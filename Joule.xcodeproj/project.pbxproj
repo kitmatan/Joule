@@ -12,6 +12,7 @@
 		1C6E1EB082639F9E547EF4D1 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B7C2C49CB053382DB54985 /* AuthService.swift */; };
 		21FCB40EF5D43710B07A6672 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = D6D06FA4439E8178AF95BFCE /* GoogleService-Info.plist */; };
 		3CFDD52C1174A0A7DE65B030 /* AddSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744E63FB0506F80359897B86 /* AddSessionView.swift */; };
+		3D0C8720D65474C7F4027FD2 /* EVPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E6A7A7C0F1994BE34BFA20 /* EVPreset.swift */; };
 		43F065F08F0435C240526498 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 903D9ED9FDC661F10F9DAEBA /* GoogleSignInSwift */; };
 		4CDE924DBB7125A6B2BFA4C3 /* BatteryHealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 775A58C1A0C3FB78E89781ED /* BatteryHealth.swift */; };
 		5062C029AC63E9884AA19D5A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA211D9DD3C06F19CECE272A /* ContentView.swift */; };
@@ -56,6 +57,7 @@
 		D6D06FA4439E8178AF95BFCE /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		DA939798ABA57BDCCC365796 /* VehicleProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleProfile.swift; sourceTree = "<group>"; };
 		E36357BF3445423DC800813B /* JouleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleApp.swift; sourceTree = "<group>"; };
+		E5E6A7A7C0F1994BE34BFA20 /* EVPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVPreset.swift; sourceTree = "<group>"; };
 		E88CBBB0F4DC2ADD8B5C1A19 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		F136979A823455B50AA53A75 /* SessionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListView.swift; sourceTree = "<group>"; };
 		FA211D9DD3C06F19CECE272A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 			children = (
 				775A58C1A0C3FB78E89781ED /* BatteryHealth.swift */,
 				767B4E7655EC6237724E840D /* ChargingSession.swift */,
+				E5E6A7A7C0F1994BE34BFA20 /* EVPreset.swift */,
 				DA939798ABA57BDCCC365796 /* VehicleProfile.swift */,
 			);
 			path = Models;
@@ -271,6 +274,7 @@
 				FDC179AD094BFA4E69B4B0F9 /* ChargingSession.swift in Sources */,
 				5062C029AC63E9884AA19D5A /* ContentView.swift in Sources */,
 				9A78802EDB3D17D568A1F178 /* DashboardView.swift in Sources */,
+				3D0C8720D65474C7F4027FD2 /* EVPreset.swift in Sources */,
 				865AFCEEEE9CD0466F879570 /* JouleApp.swift in Sources */,
 				0A8A07D17F2B50131ED9D051 /* MacRootView.swift in Sources */,
 				9A13FFBAA6D2FF5AD103EC22 /* Platform.swift in Sources */,

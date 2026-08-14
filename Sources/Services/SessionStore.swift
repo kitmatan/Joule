@@ -1,12 +1,44 @@
 import Foundation
 import FirebaseFirestore
 
+enum SyncStatus: Equatable {
+    case localOnly
+    case syncing
+    case synced(lastSync: Date)
+    case error(String)
+    
+    var isCloudActive: Bool {
+        switch self {
+        case .syncing, .synced:
+            return true
+        case .localOnly, .error:
+            return false
+        }
+    }
+    
+    var statusDescription: String {
+        switch self {
+        case .localOnly:
+            return "Local Storage (Offline-First)"
+        case .syncing:
+            return "Syncing with Cloud…"
+        case .synced(let date):
+            let formatter = RelativeDateTimeFormatter()
+            formatter.unitsStyle = .short
+            let relative = formatter.localizedString(for: date, relativeTo: Date())
+            return "Synced \(relative)"
+        case .error(let msg):
+            return "Sync issue: \(msg)"
+        }
+    }
+}
+
 class SessionStore: ObservableObject {
-    /// Firestore rejects a batched write of more than 500 operations outright — nothing in an
-    /// oversized batch is written — so a large import has to be split.
+    /// Firestore rejects a batched write of more than 500 operations outright.
     private static let maxBatchSize = 500
 
     @Published var sessions: [ChargingSession] = []
+    @Published private(set) var syncStatus: SyncStatus = .localOnly
 
     private let alerts: AlertCenter
     private var db = Firestore.firestore()
@@ -15,10 +47,50 @@ class SessionStore: ObservableObject {
 
     init(alerts: AlertCenter) {
         self.alerts = alerts
+        // Synchronously load from local storage so UI renders instantly on startup.
+        let local = loadLocalSessions()
+        self.sessions = local
+        self.syncStatus = .localOnly
     }
 
     deinit {
         listenerRegistration?.remove()
+    }
+
+    // MARK: - Local Persistence
+
+    private var localStorageURL: URL {
+        let fileManager = FileManager.default
+        let folder = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? URL.documentsDirectory
+        if !fileManager.fileExists(atPath: folder.path) {
+            try? fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
+        }
+        return folder.appendingPathComponent("joule_sessions.json")
+    }
+
+    private func loadLocalSessions() -> [ChargingSession] {
+        guard FileManager.default.fileExists(atPath: localStorageURL.path) else { return [] }
+        do {
+            let data = try Data(contentsOf: localStorageURL)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            return try decoder.decode([ChargingSession].self, from: data)
+        } catch {
+            print("Failed to load local sessions: \(error)")
+            return []
+        }
+    }
+
+    private func persistLocalSessions() {
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = .prettyPrinted
+            let data = try encoder.encode(sessions)
+            try data.write(to: localStorageURL, options: .atomic)
+        } catch {
+            print("Failed to save local sessions: \(error)")
+        }
     }
 
     // MARK: - Paths
@@ -33,85 +105,180 @@ class SessionStore: ObservableObject {
         db.collection("sessions")
     }
 
-    // MARK: - Connection
+    // MARK: - Connection & Cloud Sync
 
-    /// Binds the store to a signed-in user. Idempotent, so re-delivering the same UID (a token
-    /// refresh, a view reappearing) does not tear down and rebuild a working listener.
+    /// Binds the store to a signed-in user and synchronizes local and cloud sessions.
     func connect(userID: String) {
         guard self.userID != userID else { return }
         self.userID = userID
-        sessions = []
+        self.syncStatus = .syncing
+        
         startListening(userID: userID)
+        syncLocalSessionsToCloud(userID: userID)
         migrateLegacySessionsIfNeeded(userID: userID)
     }
 
-    func disconnect() {
+    func disconnect(clearLocalData: Bool = false) {
         userID = nil
         listenerRegistration?.remove()
         listenerRegistration = nil
-        // Signing out must not leave the previous user's history on screen.
-        sessions = []
+        syncStatus = .localOnly
+        
+        if clearLocalData {
+            sessions = []
+            try? FileManager.default.removeItem(at: localStorageURL)
+        }
+    }
+
+    func forceSync() {
+        guard let userID else {
+            syncStatus = .localOnly
+            return
+        }
+        syncStatus = .syncing
+        
+        sessionsCollection(for: userID)
+            .order(by: "date", descending: true)
+            .getDocuments { [weak self] snapshot, error in
+                guard let self else { return }
+                if let error {
+                    self.syncStatus = .error(error.localizedDescription)
+                    self.alerts.report(failure: "Sync failed: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    self.syncStatus = .synced(lastSync: Date())
+                    return
+                }
+                
+                let remoteSessions = documents.compactMap { try? $0.data(as: ChargingSession.self) }
+                self.sessions = remoteSessions
+                self.persistLocalSessions()
+                self.syncStatus = .synced(lastSync: Date())
+            }
     }
 
     private func startListening(userID: String) {
-        // Replacing a live listener without removing it would leave it attached and double-billed.
         listenerRegistration?.remove()
         listenerRegistration = sessionsCollection(for: userID)
             .order(by: "date", descending: true)
             .addSnapshotListener { [weak self] querySnapshot, error in
                 guard let self else { return }
-                // Signing out revokes the token before this listener is torn down, so a callback
-                // already in flight can arrive with a permission error — expected teardown noise,
-                // and its payload must not repopulate the list for a user who just left.
                 guard self.userID == userID else { return }
 
-                guard let documents = querySnapshot?.documents else {
-                    self.alerts.report(failure: "Failed to load sessions: \(error?.localizedDescription ?? "unknown error")")
+                if let error {
+                    self.syncStatus = .error(error.localizedDescription)
+                    self.alerts.report(failure: "Failed to load cloud sessions: \(error.localizedDescription)")
                     return
                 }
 
-                self.sessions = documents.compactMap { document in
+                guard let documents = querySnapshot?.documents else { return }
+
+                let cloudSessions = documents.compactMap { document in
                     try? document.data(as: ChargingSession.self)
                 }
+                
+                self.sessions = cloudSessions
+                self.persistLocalSessions()
+                self.syncStatus = .synced(lastSync: Date())
             }
+    }
+
+    /// Automatically uploads any local-only sessions to the user's Firestore collection upon sign-in.
+    private func syncLocalSessionsToCloud(userID: String) {
+        let localSessions = self.sessions
+        guard !localSessions.isEmpty else { return }
+        
+        let collection = sessionsCollection(for: userID)
+        collection.getDocuments { [weak self] snapshot, error in
+            guard let self else { return }
+            if let error {
+                print("Could not query existing cloud sessions for merge: \(error)")
+                return
+            }
+            
+            let remoteIDs = Set((snapshot?.documents ?? []).map(\.documentID))
+            let pendingUploads: [(DocumentReference, ChargingSession)] = localSessions.compactMap { session in
+                if let id = session.id, remoteIDs.contains(id) {
+                    return nil // Already in cloud
+                }
+                let docRef = (session.id != nil && !session.id!.isEmpty) ? collection.document(session.id!) : collection.document()
+                var updated = session
+                updated.id = docRef.documentID
+                return (docRef, updated)
+            }
+            
+            guard !pendingUploads.isEmpty else { return }
+            
+            self.write(pendingUploads) { [weak self] written, _, error in
+                guard self != nil else { return }
+                if error == nil && written > 0 {
+                    print("Synced \(written) local session(s) to cloud account.")
+                }
+            }
+        }
     }
 
     // MARK: - Writes
 
     func saveSession(_ session: ChargingSession) {
-        guard let userID else {
-            alerts.report(failure: "You are signed out, so that session was not saved.")
-            return
-        }
-        do {
-            let collection = sessionsCollection(for: userID)
-            if let id = session.id {
-                try collection.document(id).setData(from: session)
-            } else {
-                let docRef = collection.document()
-                var newSession = session
-                newSession.id = docRef.documentID
-                try docRef.setData(from: newSession)
+        var sessionToSave = session
+        
+        if let userID {
+            // Signed-in Cloud Mode
+            do {
+                let collection = sessionsCollection(for: userID)
+                if let id = sessionToSave.id, !id.isEmpty {
+                    try collection.document(id).setData(from: sessionToSave)
+                } else {
+                    let docRef = collection.document()
+                    sessionToSave.id = docRef.documentID
+                    try docRef.setData(from: sessionToSave)
+                }
+                // Optimistically update local state & disk cache
+                upsertLocalSession(sessionToSave)
+            } catch {
+                alerts.report(failure: "Failed to save session: \(error.localizedDescription)")
             }
-        } catch {
-            alerts.report(failure: "Failed to save session: \(error.localizedDescription)")
+        } else {
+            // Offline / Local Mode
+            if sessionToSave.id == nil || sessionToSave.id?.isEmpty == true {
+                sessionToSave.id = UUID().uuidString
+            }
+            upsertLocalSession(sessionToSave)
         }
     }
 
     func deleteSession(_ session: ChargingSession) {
-        guard let userID, let id = session.id else { return }
-        sessionsCollection(for: userID).document(id).delete { [weak self] error in
-            if let error {
-                self?.alerts.report(failure: "Failed to delete session: \(error.localizedDescription)")
+        guard let id = session.id else { return }
+        
+        // Remove locally immediately
+        sessions.removeAll { $0.id == id }
+        persistLocalSessions()
+        
+        // Remove from cloud if signed in
+        if let userID {
+            sessionsCollection(for: userID).document(id).delete { [weak self] error in
+                if let error {
+                    self?.alerts.report(failure: "Failed to delete session from cloud: \(error.localizedDescription)")
+                }
             }
         }
     }
 
-    // MARK: - CSV import
+    private func upsertLocalSession(_ session: ChargingSession) {
+        if let index = sessions.firstIndex(where: { $0.id == session.id }) {
+            sessions[index] = session
+        } else {
+            sessions.insert(session, at: 0)
+        }
+        sessions.sort { $0.date > $1.date }
+        persistLocalSessions()
+    }
 
-    /// Handles the result of a `fileImporter`. Lives here so iOS and macOS share one implementation
-    /// — they previously kept separate copies, and the iOS one reported its failures only to the
-    /// console, leaving a failed import silent on iPhone.
+    // MARK: - CSV Import
+
     func handleImport(_ result: Result<[URL], any Error>) {
         switch result {
         case .success(let urls):
@@ -140,38 +307,51 @@ class SessionStore: ObservableObject {
         }
     }
 
-    /// - Parameter skippedRows: rows the parser could not read, folded into the summary so the user
-    ///   sees one report covering the whole import rather than the write half of it.
     func importSessions(_ importedSessions: [ChargingSession], skippedRows: Int = 0) {
         guard !importedSessions.isEmpty else { return }
-        guard let userID else {
-            alerts.report(failure: "You are signed out, so nothing was imported.")
-            return
-        }
 
-        let collection = sessionsCollection(for: userID)
-        var documents: [(DocumentReference, ChargingSession)] = []
-        for session in importedSessions {
-            let docRef: DocumentReference
-            if let id = session.id, !id.isEmpty {
-                docRef = collection.document(id)
-            } else {
-                docRef = collection.document()
+        if let userID {
+            // Cloud batch import
+            let collection = sessionsCollection(for: userID)
+            var documents: [(DocumentReference, ChargingSession)] = []
+            for session in importedSessions {
+                let docRef: DocumentReference
+                if let id = session.id, !id.isEmpty {
+                    docRef = collection.document(id)
+                } else {
+                    docRef = collection.document()
+                }
+                var newSession = session
+                newSession.id = docRef.documentID
+                documents.append((docRef, newSession))
             }
-            var newSession = session
-            newSession.id = docRef.documentID
-            documents.append((docRef, newSession))
-        }
 
-        write(documents) { [weak self] written, encodingFailures, error in
-            guard let self else { return }
-            if let error {
-                self.alerts.report(failure: "Import failed: \(error.localizedDescription)")
-                return
+            write(documents) { [weak self] written, encodingFailures, error in
+                guard let self else { return }
+                if let error {
+                    self.alerts.report(failure: "Import failed: \(error.localizedDescription)")
+                    return
+                }
+                self.alerts.report(AppAlert(
+                    title: "Import Complete",
+                    message: Self.importSummary(written: written, skipped: skippedRows, encodingFailures: encodingFailures)
+                ))
             }
-            self.alerts.report(AppAlert(
+        } else {
+            // Local-only import
+            var addedCount = 0
+            for session in importedSessions {
+                var newSession = session
+                if newSession.id == nil || newSession.id?.isEmpty == true {
+                    newSession.id = UUID().uuidString
+                }
+                upsertLocalSession(newSession)
+                addedCount += 1
+            }
+            
+            alerts.report(AppAlert(
                 title: "Import Complete",
-                message: Self.importSummary(written: written, skipped: skippedRows, encodingFailures: encodingFailures)
+                message: Self.importSummary(written: addedCount, skipped: skippedRows, encodingFailures: 0)
             ))
         }
     }
@@ -187,10 +367,8 @@ class SessionStore: ObservableObject {
         return parts.joined(separator: " ")
     }
 
-    // MARK: - Batched writes
+    // MARK: - Batched Writes
 
-    /// Splits `documents` across as many batches as the 500-operation cap requires and reports once
-    /// they have all settled.
     private func write(
         _ documents: [(DocumentReference, ChargingSession)],
         completion: @escaping (_ written: Int, _ encodingFailures: Int, _ error: (any Error)?) -> Void
@@ -219,8 +397,6 @@ class SessionStore: ObservableObject {
 
         let written = documents.count - encodingFailures
         let group = DispatchGroup()
-        // Firestore delivers completion handlers on the main queue, so this is only ever touched
-        // from one thread despite the batches committing concurrently.
         var firstFailure: (any Error)?
 
         for batch in batches {
@@ -236,20 +412,12 @@ class SessionStore: ObservableObject {
         }
     }
 
-    // MARK: - Legacy migration
+    // MARK: - Legacy Migration
 
-    /// Copies the pre-auth top-level `sessions` collection into the signed-in user's subtree, once.
-    ///
-    /// Non-destructive in both directions: the originals are left in place, and a legacy document
-    /// whose ID already exists under the user is skipped rather than overwritten. That second rule
-    /// is what makes the pass safe to repeat — without it, a re-run after the user had edited a
-    /// migrated session would silently revert their edit back to the legacy copy.
     private func migrateLegacySessionsIfNeeded(userID: String) {
         let marker = db.collection("users").document(userID)
         marker.getDocument { [weak self] snapshot, _ in
             guard let self else { return }
-            // A failed marker read just means trying again next launch, which the skip-existing
-            // rule above makes harmless. Not worth interrupting the user for.
             guard snapshot?.get("legacySessionsMigrated") as? Bool != true else { return }
             self.copyLegacySessions(to: userID, marker: marker)
         }
@@ -258,15 +426,7 @@ class SessionStore: ObservableObject {
     private func copyLegacySessions(to userID: String, marker: DocumentReference) {
         legacySessionsCollection.getDocuments { [weak self] legacySnapshot, error in
             guard let self else { return }
-
-            if error != nil {
-                // Almost always "the rules do not expose the legacy collection", which is the
-                // expected end state once step 5 of FIREBASE_SETUP.md is done. Deliberately does
-                // not set the marker: a user who has genuinely not migrated yet should retry on the
-                // next launch rather than be recorded as migrated on the strength of a denied read.
-                // A successful migration sets the marker, so this cannot loop forever in practice.
-                return
-            }
+            if error != nil { return }
 
             let legacyDocuments = legacySnapshot?.documents ?? []
             guard !legacyDocuments.isEmpty else {
@@ -304,7 +464,7 @@ class SessionStore: ObservableObject {
                     self.markMigrated(marker, note: "migrated \(written)")
                     self.alerts.report(AppAlert(
                         title: "History Restored",
-                        message: "Moved \(written) \(written == 1 ? "session" : "sessions") into your account. The originals were left untouched — see FIREBASE_SETUP.md for how to remove them once you are happy."
+                        message: "Moved \(written) \(written == 1 ? "session" : "sessions") into your account. The originals were left untouched."
                     ))
                 }
             }

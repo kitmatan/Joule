@@ -1,11 +1,11 @@
 import Foundation
 
-/// Reference constants for the battery pack (default tuned for AION V 602 Luxury - Magazine Battery 2.0 LFP).
+/// Reference constants for the battery pack (dynamically derived from active VehicleProfile).
 enum BatteryConstants {
     /// Nominal gross / usable pack capacity when new in kWh.
     static var defaultNominalCapacityKWh: Double { VehicleProfile.nominalCapacityKWh }
     
-    /// Factory rated full range (CLTC) in km.
+    /// Factory rated full range in km.
     static var defaultNominalRangeKm: Double { VehicleProfile.nominalRangeKm }
     
     /// AC charging conversion efficiency (OBC + thermal + battery losses).
@@ -14,8 +14,8 @@ enum BatteryConstants {
     /// DC fast charging efficiency (dispenser-to-pack DC efficiency).
     static var defaultDCEfficiency: Double { VehicleProfile.dcEfficiency }
     
-    /// Theoretical LFP cycle life to 80% SoH under normal operating conditions.
-    static let lfpCycleLifeTo80Percent: Double = VehicleProfile.defaultLFPCycleLife
+    /// Theoretical cycle life to 80% SoH under normal operating conditions.
+    static var cycleLifeTo80Percent: Double { VehicleProfile.cycleLifeTo80 }
 }
 
 /// Confidence rating for a capacity estimation sample based on charging depth (ΔSoC).
@@ -186,11 +186,11 @@ struct BatteryHealthSummary {
             case .excellent:
                 return "Battery capacity retention is well above average with minimal wear."
             case .good:
-                return "Deterioration rate matches standard LFP chemistry longevity expectations."
+                return "Deterioration rate matches standard \(VehicleProfile.chemistry.rawValue) chemistry longevity expectations."
             case .normal:
                 return "Battery capacity is in line with expected calendar and cycle aging."
             case .degraded:
-                return "Capacity loss is higher than expected. Consider calibrating at 100% SoC."
+                return "Capacity loss is higher than expected. Consider calibrating at 100% SoC if using LFP, or checking cell balance."
             }
         }
         

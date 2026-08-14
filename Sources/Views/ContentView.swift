@@ -7,21 +7,10 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            switch auth.state {
-            case .resolving:
-                // Firebase restores a persisted session asynchronously; showing the sign-in screen
-                // in the meantime would flash it at every returning user.
-                ProgressView()
-                    .controlSize(.large)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            case .signedOut:
-                SignInView()
-            case .signedIn:
-                if Platform.isMac {
-                    MacRootView()
-                } else {
-                    PhoneRootView()
-                }
+            if Platform.isMac {
+                MacRootView()
+            } else {
+                PhoneRootView()
             }
         }
         // Covers the case where auth resolved before this view appeared; `onChange` catches the

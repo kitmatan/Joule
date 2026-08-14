@@ -1,8 +1,8 @@
 # Firebase setup
 
-The app signs in with Google and stores every session under `users/{uid}/sessions`. Two of these
-steps happen outside the codebase, and **the app will not work until they are done** — sign-in
-fails without step 1, and reads fail without step 3.
+Joule is an **offline-first** app: you can immediately log sessions, view dashboards, and export data locally without any cloud setup. 
+
+If you wish to enable **Cloud Sync** across your iPhone, iPad, and Mac, Joule uses Firebase Authentication (Google Sign-In) and stores sessions under `users/{uid}/sessions`. Two backend steps configure the cloud synchronization:
 
 Project: `chargelog-5714d` · Bundle ID: `com.kmatan.ChargeLog`
 

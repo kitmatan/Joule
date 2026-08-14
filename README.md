@@ -2,11 +2,16 @@
 
 A modern EV charging log and longitudinal battery health tracker for iOS, iPadOS, and macOS (Mac Catalyst), built with SwiftUI, Swift Charts, Google Sign-In, and Cloud Firestore.
 
-Tuned with out-of-the-box specifications for the **AION V 602 Luxury** (Magazine Battery 2.0 LFP) with customizable vehicle and tariff profiles.
+Supports **any electric vehicle (EV)** out of the box with an extensive built-in library of popular vehicle presets (BYD, Tesla, MG, Hyundai, Kia, Volvo, Deepal, ORA, BMW, GAC AION, etc.) and complete custom vehicle configuration.
 
 ---
 
 ## ✨ Features
+
+- 🚗 **Universal EV & Battery Chemistry Support**:
+  - **EV Preset Library**: One-tap configuration for popular EVs across global brands (BYD Atto 3 / Dolphin / Seal, Tesla Model 3 / Y, MG4 / ZS EV, Hyundai Ioniq 5 / 6, Kia EV5 / EV6, Volvo EX30 / EX40, Deepal S07, ORA Good Cat, GAC AION V / Y, BMW i4 / iX3, etc.).
+  - **Chemistry-Aware Analytics**: Tailored algorithms for **LFP** (Blade / Magazine / Lithium Iron Phosphate), **NMC/NCM** (Nickel Manganese Cobalt), **NCA**, and Custom chemistries.
+  - **Custom EV Profile**: Freely customize nominal pack capacity, rated range, range testing cycles (WLTP, NEDC, CLTC, EPA), chemistry, expected cycle life to 80% SoH, and AC onboard charger limits.
 
 - 📊 **Comprehensive Dashboard**:
   - Monthly stats (Cost, Energy, Average monthly costs).
@@ -17,8 +22,8 @@ Tuned with out-of-the-box specifications for the **AION V 602 Luxury** (Magazine
 - 🔋 **Battery Health & Longitudinal Analytics**:
   - State of Health (SoH) and usable capacity (kWh) estimation per session with confidence weighting.
   - Least-squares linear regression modeling for degradation rates per 10,000 km and per year.
-  - 4 interactive charts: SoH over Time, SoH vs. Mileage, Projected 100% Range, and Cycle Wear vs. LFP Benchmark.
-  - Chemistry-specific battery care advisories.
+  - 4 interactive charts: SoH over Time, SoH vs. Mileage, Projected 100% Range (dynamic scaling), and Cycle Wear vs. Chemistry Benchmark.
+  - Chemistry-specific battery care advisories (e.g., LFP periodic 100% cell balancing vs. NMC 80% daily charge limits).
 
 - 📜 **Session History & Management**:
   - Grouped chronologically by month with monthly totals.
@@ -35,9 +40,10 @@ Tuned with out-of-the-box specifications for the **AION V 602 Luxury** (Magazine
   - Export entire charging history to standard CSV for backup or external analysis.
   - Resilient importer with header mapping and sanitized number parsing.
 
-- ☁️ **Cloud Sync & Privacy**:
-  - Authenticates with Google Sign-In.
-  - Scoped per-user Firestore database rules (`/users/{uid}/sessions`).
+- 📱 **Offline-First & Cloud Sync**:
+  - **Zero-Friction Launch**: Start logging charges immediately in Local Mode without creating an account or logging in.
+  - **Local Persistence**: All data is saved instantly to on-device storage, functioning seamlessly in offline environments (e.g. underground parking garages).
+  - **Seamless Cloud Sync**: Sign in with Google anytime from Settings to back up and sync across iPhone, iPad, and Mac. Existing local sessions automatically merge into your cloud account.
 
 ---
 

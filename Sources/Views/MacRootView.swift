@@ -42,7 +42,11 @@ struct MacRootView: View {
                     HStack {
                         settingsButton
                         Spacer()
-                        signOutButton
+                        if auth.isSignedIn {
+                            signOutButton
+                        } else {
+                            signInButton
+                        }
                     }
                 }
                 .background(.bar)
@@ -94,6 +98,20 @@ struct MacRootView: View {
         .buttonStyle(.plain)
         .foregroundStyle(.secondary)
         .padding(.leading, 12)
+        .padding(.vertical, 10)
+    }
+
+    private var signInButton: some View {
+        Button {
+            auth.signIn()
+        } label: {
+            Label("Sign In", systemImage: "icloud.and.arrow.up")
+                .font(.callout)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.tint)
+        .padding(.trailing, 12)
         .padding(.vertical, 10)
     }
 

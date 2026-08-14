@@ -47,7 +47,7 @@ struct BatteryHealthService {
         let batteryEnergy = session.energyAdded * eff
         let estimatedCapacity = batteryEnergy / (delta / 100.0)
         
-        // Filter out extreme typos/anomalies outside realistic physics limits (30 kWh - 120 kWh for a 75 kWh pack)
+        // Filter out extreme typos/anomalies outside realistic physics limits (40% to 160% of nominal pack size)
         guard estimatedCapacity >= nominalCapacityKWh * 0.4 && estimatedCapacity <= nominalCapacityKWh * 1.6 else {
             return nil
         }
@@ -144,7 +144,7 @@ struct BatteryHealthService {
                 date: current.date,
                 mileage: current.mileage,
                 smoothedSoH: min(100.0, max(50.0, smoothedSoH)),
-                smoothedCapacityKWh: min(nominalCapacityKWh, max(30.0, smoothedCap)),
+                smoothedCapacityKWh: min(nominalCapacityKWh, max(nominalCapacityKWh * 0.4, smoothedCap)),
                 projectedFullRangeKm: smoothedRange
             ))
         }

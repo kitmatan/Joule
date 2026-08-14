@@ -24,6 +24,19 @@ final class AuthService: ObservableObject {
 
     @Published private(set) var state: State = .resolving
 
+    var userEmail: String? {
+        Auth.auth().currentUser?.email
+    }
+
+    var userDisplayName: String? {
+        Auth.auth().currentUser?.displayName
+    }
+
+    var isSignedIn: Bool {
+        if case .signedIn = state { return true }
+        return false
+    }
+
     private let alerts: AlertCenter
     private var stateHandle: AuthStateDidChangeListenerHandle?
 

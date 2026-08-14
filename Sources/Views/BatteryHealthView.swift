@@ -387,13 +387,17 @@ struct BatteryHealthView: View {
     // MARK: - Chart 3: Projected Range Over Time
     private func rangeOverTimeChart(summary: BatteryHealthSummary) -> some View {
         let rangePoints = filteredPoints.filter { $0.projectedFullRangeKm != nil }
+        let nominal = summary.nominalRangeKm
+        let minBound = max(50.0, nominal * 0.75)
+        let maxBound = nominal * 1.15
+        let standardTag = VehicleProfile.rangeStandard.rawValue
         
         return Chart {
-            RuleMark(y: .value("Nominal 602 km", summary.nominalRangeKm))
+            RuleMark(y: .value("Rated Range", summary.nominalRangeKm))
                 .foregroundStyle(Color.green.opacity(0.5))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                 .annotation(position: .top, alignment: .trailing) {
-                    Text("Factory 602 km")
+                    Text("Factory \(Int(summary.nominalRangeKm)) km (\(standardTag))")
                         .font(.caption2)
                         .foregroundColor(.green)
                 }
@@ -418,33 +422,38 @@ struct BatteryHealthView: View {
                 .interpolationMethod(.monotone)
             }
         }
-        .chartYScale(domain: 500...650)
+        .chartYScale(domain: minBound...maxBound)
         .chartYAxis {
-            AxisMarks(position: .leading, values: [520, 560, 600, 640]) { value in
+            AxisMarks(position: .leading) { value in
                 AxisGridLine()
                 AxisValueLabel {
                     if let intVal = value.as(Int.self) {
                         Text("\(intVal) km")
+                    } else if let dVal = value.as(Double.self) {
+                        Text("\(Int(dVal)) km")
                     }
                 }
             }
         }
     }
     
-    // MARK: - Chart 4: Cycle Wear vs LFP Theoretical Life
+    // MARK: - Chart 4: Cycle Wear vs Theoretical Life
     private func cycleWearChart(summary: BatteryHealthSummary) -> some View {
         let maxCycles = max(300.0, summary.equivalentFullCycles * 2.5)
         let sampleSteps = stride(from: 0.0, through: maxCycles, by: maxCycles / 20.0)
+        let benchmarkCycleLife = BatteryConstants.cycleLifeTo80Percent
+        let chemistryName = VehicleProfile.chemistry.rawValue
+        let benchmarkLabel = "\(chemistryName) Benchmark (\(Int(benchmarkCycleLife)) cyc)"
         
         return Chart {
-            // Theoretical LFP Degradation Curve (80% retention at 3000 cycles)
+            // Theoretical Degradation Curve (80% retention at expected cycle life)
             ForEach(Array(sampleSteps), id: \.self) { cycle in
-                let theoreticalSoH = 100.0 - (20.0 * (cycle / BatteryConstants.lfpCycleLifeTo80Percent))
+                let theoreticalSoH = 100.0 - (20.0 * (cycle / benchmarkCycleLife))
                 LineMark(
                     x: .value("Cycles", cycle),
                     y: .value("Theoretical SoH", theoreticalSoH)
                 )
-                .foregroundStyle(by: .value("Type", "LFP Lab Benchmark"))
+                .foregroundStyle(by: .value("Type", benchmarkLabel))
                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
             }
             
@@ -458,7 +467,7 @@ struct BatteryHealthView: View {
         }
         .chartForegroundStyleScale([
             "Your Vehicle": Color.blue,
-            "LFP Lab Benchmark": Color.secondary
+            benchmarkLabel: Color.secondary
         ])
         .chartYScale(domain: 80...105)
         .chartYAxis {
@@ -529,16 +538,16 @@ struct BatteryHealthView: View {
                 .background(Color.secondary.opacity(0.08))
                 .cornerRadius(12)
                 
-                // LFP Chemistry Tip
+                // Dynamic Battery Chemistry Tip
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: "lightbulb.fill")
                         .foregroundColor(.yellow)
                         .font(.title3)
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("\(VehicleProfile.vehicleName) Battery Care")
+                        Text("\(VehicleProfile.vehicleName) (\(VehicleProfile.chemistry.rawValue)) Battery Care")
                             .font(.subheadline).bold()
-                        Text("Lithium Iron Phosphate (LFP) chemistry has exceptional cycle durability. Charge to 100% at least once every 1–2 weeks so the BMS can balance cells and accurately calibrate the state-of-charge estimator.")
+                        Text(VehicleProfile.batteryCareTip)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
