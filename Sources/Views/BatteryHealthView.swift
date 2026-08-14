@@ -238,43 +238,104 @@ struct BatteryHealthView: View {
             return [GridItem(.flexible()), GridItem(.flexible())]
         }()
 
-        return LazyVGrid(
-            columns: columns,
-            spacing: 16
-        ) {
-            StatCard(
-                title: "Degradation Rate",
-                value: summary.formattedDegradationRate(unit: unitSystem),
-                icon: "gauge.with.needle.fill",
-                color: .mint
-            )
-            
-            StatCard(
-                title: "Annual Rate",
-                value: summary.degradationPerYear != nil
-                    ? (summary.degradationPerYear! > 0.05
-                        ? String(format: "-%.2f%% / yr", summary.degradationPerYear!)
-                        : "< 0.1% / yr")
-                    : "Calibrating",
-                icon: "calendar.badge.clock",
-                color: .cyan
-            )
-            
-            StatCard(
-                title: "Full Cycles (EFC)",
-                value: String(format: "%.1f cycles", summary.equivalentFullCycles),
-                icon: "arrow.triangle.2.circlepath.circle.fill",
-                color: .purple
-            )
-            
-            StatCard(
-                title: "Projected 100% Range",
-                value: unitSystem.formatDistance(km: summary.currentProjectedRangeKm ?? summary.nominalRangeKm),
-                icon: "car.fill",
-                color: .green
-            )
+        let isDegradationCalibrating = summary.degradationPer10kDistance(unit: unitSystem) == nil
+        let isAnnualCalibrating = summary.degradationPerYear == nil
+
+        return VStack(alignment: .leading, spacing: 12) {
+            LazyVGrid(
+                columns: columns,
+                spacing: 16
+            ) {
+                StatCard(
+                    title: "Degradation Rate",
+                    value: summary.formattedDegradationRate(unit: unitSystem),
+                    icon: "gauge.with.needle.fill",
+                    color: .mint
+                )
+                
+                StatCard(
+                    title: "Annual Rate",
+                    value: summary.degradationPerYear != nil
+                        ? (summary.degradationPerYear! > 0.05
+                            ? String(format: "-%.2f%% / yr", summary.degradationPerYear!)
+                            : "< 0.1% / yr")
+                        : "Calibrating",
+                    icon: "calendar.badge.clock",
+                    color: .cyan
+                )
+                
+                StatCard(
+                    title: "Full Cycles (EFC)",
+                    value: String(format: "%.1f cycles", summary.equivalentFullCycles),
+                    icon: "arrow.triangle.2.circlepath.circle.fill",
+                    color: .purple
+                )
+                
+                StatCard(
+                    title: "Projected 100% Range",
+                    value: unitSystem.formatDistance(km: summary.currentProjectedRangeKm ?? summary.nominalRangeKm),
+                    icon: "car.fill",
+                    color: .green
+                )
+            }
+
+            if isDegradationCalibrating || isAnnualCalibrating {
+                calibrationExplanationView(summary: summary)
+            }
         }
         .padding(.horizontal)
+    }
+
+    // MARK: - Calibration Explanation
+    private func calibrationExplanationView(summary: BatteryHealthSummary) -> some View {
+        let isDegradationCalibrating = summary.degradationPer10kDistance(unit: unitSystem) == nil
+        let isAnnualCalibrating = summary.degradationPerYear == nil
+        let distanceThreshold = unitSystem.formatDistance(km: 2500)
+
+        return HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "info.circle.fill")
+                .font(.body)
+                .foregroundColor(.cyan)
+                .padding(.top, 2)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Why are rates calibrating?")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+
+                if isDegradationCalibrating && isAnnualCalibrating {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .top, spacing: 4) {
+                            Text("•").bold()
+                            Text("**Degradation Rate** requires at least 4 sessions with odometer readings spanning \(distanceThreshold) of driving.")
+                        }
+                        HStack(alignment: .top, spacing: 4) {
+                            Text("•").bold()
+                            Text("**Annual Rate** requires at least 4 sessions spanning 60 days to calculate a yearly trend.")
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                } else if isDegradationCalibrating {
+                    Text("**Degradation Rate** requires at least 4 sessions with odometer readings spanning \(distanceThreshold) of driving to establish a reliable distance-based trend.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else if isAnnualCalibrating {
+                    Text("**Annual Rate** requires at least 60 days of charging history to compute a yearly degradation trend.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            Spacer()
+        }
+        .padding(12)
+        .background(Color.cyan.opacity(0.08))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.cyan.opacity(0.2), lineWidth: 1)
+        )
     }
     
     // MARK: - Charts Section
