@@ -202,14 +202,22 @@ struct BatteryHealthView: View {
         ) {
             StatCard(
                 title: "Degradation Rate",
-                value: summary.degradationPer10kKm != nil ? String(format: "-%.2f%% / 10k km", summary.degradationPer10kKm!) : "Calibrating",
+                value: summary.degradationPer10kKm != nil
+                    ? (summary.degradationPer10kKm! > 0.05
+                        ? String(format: "-%.2f%% / 10k km", summary.degradationPer10kKm!)
+                        : "< 0.1% / 10k km")
+                    : "Calibrating",
                 icon: "gauge.with.needle.fill",
                 color: .mint
             )
             
             StatCard(
                 title: "Annual Rate",
-                value: summary.degradationPerYear != nil ? String(format: "-%.2f%% / yr", summary.degradationPerYear!) : "Calibrating",
+                value: summary.degradationPerYear != nil
+                    ? (summary.degradationPerYear! > 0.05
+                        ? String(format: "-%.2f%% / yr", summary.degradationPerYear!)
+                        : "< 0.1% / yr")
+                    : "Calibrating",
                 icon: "calendar.badge.clock",
                 color: .cyan
             )

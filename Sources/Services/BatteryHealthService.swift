@@ -208,30 +208,36 @@ struct BatteryHealthService {
         let dcRatio = totalEnergy > 0 ? (dcEnergy / totalEnergy) : 0.5
         let efc = nominalCapacityKWh > 0 ? (totalThroughput / nominalCapacityKWh) : 0
         
-        // Degradation rate vs Mileage using robust least-squares linear regression
+        // Degradation rate vs Mileage using robust confidence-weighted least-squares linear regression
         var degradationPer10kKm: Double? = nil
         let mileagePoints = points.filter { $0.mileage != nil && $0.confidence >= .medium }
-        if mileagePoints.count >= 2 {
+        if mileagePoints.count >= 4 {
             let mileages = mileagePoints.compactMap(\.mileage)
-            let sohs = mileagePoints.map(\.stateOfHealth)
             let minM = mileages.min() ?? 0
             let maxM = mileages.max() ?? 0
-            if maxM - minM >= 500.0 {
-                let meanM = mileages.reduce(0, +) / Double(mileages.count)
-                let meanSoH = sohs.reduce(0, +) / Double(sohs.count)
+            
+            // Require at least 2,500 km of driving baseline to avoid multiplying short-term noise
+            if maxM - minM >= 2500.0 {
+                let totalWeight = mileagePoints.reduce(0.0) { $0 + $1.confidence.weight }
+                let weightedMeanM = mileagePoints.reduce(0.0) { $0 + $1.mileage! * $1.confidence.weight } / totalWeight
+                let weightedMeanSoH = mileagePoints.reduce(0.0) { $0 + min(100.0, $1.stateOfHealth) * $1.confidence.weight } / totalWeight
+                
                 var numerator = 0.0
                 var denominator = 0.0
                 for p in mileagePoints {
-                    let m = p.mileage!
-                    let diffM = m - meanM
-                    numerator += diffM * (p.stateOfHealth - meanSoH)
-                    denominator += diffM * diffM
+                    let w = p.confidence.weight
+                    let diffM = p.mileage! - weightedMeanM
+                    let diffSoH = min(100.0, p.stateOfHealth) - weightedMeanSoH
+                    numerator += w * diffM * diffSoH
+                    denominator += w * diffM * diffM
                 }
+                
                 if denominator > 0 {
                     let slope = numerator / denominator // % SoH per km
-                    // Degradation rate is positive when SoH is decreasing (slope is negative)
                     if slope < 0 {
-                        degradationPer10kKm = -slope * 10000.0
+                        // Bounded to physically plausible EV degradation limits (max 3.5% / 10k km)
+                        let rawRate = -slope * 10000.0
+                        degradationPer10kKm = min(3.5, rawRate)
                     } else {
                         degradationPer10kKm = 0.0
                     }
@@ -239,30 +245,38 @@ struct BatteryHealthService {
             }
         }
         
-        // Degradation rate vs Time using least-squares linear regression across observed timeline
+        // Degradation rate vs Time using confidence-weighted linear regression across observed timeline
         var degradationPerYear: Double? = nil
         let reliablePoints = points.filter { $0.confidence >= .medium }
-        if reliablePoints.count >= 2,
+        if reliablePoints.count >= 4,
            let firstDate = reliablePoints.first?.date,
            let lastDate = reliablePoints.last?.date {
             let days = lastDate.timeIntervalSince(firstDate) / 86400.0
-            if days >= 21.0 {
+            
+            // Require at least 60 days of historical baseline to calculate an annual degradation rate
+            if days >= 60.0 {
                 let refDate = firstDate
                 let times = reliablePoints.map { $0.date.timeIntervalSince(refDate) / (86400.0 * 365.25) }
-                let sohs = reliablePoints.map(\.stateOfHealth)
-                let meanT = times.reduce(0, +) / Double(times.count)
-                let meanSoH = sohs.reduce(0, +) / Double(sohs.count)
+                let totalWeight = reliablePoints.reduce(0.0) { $0 + $1.confidence.weight }
+                let weightedMeanT = zip(times, reliablePoints).reduce(0.0) { $0 + $1.0 * $1.1.confidence.weight } / totalWeight
+                let weightedMeanSoH = reliablePoints.reduce(0.0) { $0 + min(100.0, $1.stateOfHealth) * $1.confidence.weight } / totalWeight
+                
                 var numerator = 0.0
                 var denominator = 0.0
                 for i in 0..<reliablePoints.count {
-                    let diffT = times[i] - meanT
-                    numerator += diffT * (sohs[i] - meanSoH)
-                    denominator += diffT * diffT
+                    let w = reliablePoints[i].confidence.weight
+                    let diffT = times[i] - weightedMeanT
+                    let diffSoH = min(100.0, reliablePoints[i].stateOfHealth) - weightedMeanSoH
+                    numerator += w * diffT * diffSoH
+                    denominator += w * diffT * diffT
                 }
+                
                 if denominator > 0 {
                     let slope = numerator / denominator // % SoH change per year
                     if slope < 0 {
-                        degradationPerYear = -slope
+                        // Bounded to physically plausible EV degradation limits (max 5.0% / yr)
+                        let rawRate = -slope
+                        degradationPerYear = min(5.0, rawRate)
                     } else {
                         degradationPerYear = 0.0
                     }
