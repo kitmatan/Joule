@@ -3,33 +3,29 @@ import UniformTypeIdentifiers
 
 /// macOS experience: sidebar navigation with a Mail-style list + detail split for history.
 struct MacRootView: View {
-    enum SidebarItem: Hashable {
-        case dashboard
-        case batteryHealth
-        case history(SessionFilter)
-    }
+    typealias SidebarItem = MacSidebarDestination
 
     @EnvironmentObject private var store: SessionStore
     @EnvironmentObject private var auth: AuthService
-    @State private var selection: SidebarItem? = .dashboard
-    @State private var showingAddSession = false
-    @State private var showingSettings = false
+    @EnvironmentObject private var navCoordinator: AppNavigationCoordinator
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $selection) {
+            List(selection: $navCoordinator.macSidebarSelection) {
                 Section("Overview") {
                     Label("Dashboard", systemImage: "chart.bar.xaxis")
-                        .tag(SidebarItem.dashboard)
+                        .tag(MacSidebarDestination.dashboard)
+                        .keyboardShortcut("1", modifiers: .command)
                     Label("Battery Health", systemImage: "bolt.batteryblock.fill")
-                        .tag(SidebarItem.batteryHealth)
+                        .tag(MacSidebarDestination.batteryHealth)
+                        .keyboardShortcut("2", modifiers: .command)
                 }
 
                 Section("History") {
                     ForEach(SessionFilter.allCases) { filter in
                         Label(filter.sidebarTitle, systemImage: filter.icon)
                             .badge(store.sessions.filter { filter.matches($0) }.count)
-                            .tag(SidebarItem.history(filter))
+                            .tag(MacSidebarDestination.history(filter))
                     }
                 }
             }
@@ -52,7 +48,7 @@ struct MacRootView: View {
                 .background(.bar)
             }
         } detail: {
-            switch selection ?? .dashboard {
+            switch navCoordinator.macSidebarSelection ?? .dashboard {
             case .dashboard:
                 DashboardView()
             case .batteryHealth:
@@ -61,19 +57,32 @@ struct MacRootView: View {
                 MacHistoryView(filter: filter)
             }
         }
-        .sheet(isPresented: $showingAddSession) {
+        .sheet(isPresented: $navCoordinator.showingAddSession) {
             AddSessionView()
                 .frame(minWidth: 540, minHeight: 640)
         }
-        .sheet(isPresented: $showingSettings) {
+        .sheet(isPresented: $navCoordinator.showingSettings) {
             SettingsView()
                 .frame(minWidth: 500, minHeight: 550)
+        }
+        .fileExporter(
+            isPresented: $navCoordinator.showingExporter,
+            document: CSVDocument(text: CSVExporter.generateCSV(from: store.sessions)),
+            contentType: .commaSeparatedText,
+            defaultFilename: "Joule_Export"
+        ) { _ in }
+        .fileImporter(
+            isPresented: $navCoordinator.showingImporter,
+            allowedContentTypes: [.commaSeparatedText],
+            allowsMultipleSelection: false
+        ) { result in
+            store.handleImport(result)
         }
     }
 
     private var newSessionButton: some View {
         Button {
-            showingAddSession = true
+            navCoordinator.presentNewSession()
         } label: {
             Label("New Session", systemImage: "plus.circle.fill")
                 .fontWeight(.medium)
@@ -83,13 +92,15 @@ struct MacRootView: View {
         .buttonStyle(.plain)
         .foregroundStyle(.tint)
         .keyboardShortcut("n", modifiers: .command)
+        .accessibilityLabel("New Charging Session")
+        .accessibilityHint("Opens sheet to log a new charging session")
         .padding(.horizontal, 12)
         .padding(.top, 12)
     }
 
     private var settingsButton: some View {
         Button {
-            showingSettings = true
+            navCoordinator.presentSettings()
         } label: {
             Label("Settings", systemImage: "gearshape")
                 .font(.callout)
@@ -97,6 +108,9 @@ struct MacRootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(.secondary)
+        .keyboardShortcut(",", modifiers: .command)
+        .accessibilityLabel("Settings")
+        .accessibilityHint("Opens vehicle settings and preferences")
         .padding(.leading, 12)
         .padding(.vertical, 10)
     }
@@ -111,6 +125,8 @@ struct MacRootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(.tint)
+        .accessibilityLabel("Sign In with Google")
+        .accessibilityHint("Enables automatic cloud backup and sync")
         .padding(.trailing, 12)
         .padding(.vertical, 10)
     }
@@ -125,6 +141,8 @@ struct MacRootView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(.secondary)
+        .accessibilityLabel("Sign Out")
+        .accessibilityHint("Signs out of Google account")
         .padding(.trailing, 12)
         .padding(.vertical, 10)
     }
@@ -133,16 +151,13 @@ struct MacRootView: View {
 /// Two-pane history: session list on the left, detail on the right.
 struct MacHistoryView: View {
     @EnvironmentObject private var store: SessionStore
+    @EnvironmentObject private var navCoordinator: AppNavigationCoordinator
     let filter: SessionFilter
 
     @State private var searchText = ""
     @State private var selectedSessionID: String?
-    @State private var showingAddSession = false
     @State private var sessionToEdit: ChargingSession?
     @State private var sessionToDelete: ChargingSession?
-    @State private var showingExporter = false
-    @State private var showingImporter = false
-    @State private var csvDocument: CSVDocument?
 
     var filteredSessions: [ChargingSession] {
         store.sessions.filter { session in
@@ -185,28 +200,26 @@ struct MacHistoryView: View {
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Menu {
-                    Button(action: { showingImporter = true }) {
+                    Button(action: { navCoordinator.triggerImport() }) {
                         Label("Import CSV…", systemImage: "square.and.arrow.down")
                     }
+                    .keyboardShortcut("i", modifiers: [.command, .shift])
+
                     Button(action: {
-                        csvDocument = CSVDocument(text: CSVExporter.generateCSV(from: store.sessions))
-                        showingExporter = true
+                        navCoordinator.triggerExport()
                     }) {
                         // The whole history, not the current filter — this is the backup path.
                         Label("Export All to CSV…", systemImage: "square.and.arrow.up")
                     }
+                    .keyboardShortcut("e", modifiers: .command)
                 } label: {
                     Label("Import/Export", systemImage: "square.and.arrow.up.on.square")
                 }
 
-                Button(action: { showingAddSession = true }) {
+                Button(action: { navCoordinator.presentNewSession() }) {
                     Label("New Session", systemImage: "plus")
                 }
             }
-        }
-        .sheet(isPresented: $showingAddSession) {
-            AddSessionView()
-                .frame(minWidth: 540, minHeight: 640)
         }
         .sheet(item: $sessionToEdit) { session in
             AddSessionView(sessionToEdit: session)
@@ -232,19 +245,6 @@ struct MacHistoryView: View {
             }
         } message: { session in
             Text("Are you sure you want to delete the charging session at \(session.locationName ?? "this location") on \(session.date.formatted(.dateTime.month(.abbreviated).day().year().locale(Locale(identifier: "en_US_POSIX"))))?")
-        }
-        .fileExporter(
-            isPresented: $showingExporter,
-            document: csvDocument,
-            contentType: .commaSeparatedText,
-            defaultFilename: "Joule_Export"
-        ) { _ in }
-        .fileImporter(
-            isPresented: $showingImporter,
-            allowedContentTypes: [.commaSeparatedText],
-            allowsMultipleSelection: false
-        ) { result in
-            store.handleImport(result)
         }
     }
 
@@ -336,10 +336,12 @@ struct MacSessionRow: View {
                 Text(session.locationName ?? "Unknown Location")
                     .font(.headline)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                 Spacer(minLength: 8)
                 Text(session.totalPrice.formatted(.currency(code: "THB").presentation(.narrow)))
                     .font(.subheadline).bold()
                     .foregroundColor(session.paymentStatus == .deferred ? .orange : .primary)
+                    .lineLimit(1)
             }
 
             HStack(spacing: 6) {
@@ -364,5 +366,8 @@ struct MacSessionRow: View {
             .foregroundColor(.secondary)
         }
         .padding(.vertical, 3)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(session.locationName ?? "Charging Session"), \(session.date.formatted(.dateTime.month(.abbreviated).day().locale(Locale(identifier: "en_US_POSIX"))))")
+        .accessibilityValue("\(session.chargingType?.rawValue ?? "") \(String(format: "%.1f kWh", session.energyAdded)), \(session.totalPrice.formatted(.currency(code: "THB").presentation(.narrow)))\(session.paymentStatus == .deferred ? ", Deferred" : "")")
     }
 }

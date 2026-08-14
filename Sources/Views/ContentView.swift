@@ -43,13 +43,7 @@ struct ContentView: View {
 /// iPhone/iPad experience: bottom tab bar with push navigation.
 struct PhoneRootView: View {
     @EnvironmentObject private var store: SessionStore
-    @State private var selectedTab: Int = {
-        switch ProcessInfo.processInfo.environment["SCREENSHOT_TAB"] {
-        case "1", "battery_health": return 1
-        case "2", "history": return 2
-        default: return 0
-        }
-    }()
+    @EnvironmentObject private var navCoordinator: AppNavigationCoordinator
 
     var body: some View {
         Group {
@@ -68,7 +62,10 @@ struct PhoneRootView: View {
             } else if ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "presets" {
                 PresetPickerView(selectedPresetId: .constant("byd_atto3_ext")) { _ in }
             } else {
-                TabView(selection: $selectedTab) {
+                TabView(selection: Binding(
+                    get: { navCoordinator.selectedTab.rawValue },
+                    set: { if let tab = AppTab(rawValue: $0) { navCoordinator.selectTab(tab) } }
+                )) {
                     DashboardView()
                         .tabItem {
                             Label("Dashboard", systemImage: "chart.bar.xaxis")
@@ -88,6 +85,34 @@ struct PhoneRootView: View {
                             Label("History", systemImage: "list.bullet")
                         }
                         .tag(2)
+                }
+            }
+        }
+        .sheet(isPresented: $navCoordinator.showingAddSession) {
+            AddSessionView()
+        }
+        .sheet(isPresented: $navCoordinator.showingSettings) {
+            SettingsView()
+        }
+        .fileExporter(
+            isPresented: $navCoordinator.showingExporter,
+            document: CSVDocument(text: CSVExporter.generateCSV(from: store.sessions)),
+            contentType: .commaSeparatedText,
+            defaultFilename: "Joule_Export"
+        ) { _ in }
+        .fileImporter(
+            isPresented: $navCoordinator.showingImporter,
+            allowedContentTypes: [.commaSeparatedText],
+            allowsMultipleSelection: false
+        ) { result in
+            store.handleImport(result)
+        }
+        .onAppear {
+            if let envTab = ProcessInfo.processInfo.environment["SCREENSHOT_TAB"] {
+                switch envTab {
+                case "1", "battery_health": navCoordinator.selectTab(.batteryHealth)
+                case "2", "history": navCoordinator.selectTab(.history)
+                default: navCoordinator.selectTab(.dashboard)
                 }
             }
         }

@@ -26,11 +26,15 @@ struct LocationStat: Identifiable {
 struct DashboardView: View {
     @EnvironmentObject private var store: SessionStore
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// Wide layout on Mac and iPad (regular width); compact two-column layout on iPhone.
     private var isWide: Bool { horizontalSizeClass == .regular }
 
     private var statColumns: [GridItem] {
+        if dynamicTypeSize.isAccessibilitySize {
+            return [GridItem(.flexible())]
+        }
         if isWide {
             return [GridItem(.adaptive(minimum: 180, maximum: 260), spacing: 16)]
         }
@@ -49,12 +53,6 @@ struct DashboardView: View {
     }
 
     /// Odometer span, together with the energy and cost that actually powered it.
-    ///
-    /// Mileage is read on arrival, so the energy added at a session powers the driving that
-    /// follows it: the distance between the first and last mileage-logged session was powered by
-    /// the sessions from the first up to — but not including — the last. Lifetime totals cannot be
-    /// used as the numerator, because a session logged without mileage would add energy and cost
-    /// while contributing nothing to the distance, quietly skewing both efficiency figures.
     var drivingWindow: (distance: Double, energy: Double, cost: Double)? {
         let logged = store.sessions
             .filter { $0.mileage != nil }
@@ -135,8 +133,6 @@ struct DashboardView: View {
             return []
         }
 
-        // Seed every month in the window so a month without sessions reads as an empty slot rather
-        // than collapsing and letting its neighbours slide together.
         var byMonth: [Date: MonthlyStat] = [:]
         for offset in 0...11 {
             guard let month = calendar.date(byAdding: .month, value: offset, to: cutoff) else { continue }
@@ -157,8 +153,6 @@ struct DashboardView: View {
         return byMonth.values.sorted { $0.month < $1.month }
     }
 
-    /// Only surfaces the third series when there is untyped energy to show, so the legend stays at
-    /// two entries for the normal case.
     var showsUntypedEnergy: Bool {
         monthlyStats.contains { $0.untypedEnergy > 0 }
     }
@@ -226,6 +220,7 @@ struct DashboardView: View {
                         Image(systemName: "gearshape")
                             .fontWeight(.semibold)
                     }
+                    .accessibilityLabel("Settings")
                 }
             }
             .sheet(isPresented: $showingSettings) {
@@ -300,6 +295,10 @@ struct DashboardView: View {
                     .padding(.horizontal)
                 }
                 .buttonStyle(.plain)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Battery Health: \(String(format: "%.1f%%", health.currentSoH)) State of Health, \(health.assessment.title)")
+                .accessibilityValue("\(String(format: "%.1f", health.currentCapacityKWh)) usable of \(String(format: "%.1f", health.nominalCapacityKWh)) kWh nominal, \(String(format: "%.1f", health.equivalentFullCycles)) full cycles")
+                .accessibilityHint("Double tap to open detailed battery health analytics")
             }
         }
     }
@@ -340,6 +339,9 @@ struct DashboardView: View {
         .background(Color.orange.opacity(0.1))
         .cornerRadius(12)
         .padding(.horizontal)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Deferred to Electric Bill This Month")
+        .accessibilityValue(currentMonthDeferredCost.formatted(.currency(code: "THB").presentation(.narrow)))
     }
 
     private var lifetimeTotalsSection: some View {
@@ -411,6 +413,10 @@ struct DashboardView: View {
                     AxisValueLabel(format: .dateTime.month(.narrow))
                 }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Monthly Charging Cost Trend")
+            .accessibilityValue("Total cost across last 12 months: \(totalCost.formatted(.currency(code: "THB").presentation(.narrow)))")
+            .accessibilityHint("Shows monthly charging cost trends in Thai Baht over the past year")
         }
     }
 
@@ -450,6 +456,10 @@ struct DashboardView: View {
                     AxisValueLabel(format: .dateTime.month(.narrow))
                 }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Monthly Energy Breakdown by Charging Type")
+            .accessibilityValue("Total energy \(String(format: "%.1f kWh", totalEnergy)) across AC and DC charging")
+            .accessibilityHint("Stacked bar chart showing monthly kilowatt-hours consumed")
         }
     }
 
@@ -469,6 +479,10 @@ struct DashboardView: View {
                 )
                 .foregroundStyle(.orange.opacity(0.1))
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Recent Charging Speeds")
+            .accessibilityValue("Average speed \(averageSpeed > 0 ? String(format: "%.1f kW", averageSpeed) : "N/A")")
+            .accessibilityHint("Line chart showing power delivery rates for recent charging sessions")
         }
     }
 
@@ -504,6 +518,9 @@ struct DashboardView: View {
                         }
                     }
                     .padding()
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(location.name), \(location.sessionCount) sessions")
+                    .accessibilityValue("\(String(format: "%.0f kWh", location.totalEnergy)), total \(location.totalCost.formatted(.currency(code: "THB").presentation(.narrow)))\(location.pricePerKWh > 0 ? String(format: ", %.2f Baht per kilowatt-hour", location.pricePerKWh) : "")")
                 }
             }
             .background(Color.secondary.opacity(0.1))
@@ -524,28 +541,33 @@ struct StatCard: View {
     let value: String
     let icon: String
     let color: Color
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: 6) {
                 Image(systemName: icon)
                     .foregroundColor(color)
+                    .font(.subheadline)
                 Text(title)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                    .lineLimit(1)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                     .minimumScaleFactor(0.8)
             }
             Text(value)
                 .font(.title3)
                 .bold()
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.75)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
+        .padding(14)
         .background(Color.secondary.opacity(0.1))
         .cornerRadius(12)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue(value)
     }
 }
 
@@ -562,7 +584,7 @@ struct ChartCard<Content: View>: View {
                 .padding(.horizontal, insetsHorizontally ? 16 : 4)
 
             content
-                .frame(height: 200)
+                .frame(minHeight: 200, idealHeight: 220)
                 .padding()
                 .background(Color.secondary.opacity(0.1))
                 .cornerRadius(12)

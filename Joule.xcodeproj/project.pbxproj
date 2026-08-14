@@ -20,6 +20,7 @@
 		6A7089873F18663BC356F414 /* BatteryHealthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66FF878F9A0A9B7E0F5B7314 /* BatteryHealthView.swift */; };
 		773058C2AD45A5D25E26A20D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = FEAE31B02908470FF07C8C59 /* FirebaseAuth */; };
 		865AFCEEEE9CD0466F879570 /* JouleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E36357BF3445423DC800813B /* JouleApp.swift */; };
+		89F6509DC79A32297968FDC1 /* AppNavigationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE28281D97BAC3DF2678EB7 /* AppNavigationCoordinator.swift */; };
 		92661FADDAC3E794B6E935DC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FAFC87FA5A246312103F29F /* SettingsView.swift */; };
 		95F6DDE25A7C95F343A6F833 /* BatteryHealthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDB5446BA4A3D01E6346EFA /* BatteryHealthService.swift */; };
 		98CF0B5413C15549F7F4066F /* VehicleProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA939798ABA57BDCCC365796 /* VehicleProfile.swift */; };
@@ -43,6 +44,7 @@
 		2FAFC87FA5A246312103F29F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		3A71AA0D6513085A5409BBF6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3B95188F17C85BA80916D030 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		3DE28281D97BAC3DF2678EB7 /* AppNavigationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppNavigationCoordinator.swift; sourceTree = "<group>"; };
 		4348C99C98519F8CCB2DD663 /* Joule.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Joule.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FB1BB48603020432A57E231 /* CSVExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExport.swift; sourceTree = "<group>"; };
 		66FF878F9A0A9B7E0F5B7314 /* BatteryHealthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealthView.swift; sourceTree = "<group>"; };
@@ -83,6 +85,7 @@
 		25B080F5F13B47ACE7C6CADD /* App */ = {
 			isa = PBXGroup;
 			children = (
+				3DE28281D97BAC3DF2678EB7 /* AppNavigationCoordinator.swift */,
 				E36357BF3445423DC800813B /* JouleApp.swift */,
 				FE9ECDC6FFAAE089977C8A0A /* Platform.swift */,
 			);
@@ -265,6 +268,7 @@
 			files = (
 				3CFDD52C1174A0A7DE65B030 /* AddSessionView.swift in Sources */,
 				F379D6DA4C7904312953CCE2 /* AlertCenter.swift in Sources */,
+				89F6509DC79A32297968FDC1 /* AppNavigationCoordinator.swift in Sources */,
 				1C6E1EB082639F9E547EF4D1 /* AuthService.swift in Sources */,
 				4CDE924DBB7125A6B2BFA4C3 /* BatteryHealth.swift in Sources */,
 				95F6DDE25A7C95F343A6F833 /* BatteryHealthService.swift in Sources */,

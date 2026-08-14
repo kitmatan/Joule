@@ -28,6 +28,7 @@ struct SessionDetailView: View {
 /// Platform-neutral detail content, shared by the iOS push view and the macOS detail pane.
 struct SessionDetailContent: View {
     var session: ChargingSession
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var efficiency: Double {
         session.energyAdded > 0 ? session.totalPrice / session.energyAdded : 0
@@ -39,7 +40,7 @@ struct SessionDetailContent: View {
                 
                 // Header
                 VStack(spacing: 8) {
-                    Text(session.locationName ?? "Unknown")
+                    Text(session.locationName ?? "Unknown Location")
                         .font(.title)
                         .bold()
                         .multilineTextAlignment(.center)
@@ -56,12 +57,23 @@ struct SessionDetailContent: View {
                         .padding(.top, 4)
                 }
                 .padding(.top, 20)
+                .accessibilityElement(children: .combine)
                 
                 // Hero Metrics
-                HStack(spacing: 16) {
-                    DetailHeroCard(title: "Total Paid", value: session.totalPrice.formatted(.currency(code: "THB").presentation(.narrow)), color: .green)
-                    DetailHeroCard(title: "Energy", value: String(format: "%.1f kWh", session.energyAdded), color: .blue)
-                    DetailHeroCard(title: "Duration", value: String(format: "%.0f min", session.duration / 60), color: .orange)
+                Group {
+                    if dynamicTypeSize.isAccessibilitySize {
+                        VStack(spacing: 12) {
+                            DetailHeroCard(title: "Total Paid", value: session.totalPrice.formatted(.currency(code: "THB").presentation(.narrow)), color: .green)
+                            DetailHeroCard(title: "Energy", value: String(format: "%.1f kWh", session.energyAdded), color: .blue)
+                            DetailHeroCard(title: "Duration", value: String(format: "%.0f min", session.duration / 60), color: .orange)
+                        }
+                    } else {
+                        HStack(spacing: 16) {
+                            DetailHeroCard(title: "Total Paid", value: session.totalPrice.formatted(.currency(code: "THB").presentation(.narrow)), color: .green)
+                            DetailHeroCard(title: "Energy", value: String(format: "%.1f kWh", session.energyAdded), color: .blue)
+                            DetailHeroCard(title: "Duration", value: String(format: "%.0f min", session.duration / 60), color: .orange)
+                        }
+                    }
                 }
                 .padding(.horizontal)
                 
@@ -129,6 +141,9 @@ struct SessionDetailContent: View {
                             }
                             .padding(.vertical, 10)
                             .padding(.horizontal, 16)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Estimated Pack Capacity")
+                            .accessibilityValue("\(String(format: "%.1f kWh", point.estimatedCapacityKWh)), \(String(format: "%.1f%%", point.stateOfHealth)) State of Health, \(point.confidence.description) confidence")
                         }
                     }
                     .background(Color.secondary.opacity(0.1))
@@ -213,6 +228,9 @@ struct DetailHeroCard: View {
         .padding(.horizontal, 8)
         .background(color.opacity(0.1))
         .cornerRadius(12)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue(value)
     }
 }
 
@@ -227,11 +245,16 @@ struct DetailRow: View {
                 .foregroundColor(.blue)
                 .frame(width: 24)
             Text(title)
+                .font(.body)
             Spacer()
             Text(value)
+                .font(.subheadline)
                 .foregroundColor(.secondary)
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(value)
     }
 }

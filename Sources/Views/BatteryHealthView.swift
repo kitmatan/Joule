@@ -4,6 +4,7 @@ import Charts
 struct BatteryHealthView: View {
     @EnvironmentObject private var store: SessionStore
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     @State private var selectedTimeRange: ChartTimeRange = .all
     @State private var selectedChartMode: ChartMode = {
@@ -99,6 +100,7 @@ struct BatteryHealthView: View {
                     Image(systemName: "gearshape")
                         .fontWeight(.semibold)
                 }
+                .accessibilityLabel("Settings")
             }
         }
         .sheet(isPresented: $showingSettings) {
@@ -109,61 +111,21 @@ struct BatteryHealthView: View {
     // MARK: - Hero Card
     private func heroCard(summary: BatteryHealthSummary) -> some View {
         VStack(spacing: 16) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 6) {
-                        Image(systemName: summary.assessment.icon)
-                            .foregroundColor(assessmentColor(summary.assessment))
-                        Text(summary.assessment.title)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(assessmentColor(summary.assessment))
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(assessmentColor(summary.assessment).opacity(0.12))
-                    .clipShape(Capsule())
-                    
-                    Text(String(format: "%.1f%%", summary.currentSoH))
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
-                    
-                    Text("Estimated State of Health (SoH)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top) {
+                    heroTextContent(summary: summary)
+                    Spacer()
+                    circularCapacityGauge(summary: summary)
                 }
                 
-                Spacer()
-                
-                // Circular Capacity Gauge
-                ZStack {
-                    Circle()
-                        .stroke(Color.secondary.opacity(0.2), lineWidth: 10)
-                    Circle()
-                        .trim(from: 0, to: CGFloat(min(1.0, summary.currentSoH / 100.0)))
-                        .stroke(
-                            LinearGradient(
-                                colors: [assessmentColor(summary.assessment), .blue],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            style: StrokeStyle(lineWidth: 10, lineCap: .round)
-                        )
-                        .rotationEffect(.degrees(-90))
-                    
-                    VStack(spacing: 2) {
-                        Image(systemName: "bolt.batteryblock.fill")
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                        Text(String(format: "%.1f", summary.currentCapacityKWh))
-                            .font(.headline)
-                            .bold()
-                        Text("kWh")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                VStack(alignment: .leading, spacing: 16) {
+                    heroTextContent(summary: summary)
+                    HStack {
+                        Spacer()
+                        circularCapacityGauge(summary: summary)
+                        Spacer()
                     }
                 }
-                .frame(width: 100, height: 100)
             }
             
             Divider()
@@ -192,12 +154,81 @@ struct BatteryHealthView: View {
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
         .padding(.horizontal)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Battery State of Health: \(String(format: "%.1f%%", summary.currentSoH)), \(summary.assessment.title)")
+        .accessibilityValue("Usable capacity: \(String(format: "%.1f", summary.currentCapacityKWh)) of \(String(format: "%.1f", summary.nominalCapacityKWh)) kilowatt-hours nominal. Capacity loss: \(String(format: "%.1f", summary.capacityLostKWh)) kilowatt-hours (\(String(format: "%.1f%%", summary.totalDegradationPercentage)))")
+    }
+
+    private func heroTextContent(summary: BatteryHealthSummary) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: summary.assessment.icon)
+                    .foregroundColor(assessmentColor(summary.assessment))
+                Text(summary.assessment.title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(assessmentColor(summary.assessment))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(assessmentColor(summary.assessment).opacity(0.12))
+            .clipShape(Capsule())
+            
+            Text(String(format: "%.1f%%", summary.currentSoH))
+                .font(.system(size: 48, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+            
+            Text("Estimated State of Health (SoH)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private func circularCapacityGauge(summary: BatteryHealthSummary) -> some View {
+        ZStack {
+            Circle()
+                .stroke(Color.secondary.opacity(0.2), lineWidth: 10)
+            Circle()
+                .trim(from: 0, to: CGFloat(min(1.0, summary.currentSoH / 100.0)))
+                .stroke(
+                    LinearGradient(
+                        colors: [assessmentColor(summary.assessment), .blue],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    style: StrokeStyle(lineWidth: 10, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+            
+            VStack(spacing: 2) {
+                Image(systemName: "bolt.batteryblock.fill")
+                    .font(.title2)
+                    .foregroundColor(.blue)
+                Text(String(format: "%.1f", summary.currentCapacityKWh))
+                    .font(.headline)
+                    .bold()
+                Text("kWh")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .frame(width: 100, height: 100)
     }
     
     // MARK: - Metrics Grid
     private func metricsGrid(summary: BatteryHealthSummary) -> some View {
-        LazyVGrid(
-            columns: isWide ? [GridItem(.adaptive(minimum: 180, maximum: 260), spacing: 16)] : [GridItem(.flexible()), GridItem(.flexible())],
+        let columns: [GridItem] = {
+            if dynamicTypeSize.isAccessibilitySize {
+                return [GridItem(.flexible())]
+            }
+            if isWide {
+                return [GridItem(.adaptive(minimum: 180, maximum: 260), spacing: 16)]
+            }
+            return [GridItem(.flexible()), GridItem(.flexible())]
+        }()
+
+        return LazyVGrid(
+            columns: columns,
             spacing: 16
         ) {
             StatCard(
@@ -275,7 +306,7 @@ struct BatteryHealthView: View {
                     cycleWearChart(summary: summary)
                 }
             }
-            .frame(height: 260)
+            .frame(minHeight: 260)
             .padding()
             .background(Color(uiColor: .secondarySystemGroupedBackground))
             .cornerRadius(16)
@@ -348,6 +379,10 @@ struct BatteryHealthView: View {
                 AxisValueLabel(format: .dateTime.month(.abbreviated).year(.twoDigits))
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("State of Health Over Time")
+        .accessibilityValue(summary != nil ? "Current SoH \(String(format: "%.1f%%", summary!.currentSoH)) across \(filteredPoints.count) analyzed points" : "Historical battery degradation curve")
+        .accessibilityHint("Shows individual charging session estimates and smoothed trend line over time")
     }
     
     // MARK: - Chart 2: SoH Vs Mileage
@@ -400,6 +435,10 @@ struct BatteryHealthView: View {
                 }
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("State of Health Versus Mileage")
+        .accessibilityValue(summary?.degradationPer10kKm != nil ? "Degradation rate \(String(format: "%.2f%% per 10,000 km", summary!.degradationPer10kKm!))" : "Plot of battery health versus odometer distance")
+        .accessibilityHint("Plots capacity retention against distance driven in thousands of kilometers")
     }
     
     // MARK: - Chart 3: Projected Range Over Time
@@ -453,6 +492,10 @@ struct BatteryHealthView: View {
                 }
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Projected 100% Driving Range Over Time")
+        .accessibilityValue("Estimated full range \(summary.currentProjectedRangeKm != nil ? String(format: "%.0f km", summary.currentProjectedRangeKm!) : String(format: "%.0f km", summary.nominalRangeKm)) compared to nominal \(Int(summary.nominalRangeKm)) km")
+        .accessibilityHint("Tracks estimated driving range on full charge over time")
     }
     
     // MARK: - Chart 4: Cycle Wear vs Theoretical Life
@@ -508,6 +551,10 @@ struct BatteryHealthView: View {
                 }
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Cycle Wear Versus Chemistry Benchmark")
+        .accessibilityValue("\(String(format: "%.1f", summary.equivalentFullCycles)) full cycles completed, current SoH \(String(format: "%.1f%%", summary.currentSoH))")
+        .accessibilityHint("Compares actual vehicle degradation against standard \(chemistryName) laboratory cycle wear curve")
     }
     
     // MARK: - Charging Habits Section
@@ -555,6 +602,9 @@ struct BatteryHealthView: View {
                 .padding()
                 .background(Color.secondary.opacity(0.08))
                 .cornerRadius(12)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Charging Habits")
+                .accessibilityValue("\(Int(summary.acEnergyRatio * 100)) percent AC slow charging, \(Int(summary.dcEnergyRatio * 100)) percent DC fast charging")
                 
                 // Dynamic Battery Chemistry Tip
                 HStack(alignment: .top, spacing: 12) {
@@ -635,6 +685,9 @@ struct BatteryHealthView: View {
                         }
                     }
                     .padding()
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(point.date.formatted(.dateTime.month(.abbreviated).day().year().locale(Locale(identifier: "en_US_POSIX")))), \(point.chargingType.rawValue) session")
+                    .accessibilityValue("SoC changed from \(Int(point.startSoC))% to \(Int(point.endSoC))%, \(String(format: "%.1f kWh", point.energyAdded)) added. Estimated pack capacity \(String(format: "%.1f kWh", point.estimatedCapacityKWh)), \(String(format: "%.1f%%", point.stateOfHealth)) State of Health, \(point.confidence.description) confidence")
                 }
             }
             .background(Color(uiColor: .secondarySystemGroupedBackground))

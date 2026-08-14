@@ -42,6 +42,7 @@ enum SessionFilter: String, CaseIterable, Identifiable, Hashable {
 struct SessionListView: View {
     @EnvironmentObject private var store: SessionStore
     @EnvironmentObject private var auth: AuthService
+    @EnvironmentObject private var navCoordinator: AppNavigationCoordinator
 
     @State private var showingAddSession = false
     @State private var showingSettings = false
@@ -114,7 +115,7 @@ struct SessionListView: View {
                         Text("No charging history yet.")
                             .foregroundColor(.secondary)
                         Button("Add Charging Session") {
-                            showingAddSession = true
+                            navCoordinator.presentNewSession()
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -141,19 +142,24 @@ struct SessionListView: View {
                                 }
                             }
                             Divider()
-                            Button(action: { showingImporter = true }) {
+                            Button(action: { navCoordinator.triggerImport() }) {
                                 Label("Import CSV…", systemImage: "square.and.arrow.down")
                             }
+                            .keyboardShortcut("i", modifiers: [.command, .shift])
+
                             Button(action: {
-                                csvDocument = CSVDocument(text: CSVExporter.generateCSV(from: store.sessions))
-                                showingExporter = true
+                                navCoordinator.triggerExport()
                             }) {
                                 Label("Export All to CSV…", systemImage: "square.and.arrow.up")
                             }
+                            .keyboardShortcut("e", modifiers: .command)
+
                             Divider()
-                            Button(action: { showingSettings = true }) {
+                            Button(action: { navCoordinator.presentSettings() }) {
                                 Label("Settings…", systemImage: "gearshape")
                             }
+                            .keyboardShortcut(",", modifiers: .command)
+
                             Button(role: .destructive, action: { auth.signOut() }) {
                                 Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                             }
@@ -163,11 +169,14 @@ struct SessionListView: View {
                                   : "line.3.horizontal.decrease.circle.fill")
                                 .fontWeight(.semibold)
                         }
+                        .accessibilityLabel("History Options")
 
-                        Button(action: { showingAddSession = true }) {
+                        Button(action: { navCoordinator.presentNewSession() }) {
                             Image(systemName: "plus")
                                 .fontWeight(.semibold)
                         }
+                        .keyboardShortcut("n", modifiers: .command)
+                        .accessibilityLabel("New Session")
                     }
                 }
             }
@@ -233,6 +242,7 @@ struct SessionRow: View {
                 Text(session.locationName ?? "Unknown Location")
                     .font(.headline)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                 
                 HStack(spacing: 4) {
                     if let vendor = session.vendorName, !vendor.isEmpty {
@@ -305,6 +315,9 @@ struct SessionRow: View {
             }
         }
         .padding(.vertical, 6)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(session.locationName ?? "Charging Session")\(session.vendorName != nil ? ", \(session.vendorName!)" : ""), \(session.date.formatted(.dateTime.month(.abbreviated).day().year().locale(Locale(identifier: "en_US_POSIX"))))")
+        .accessibilityValue("\(session.chargingType?.rawValue ?? "") charging, \(String(format: "%.1f kWh", session.energyAdded)) added in \(String(format: "%.0f minutes", session.duration / 60)), \(session.totalPrice.formatted(.currency(code: "THB").presentation(.narrow)))\(session.paymentStatus == .deferred ? ", Deferred" : "")")
     }
     
     @ViewBuilder
