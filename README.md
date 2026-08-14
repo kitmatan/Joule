@@ -63,19 +63,113 @@ Supports **any electric vehicle (EV)** out of the box with an extensive built-in
 
 ---
 
-## 🛠️ Requirements & Setup
+---
 
-- **Xcode 15+** (iOS 17.0+ / macOS 14.0+ deployment target)
-- **XcodeGen**: `brew install xcodegen`
+## 🚀 Installation Guide
 
-### Generating the Project
-Generate the `.xcodeproj` from `project.yml`:
+Choose the installation method that fits your setup:
+
+### 1. Build & Run from Source (macOS, iOS Simulator, or iPhone/iPad)
+
+No paid Apple Developer account is required. You can build and run using a free Apple ID.
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/kitmatan/Joule.git
+   cd Joule
+   ```
+2. **Open the project in Xcode**:
+   - Open `Joule.xcodeproj` in Xcode 15+.
+   - *(Optional)* If modifying `project.yml`, regenerate via `xcodegen generate` (`brew install xcodegen`).
+3. **Configure Code Signing**:
+   - Select the **Joule** project root in Xcode $\to$ Select the **Joule** target $\to$ **Signing & Capabilities**.
+   - Under **Team**, choose your personal Apple ID team.
+   - If using a free personal team, change the **Bundle Identifier** to a unique value (e.g. `com.yourname.Joule`).
+4. **Run the App**:
+   - Select your destination device: **My Mac (Mac Catalyst)**, **iOS Simulator**, or your **connected iPhone / iPad**.
+   - Press **Cmd + R** (or click the **Play** button).
+   - *Note: Joule starts in Offline/Local Mode immediately with zero configuration needed.*
+
+---
+
+### 2. macOS Direct App Download (`.dmg` / `.zip`)
+
+1. Go to the [Joule GitHub Releases](https://github.com/kitmatan/Joule/releases) page.
+2. Download the latest `Joule-macOS-vX.Y.Z.dmg` (or `.zip`).
+3. Open the `.dmg` and drag **Joule.app** into `/Applications`.
+4. **First Launch (macOS Gatekeeper notice)**:
+   - Because open-source builds may not be notarized with an Apple Developer certificate, right-click (or Control-click) `Joule.app` $\to$ click **Open** $\to$ select **Open** in the prompt.
+   - Alternatively, remove the quarantine attribute in Terminal:
+     ```bash
+     xattr -cr /Applications/Joule.app
+     ```
+
+---
+
+### 3. iOS Sideloading (`.ipa`)
+
+To install directly on iPhone or iPad without Xcode:
+
+1. Download the latest `Joule-iOS-vX.Y.Z.ipa` from [GitHub Releases](https://github.com/kitmatan/Joule/releases).
+2. Install using your preferred sideloading utility:
+   - **[AltStore](https://altstore.io/)**: Open AltStore on your device $\to$ `My Apps` $\to$ tap `+` $\to$ select the `.ipa`.
+   - **[Sideloadly](https://sideloadly.io/)**: Connect your device to Mac/PC, drag the `.ipa` into Sideloadly, enter your Apple ID, and click **Start**.
+   - **[TrollStore](https://github.com/opa334/TrollStore)** / **[LiveContainer](https://github.com/khanld/LiveContainer)**: Open the `.ipa` directly in the app.
+3. On iOS, go to **Settings $\to$ General $\to$ VPN & Device Management** and trust your developer certificate if prompted.
+
+---
+
+## 🏷️ Tagging a Release & Publishing to GitHub
+
+For maintainers creating new releases with pre-built Mac `.dmg`/`.zip` and iOS `.ipa` packages:
+
+### Automated CI Release (Recommended)
+
+Pushing a version tag automatically triggers GitHub Actions to build macOS and iOS artifacts and publish them to a new GitHub Release:
+
 ```bash
-xcodegen generate
-```
+# 1. Commit and push any changes
+git add .
+git commit -m "Prepare release v1.0.0"
+git push origin main
 
-### Firebase Setup
-Follow the steps in [FIREBASE_SETUP.md](FIREBASE_SETUP.md) to:
+# 2. Create and push a version tag
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+GitHub Actions will build `Joule-macOS-v1.0.0.zip`, `Joule-macOS-v1.0.0.dmg`, and `Joule-iOS-v1.0.0.ipa`, and publish the release automatically.
+
+---
+
+### Local Build & Manual Upload
+
+You can also build the release binaries locally on your Mac using the included build script:
+
+1. **Run the Release Build Script**:
+   ```bash
+   ./scripts/build_release.sh
+   ```
+   This generates all distribution packages in the `dist/` directory:
+   - `dist/Joule-macOS-v1.0.0.dmg`
+   - `dist/Joule-macOS-v1.0.0.zip`
+   - `dist/Joule-iOS-v1.0.0.ipa`
+
+2. **Publish with GitHub CLI (`gh`)**:
+   ```bash
+   gh release create v1.0.0 dist/* --title "Joule v1.0.0" --notes "Initial public release with EV preset catalog, battery health tracking, and offline support."
+   ```
+
+3. **Or Publish via GitHub Web Interface**:
+   - Go to `https://github.com/kitmatan/Joule/releases/new`
+   - Choose or create tag `v1.0.0`.
+   - Drag and drop the files from the `dist/` folder into the release assets area.
+   - Click **Publish release**.
+
+---
+
+## 🛠️ Cloud Sync Setup (Optional)
+
+Joule works completely standalone in offline mode. If you wish to configure Google Sign-In and Cloud Firestore sync for multi-device backup, follow [FIREBASE_SETUP.md](FIREBASE_SETUP.md):
 1. Configure Google Sign-In and download `GoogleService-Info.plist`.
 2. Deploy Firestore security rules (`firestore.rules`).
 

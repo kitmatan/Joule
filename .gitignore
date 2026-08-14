@@ -13,9 +13,11 @@ xcuserdata/
 
 # Build outputs
 build/
+dist/
 DerivedData/
 *.hmap
 *.ipa
+*.dmg
 *.dSYM.zip
 *.dSYM
 
