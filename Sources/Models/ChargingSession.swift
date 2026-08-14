@@ -166,4 +166,107 @@ struct ChargingSession: Identifiable, Codable {
         try container.encodeIfPresent(paymentStatus, forKey: .paymentStatus)
         try container.encodeIfPresent(notes, forKey: .notes)
     }
+
+    // MARK: - Duplicate Detection & Merging
+
+    /// Returns true if this session represents the same physical charging event as `other`.
+    func isDuplicate(of other: ChargingSession, timeToleranceSeconds: TimeInterval = 300) -> Bool {
+        // 1. Explicit ID match (if both non-empty)
+        if let id1 = self.id, let id2 = other.id, !id1.isEmpty, !id2.isEmpty, id1 == id2 {
+            return true
+        }
+
+        // 2. Timestamp proximity check (default within 5 minutes)
+        let timeDiff = abs(self.date.timeIntervalSince(other.date))
+        guard timeDiff <= timeToleranceSeconds else { return false }
+
+        // 3. Location match:
+        // - Both are home charging
+        // - Both have matching non-empty location names (case-insensitive)
+        // - Or both have matching location types
+        let isBothHome = (self.locationType == .home || self.locationName?.lowercased().contains("home") == true) &&
+                         (other.locationType == .home || other.locationName?.lowercased().contains("home") == true)
+
+        let locName1 = self.locationName?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
+        let locName2 = other.locationName?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
+        let isSameLocName = !locName1.isEmpty && !locName2.isEmpty && locName1 == locName2
+
+        let isSameLocType = self.locationType != nil && self.locationType == other.locationType
+
+        guard isBothHome || isSameLocName || isSameLocType || (locName1.isEmpty && locName2.isEmpty) else {
+            return false
+        }
+
+        // 4. Energy added matching (within 0.15 kWh tolerance)
+        let energyDiff = abs(self.energyAdded - other.energyAdded)
+        if energyDiff <= 0.15 {
+            return true
+        }
+
+        // 5. SoC delta matching if energy numbers differ slightly (e.g. meter rounding differences)
+        if let s1 = self.startPercentage, let s2 = other.startPercentage,
+           let e1 = self.endPercentage, let e2 = other.endPercentage,
+           abs(s1 - s2) <= 1.0, abs(e1 - e2) <= 1.0 {
+            return true
+        }
+
+        // 6. If duration is non-trivial and matches closely (within 3 minutes)
+        if self.duration > 0 && other.duration > 0 && abs(self.duration - other.duration) <= 180 && energyDiff <= 0.5 {
+            return true
+        }
+
+        return false
+    }
+
+    /// Merges details from another duplicate session into this one, preserving the richest data.
+    func merged(with other: ChargingSession) -> ChargingSession {
+        var result = self
+
+        // Prefer non-empty ID (prefer Firestore-style document IDs over local UUIDs if possible)
+        if result.id == nil || result.id?.isEmpty == true {
+            result.id = other.id
+        }
+
+        // Location & Vendor
+        if (result.locationName == nil || result.locationName?.isEmpty == true) && other.locationName != nil {
+            result.locationName = other.locationName
+        }
+        if (result.vendorName == nil || result.vendorName?.isEmpty == true) && other.vendorName != nil {
+            result.vendorName = other.vendorName
+        }
+
+        // Numbers: Prefer non-zero values
+        if result.energyAdded == 0 && other.energyAdded > 0 { result.energyAdded = other.energyAdded }
+        if result.duration == 0 && other.duration > 0 { result.duration = other.duration }
+        if result.speed == 0 && other.speed > 0 { result.speed = other.speed }
+        if result.totalPrice == 0 && other.totalPrice > 0 { result.totalPrice = other.totalPrice }
+        if result.chargingFee == 0 && other.chargingFee > 0 { result.chargingFee = other.chargingFee }
+        if result.bookingFee == 0 && other.bookingFee > 0 { result.bookingFee = other.bookingFee }
+        if result.overtimeFee == 0 && other.overtimeFee > 0 { result.overtimeFee = other.overtimeFee }
+        if result.pricePerUnit == 0 && other.pricePerUnit > 0 { result.pricePerUnit = other.pricePerUnit }
+
+        // Optional fields: Prefer existing values from other if nil in self
+        if result.mileage == nil { result.mileage = other.mileage }
+        if result.startPercentage == nil { result.startPercentage = other.startPercentage }
+        if result.endPercentage == nil { result.endPercentage = other.endPercentage }
+        if result.startRange == nil { result.startRange = other.startRange }
+        if result.endRange == nil { result.endRange = other.endRange }
+        if result.chargingType == nil { result.chargingType = other.chargingType }
+        if result.locationType == nil { result.locationType = other.locationType }
+        if result.paymentStatus == nil { result.paymentStatus = other.paymentStatus }
+
+        // Notes: Combine or preserve longest notes
+        if let n1 = result.notes, let n2 = other.notes, !n1.isEmpty, !n2.isEmpty {
+            if !n1.contains(n2) && !n2.contains(n1) {
+                result.notes = "\(n1)\n\(n2)"
+            } else if n2.count > n1.count {
+                result.notes = n2
+            }
+        } else if result.notes == nil || result.notes?.isEmpty == true {
+            result.notes = other.notes
+        }
+
+        return result
+    }
 }
+

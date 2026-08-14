@@ -74,7 +74,9 @@ class SessionStore: ObservableObject {
             let data = try Data(contentsOf: localStorageURL)
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
-            return try decoder.decode([ChargingSession].self, from: data)
+            let decoded = try decoder.decode([ChargingSession].self, from: data)
+            let (unique, _) = Self.findDuplicates(in: decoded)
+            return unique
         } catch {
             print("Failed to load local sessions: \(error)")
             return []
@@ -90,6 +92,89 @@ class SessionStore: ObservableObject {
             try data.write(to: localStorageURL, options: .atomic)
         } catch {
             print("Failed to save local sessions: \(error)")
+        }
+    }
+
+    // MARK: - Deduplication
+
+    /// Scans a list of sessions, identifying duplicates and preserving the richest record for each unique event.
+    static func findDuplicates(in sessions: [ChargingSession]) -> (unique: [ChargingSession], duplicatesToRemove: [ChargingSession]) {
+        var unique: [ChargingSession] = []
+        var duplicates: [ChargingSession] = []
+
+        // Sort by date descending
+        let sorted = sessions.sorted { $0.date > $1.date }
+
+        for session in sorted {
+            if let existingIndex = unique.firstIndex(where: { $0.isDuplicate(of: session) }) {
+                // Merge info into the existing unique session to retain the best metadata
+                unique[existingIndex] = unique[existingIndex].merged(with: session)
+                duplicates.append(session)
+            } else {
+                unique.append(session)
+            }
+        }
+
+        return (unique, duplicates)
+    }
+
+    /// Total count of detected duplicate sessions in the current session list.
+    var duplicateSessionsCount: Int {
+        let (_, duplicates) = Self.findDuplicates(in: sessions)
+        return duplicates.count
+    }
+
+    /// Scans current sessions, merges metadata into canonical records, and removes duplicate records from memory, local storage, and Firestore.
+    func cleanDuplicates(completion: ((_ removedCount: Int) -> Void)? = nil) {
+        let (uniqueSessions, duplicates) = Self.findDuplicates(in: self.sessions)
+        guard !duplicates.isEmpty else {
+            alerts.report(AppAlert(title: "No Duplicates Found", message: "Your charging history contains no duplicate records."))
+            completion?(0)
+            return
+        }
+
+        let removedCount = duplicates.count
+        self.sessions = uniqueSessions
+        self.persistLocalSessions()
+
+        if let userID {
+            let collection = sessionsCollection(for: userID)
+            let group = DispatchGroup()
+
+            // Update any merged unique sessions that may have been enriched
+            let pendingUpdates: [(DocumentReference, ChargingSession)] = uniqueSessions.compactMap { session in
+                guard let id = session.id, !id.isEmpty else { return nil }
+                return (collection.document(id), session)
+            }
+            if !pendingUpdates.isEmpty {
+                write(pendingUpdates) { _, _, _ in }
+            }
+
+            // Delete duplicates from Firestore (only if their ID is not retained as a unique session's ID)
+            let uniqueIDs = Set(uniqueSessions.compactMap(\.id))
+            for dup in duplicates {
+                if let dupId = dup.id, !dupId.isEmpty, !uniqueIDs.contains(dupId) {
+                    group.enter()
+                    collection.document(dupId).delete { _ in
+                        group.leave()
+                    }
+                }
+            }
+
+            group.notify(queue: .main) { [weak self] in
+                guard let self else { return }
+                self.alerts.report(AppAlert(
+                    title: "Deduplication Complete",
+                    message: "Cleaned up \(removedCount) duplicate \(removedCount == 1 ? "record" : "records")."
+                ))
+                completion?(removedCount)
+            }
+        } else {
+            alerts.report(AppAlert(
+                title: "Deduplication Complete",
+                message: "Cleaned up \(removedCount) duplicate \(removedCount == 1 ? "record" : "records")."
+            ))
+            completion?(removedCount)
         }
     }
 
@@ -153,7 +238,8 @@ class SessionStore: ObservableObject {
                 }
                 
                 let remoteSessions = documents.compactMap { try? $0.data(as: ChargingSession.self) }
-                self.sessions = remoteSessions
+                let (uniqueRemote, _) = Self.findDuplicates(in: remoteSessions)
+                self.sessions = uniqueRemote
                 self.persistLocalSessions()
                 self.syncStatus = .synced(lastSync: Date())
             }
@@ -178,8 +264,9 @@ class SessionStore: ObservableObject {
                 let cloudSessions = documents.compactMap { document in
                     try? document.data(as: ChargingSession.self)
                 }
+                let (uniqueCloudSessions, _) = Self.findDuplicates(in: cloudSessions)
                 
-                self.sessions = cloudSessions
+                self.sessions = uniqueCloudSessions
                 self.persistLocalSessions()
                 self.syncStatus = .synced(lastSync: Date())
             }
@@ -198,11 +285,20 @@ class SessionStore: ObservableObject {
                 return
             }
             
-            let remoteIDs = Set((snapshot?.documents ?? []).map(\.documentID))
+            let remoteDocs = snapshot?.documents ?? []
+            let remoteIDs = Set(remoteDocs.map(\.documentID))
+            let remoteSessions = remoteDocs.compactMap { try? $0.data(as: ChargingSession.self) }
+
             let pendingUploads: [(DocumentReference, ChargingSession)] = localSessions.compactMap { session in
+                // Skip if already in cloud by ID
                 if let id = session.id, remoteIDs.contains(id) {
-                    return nil // Already in cloud
+                    return nil
                 }
+                // Skip if semantically duplicate with an existing remote session
+                if remoteSessions.contains(where: { $0.isDuplicate(of: session) }) {
+                    return nil
+                }
+
                 let docRef = (session.id != nil && !session.id!.isEmpty) ? collection.document(session.id!) : collection.document()
                 var updated = session
                 updated.id = docRef.documentID
@@ -310,11 +406,34 @@ class SessionStore: ObservableObject {
     func importSessions(_ importedSessions: [ChargingSession], skippedRows: Int = 0) {
         guard !importedSessions.isEmpty else { return }
 
+        // Filter duplicates against existing sessions and within the import batch itself
+        var nonDuplicateSessions: [ChargingSession] = []
+        var duplicateCount = 0
+
+        for session in importedSessions {
+            let isDupOfExisting = self.sessions.contains(where: { $0.isDuplicate(of: session) })
+            let isDupOfBatch = nonDuplicateSessions.contains(where: { $0.isDuplicate(of: session) })
+
+            if isDupOfExisting || isDupOfBatch {
+                duplicateCount += 1
+            } else {
+                nonDuplicateSessions.append(session)
+            }
+        }
+
+        guard !nonDuplicateSessions.isEmpty else {
+            alerts.report(AppAlert(
+                title: "Import Complete",
+                message: Self.importSummary(written: 0, skipped: skippedRows, duplicates: duplicateCount, encodingFailures: 0)
+            ))
+            return
+        }
+
         if let userID {
             // Cloud batch import
             let collection = sessionsCollection(for: userID)
             var documents: [(DocumentReference, ChargingSession)] = []
-            for session in importedSessions {
+            for session in nonDuplicateSessions {
                 let docRef: DocumentReference
                 if let id = session.id, !id.isEmpty {
                     docRef = collection.document(id)
@@ -334,13 +453,13 @@ class SessionStore: ObservableObject {
                 }
                 self.alerts.report(AppAlert(
                     title: "Import Complete",
-                    message: Self.importSummary(written: written, skipped: skippedRows, encodingFailures: encodingFailures)
+                    message: Self.importSummary(written: written, skipped: skippedRows, duplicates: duplicateCount, encodingFailures: encodingFailures)
                 ))
             }
         } else {
             // Local-only import
             var addedCount = 0
-            for session in importedSessions {
+            for session in nonDuplicateSessions {
                 var newSession = session
                 if newSession.id == nil || newSession.id?.isEmpty == true {
                     newSession.id = UUID().uuidString
@@ -351,13 +470,16 @@ class SessionStore: ObservableObject {
             
             alerts.report(AppAlert(
                 title: "Import Complete",
-                message: Self.importSummary(written: addedCount, skipped: skippedRows, encodingFailures: 0)
+                message: Self.importSummary(written: addedCount, skipped: skippedRows, duplicates: duplicateCount, encodingFailures: 0)
             ))
         }
     }
 
-    private static func importSummary(written: Int, skipped: Int, encodingFailures: Int) -> String {
+    private static func importSummary(written: Int, skipped: Int, duplicates: Int = 0, encodingFailures: Int = 0) -> String {
         var parts = ["Imported \(written) \(written == 1 ? "session" : "sessions")."]
+        if duplicates > 0 {
+            parts.append("\(duplicates) duplicate \(duplicates == 1 ? "session was" : "sessions were") skipped.")
+        }
         if skipped > 0 {
             parts.append("\(skipped) \(skipped == 1 ? "row was" : "rows were") missing a readable date and \(skipped == 1 ? "was" : "were") skipped.")
         }

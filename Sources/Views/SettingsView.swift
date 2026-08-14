@@ -287,6 +287,20 @@ struct SettingsView: View {
                         } label: {
                             Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
                         }
+
+                        Button {
+                            store.cleanDuplicates()
+                        } label: {
+                            HStack {
+                                Label("Clean Up Duplicate Sessions", systemImage: "sparkles.rectangle.stack")
+                                Spacer()
+                                if store.duplicateSessionsCount > 0 {
+                                    Text("\(store.duplicateSessionsCount) found")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                }
+                            }
+                        }
                         
                         Button(role: .destructive) {
                             showingSignOutAlert = true
@@ -320,6 +334,20 @@ struct SettingsView: View {
                             Spacer()
                             Text("\(store.sessions.count)")
                                 .foregroundColor(.secondary)
+                        }
+
+                        Button {
+                            store.cleanDuplicates()
+                        } label: {
+                            HStack {
+                                Label("Clean Up Duplicate Sessions", systemImage: "sparkles.rectangle.stack")
+                                Spacer()
+                                if store.duplicateSessionsCount > 0 {
+                                    Text("\(store.duplicateSessionsCount) found")
+                                        .font(.caption)
+                                        .foregroundColor(.orange)
+                                }
+                            }
                         }
                         
                         Button {

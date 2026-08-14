@@ -80,6 +80,33 @@ struct SessionListView: View {
     var body: some View {
         NavigationStack {
             List {
+                if store.duplicateSessionsCount > 0 {
+                    Section {
+                        HStack(spacing: 12) {
+                            Image(systemName: "sparkles.rectangle.stack.fill")
+                                .font(.title3)
+                                .foregroundColor(.orange)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("\(store.duplicateSessionsCount) Duplicate \(store.duplicateSessionsCount == 1 ? "Session" : "Sessions") Found")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                Text("Merge data into canonical records and remove duplicates.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Button("Clean Up") {
+                                store.cleanDuplicates()
+                            }
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .buttonStyle(.borderedProminent)
+                            .tint(.orange)
+                        }
+                        .padding(.vertical, 2)
+                    }
+                }
+
                 ForEach(groupedSessions, id: \.0) { month, sessions in
                     Section {
                         ForEach(sessions) { session in
@@ -142,6 +169,12 @@ struct SessionListView: View {
                                 }
                             }
                             Divider()
+                            if store.duplicateSessionsCount > 0 {
+                                Button(action: { store.cleanDuplicates() }) {
+                                    Label("Clean Up Duplicates (\(store.duplicateSessionsCount))", systemImage: "sparkles.rectangle.stack")
+                                }
+                                Divider()
+                            }
                             Button(action: { navCoordinator.triggerImport() }) {
                                 Label("Import CSV…", systemImage: "square.and.arrow.down")
                             }

@@ -200,6 +200,13 @@ struct MacHistoryView: View {
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Menu {
+                    if store.duplicateSessionsCount > 0 {
+                        Button(action: { store.cleanDuplicates() }) {
+                            Label("Clean Up Duplicates (\(store.duplicateSessionsCount))", systemImage: "sparkles.rectangle.stack")
+                        }
+                        Divider()
+                    }
+
                     Button(action: { navCoordinator.triggerImport() }) {
                         Label("Import CSV…", systemImage: "square.and.arrow.down")
                     }

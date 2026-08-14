@@ -34,6 +34,7 @@
 		A5CC4AAFA4C3CE28F79AF661 /* UnitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2416E44AAB7867777DF24684 /* UnitSettings.swift */; };
 		A677B45D916235F8178183C5 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 400DC804E052054BC7E7A312 /* GoogleSignIn */; };
 		A6AB82D834D34FE287E83002 /* SessionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F136979A823455B50AA53A75 /* SessionListView.swift */; };
+		AB8AE6E1EC2F25EC9EC643B2 /* DeduplicationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6876B524A40C91D08C4F1E1 /* DeduplicationTests.swift */; };
 		AD7BF908F115951C3C405E4A /* CSVExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB1BB48603020432A57E231 /* CSVExport.swift */; };
 		D2997D6BFEEC926411C26670 /* JouleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35D6486889072F0C97BE9CA8 /* JouleTests.swift */; };
 		D76A5A2FB35F59195191CD49 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3A71AA0D6513085A5409BBF6 /* Assets.xcassets */; };
@@ -79,6 +80,7 @@
 		894AA0713BDFFB69A7B83BBC /* CSVParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVParser.swift; sourceTree = "<group>"; };
 		99B56310846C4E0CAEAC33E7 /* AlertCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCenter.swift; sourceTree = "<group>"; };
 		B5B7C2C49CB053382DB54985 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		B6876B524A40C91D08C4F1E1 /* DeduplicationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeduplicationTests.swift; sourceTree = "<group>"; };
 		BA13888C65E01472BAC32C37 /* MacRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
 		C128488C31FAC2F33D48BCA1 /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
 		CC6668F00164A974F1B5D3DE /* VehicleProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleProfileTests.swift; sourceTree = "<group>"; };
@@ -146,6 +148,7 @@
 			children = (
 				42C4DD95292BDA7907AD829D /* BatteryHealthTests.swift */,
 				1B7CBE58FA53041CCC033C90 /* CSVProcessingTests.swift */,
+				B6876B524A40C91D08C4F1E1 /* DeduplicationTests.swift */,
 				35D6486889072F0C97BE9CA8 /* JouleTests.swift */,
 				5CB2503927C3C9C365FC0FCE /* TariffAndEnergyTests.swift */,
 				CC6668F00164A974F1B5D3DE /* VehicleProfileTests.swift */,
@@ -338,6 +341,7 @@
 			files = (
 				D8080E5C585289BF9203A9D6 /* BatteryHealthTests.swift in Sources */,
 				3FEF0096042456F6940D7ABF /* CSVProcessingTests.swift in Sources */,
+				AB8AE6E1EC2F25EC9EC643B2 /* DeduplicationTests.swift in Sources */,
 				D2997D6BFEEC926411C26670 /* JouleTests.swift in Sources */,
 				3DE2EAD34CBFEF26CDB34950 /* TariffAndEnergyTests.swift in Sources */,
 				884C655B1A1406971B59C773 /* VehicleProfileTests.swift in Sources */,
