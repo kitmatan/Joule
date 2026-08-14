@@ -42,24 +42,54 @@ struct ContentView: View {
 
 /// iPhone/iPad experience: bottom tab bar with push navigation.
 struct PhoneRootView: View {
+    @EnvironmentObject private var store: SessionStore
+    @State private var selectedTab: Int = {
+        switch ProcessInfo.processInfo.environment["SCREENSHOT_TAB"] {
+        case "1", "battery_health": return 1
+        case "2", "history": return 2
+        default: return 0
+        }
+    }()
+
     var body: some View {
-        TabView {
-            DashboardView()
-                .tabItem {
-                    Label("Dashboard", systemImage: "chart.bar.xaxis")
+        Group {
+            if let targetSession = store.sessions.first, ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "session_detail" {
+                NavigationStack {
+                    SessionDetailView(session: targetSession)
                 }
-
-            NavigationStack {
-                BatteryHealthView()
-            }
-            .tabItem {
-                Label("Battery Health", systemImage: "bolt.batteryblock.fill")
-            }
-
-            SessionListView()
-                .tabItem {
-                    Label("History", systemImage: "list.bullet")
+            } else if ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "add_session" {
+                NavigationStack {
+                    AddSessionView()
                 }
+            } else if ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "settings" {
+                NavigationStack {
+                    SettingsView()
+                }
+            } else if ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "presets" {
+                PresetPickerView(selectedPresetId: .constant("byd_atto3_ext")) { _ in }
+            } else {
+                TabView(selection: $selectedTab) {
+                    DashboardView()
+                        .tabItem {
+                            Label("Dashboard", systemImage: "chart.bar.xaxis")
+                        }
+                        .tag(0)
+
+                    NavigationStack {
+                        BatteryHealthView()
+                    }
+                    .tabItem {
+                        Label("Battery Health", systemImage: "bolt.batteryblock.fill")
+                    }
+                    .tag(1)
+
+                    SessionListView()
+                        .tabItem {
+                            Label("History", systemImage: "list.bullet")
+                        }
+                        .tag(2)
+                }
+            }
         }
     }
 }

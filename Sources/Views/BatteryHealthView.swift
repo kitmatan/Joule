@@ -6,7 +6,17 @@ struct BatteryHealthView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     @State private var selectedTimeRange: ChartTimeRange = .all
-    @State private var selectedChartMode: ChartMode = .time
+    @State private var selectedChartMode: ChartMode = {
+        if let mode = ProcessInfo.processInfo.environment["BATTERY_CHART_MODE"] {
+            switch mode {
+            case "mileage": return .mileage
+            case "range": return .range
+            case "cycles": return .cycles
+            default: return .time
+            }
+        }
+        return .mileage
+    }()
     
     private var isWide: Bool { horizontalSizeClass == .regular }
     

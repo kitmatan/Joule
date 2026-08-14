@@ -18,7 +18,7 @@ struct SettingsView: View {
     @AppStorage("home_tariff_type") private var tariffType: HomeTariffType = .standardNonTOU
     @AppStorage("home_custom_tariff_rate") private var customTariffRate: Double = VehicleProfile.defaultTariffPerKWh
     
-    @State private var showingPresetSheet = false
+    @State private var showingPresetSheet = ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "presets"
     @State private var showingSignOutAlert = false
     @State private var showingResetAlert = false
     

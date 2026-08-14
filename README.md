@@ -6,6 +6,22 @@ Supports **any electric vehicle (EV)** out of the box with an extensive built-in
 
 ---
 
+## 📱 App Screenshots
+
+<div align="center">
+
+| **Dashboard Analytics** | **Battery Health Tracker** | **Session History** |
+| :---: | :---: | :---: |
+| <img src="screenshots/01_dashboard.png" width="280" alt="Dashboard" /> | <img src="screenshots/02_battery_health.png" width="280" alt="Battery Health" /> | <img src="screenshots/03_session_history.png" width="280" alt="Session History" /> |
+
+| **Session Details** | **Smart Charging Form** | **Vehicle Presets & Settings** |
+| :---: | :---: | :---: |
+| <img src="screenshots/04_session_detail.png" width="280" alt="Session Detail" /> | <img src="screenshots/05_add_session.png" width="280" alt="Add Session" /> | <img src="screenshots/07_ev_presets.png" width="280" alt="EV Presets" /> |
+
+</div>
+
+---
+
 ## ✨ Features
 
 - 🚗 **Universal EV & Battery Chemistry Support**:
