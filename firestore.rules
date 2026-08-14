@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Each signed-in user owns exactly one subtree and can touch nothing else.
+    match /users/{userID} {
+      allow read, write: if request.auth != null && request.auth.uid == userID;
+
+      match /sessions/{sessionID} {
+        allow read, write: if request.auth != null && request.auth.uid == userID;
+      }
+    }
+
+    // Pre-auth collection, kept readable only so the one-time migration in SessionStore can copy
+    // it into the signed-in user's subtree. Writes are closed, so the originals cannot be changed
+    // or deleted by the app.
+    //
+    // DELETE THIS BLOCK once you have confirmed the migration ran — see FIREBASE_SETUP.md step 4.
+    // While it is here, any signed-in Firebase user can read the old collection.
+    match /sessions/{sessionID} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}

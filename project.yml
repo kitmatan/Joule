@@ -1,0 +1,82 @@
+name: Joule
+options:
+  bundleIdPrefix: com.kmatan
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk.git
+    from: 12.0.0
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS.git
+    from: 8.0.0
+targets:
+  Joule:
+    type: application
+    platform: iOS
+    deploymentTarget:
+      iOS: "17.0"
+    sources:
+      - path: Sources
+    info:
+      path: Info.plist
+      properties:
+        UILaunchScreen: {}
+    entitlements:
+      path: Joule.entitlements
+      properties:
+        # Firebase Auth persists the signed-in session in the keychain. iOS grants apps a default
+        # access group implicitly; macOS and Mac Catalyst do not, and Auth fails with
+        # "keychain error" without this. Keychain Sharing is unrestricted, so a personal team
+        # signs it fine — unlike Sign in with Apple.
+        keychain-access-groups:
+          - "$(AppIdentifierPrefix)com.kmatan.ChargeLog"
+    dependencies:
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: GoogleSignIn
+        product: GoogleSignInSwift
+    postBuildScripts:
+      # Google's OAuth callback returns through a custom URL scheme that must match the
+      # REVERSED_CLIENT_ID in GoogleService-Info.plist. Copying it into the built Info.plist at
+      # build time keeps the two from drifting — the failure mode of a stale hand-copied scheme is
+      # a sign-in that hangs on the callback with no useful error.
+      - name: Configure Google Sign-In URL scheme
+        basedOnDependencyAnalysis: false
+        script: |
+          set -euo pipefail
+          SOURCE_PLIST="${SRCROOT}/Sources/GoogleService-Info.plist"
+          TARGET_PLIST="${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
+
+          SCHEME=$(/usr/libexec/PlistBuddy -c "Print :REVERSED_CLIENT_ID" "${SOURCE_PLIST}" 2>/dev/null || true)
+          if [ -z "${SCHEME}" ]; then
+            echo "warning: GoogleService-Info.plist has no REVERSED_CLIENT_ID. Enable the Google provider in the Firebase console and re-download the file — Google Sign-In cannot complete until you do (see FIREBASE_SETUP.md)."
+            exit 0
+          fi
+
+          /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "${TARGET_PLIST}" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string ${SCHEME}" "${TARGET_PLIST}"
+    settings:
+      base:
+        OTHER_LDFLAGS: ["-ObjC"]
+        PRODUCT_BUNDLE_IDENTIFIER: "com.kmatan.ChargeLog"
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        SUPPORTS_MACCATALYST: YES
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: YES
+        TARGETED_DEVICE_FAMILY: "1,2,6"
+        CODE_SIGN_STYLE: Automatic
+        # Personal team. Google Sign-In needs no entitlement, so nothing here requires a paid
+        # Developer Program membership.
+        DEVELOPMENT_TEAM: M38ACZ9N67
+        ENABLE_PREVIEWS: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
