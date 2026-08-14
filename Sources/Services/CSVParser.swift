@@ -190,8 +190,11 @@ struct CSVParser {
         var clean = trimmed(value)
         guard !clean.isEmpty else { return nil }
         clean = clean.replacingOccurrences(of: ",", with: "")
-        clean = clean.replacingOccurrences(of: "฿", with: "")
-        clean = clean.replacingOccurrences(of: "$", with: "")
+        // Strip common currency symbols
+        let currencySymbols = ["฿", "$", "€", "£", "¥", "₩", "₹", "kr", "CHF"]
+        for sym in currencySymbols {
+            clean = clean.replacingOccurrences(of: sym, with: "")
+        }
         clean = clean.trimmingCharacters(in: .whitespacesAndNewlines)
         return Double(clean)
     }

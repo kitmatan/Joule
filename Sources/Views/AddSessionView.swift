@@ -32,6 +32,9 @@ struct AddSessionView: View {
         }
     }
     
+    @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
+    @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
+
     @State private var locationName = ""
     @State private var vendorName = ""
     @State private var date = Date()
@@ -54,6 +57,54 @@ struct AddSessionView: View {
     @State private var notes = ""
 
     private var isHomeCharging: Bool { locationType == .home }
+
+    private var mileageBinding: Binding<Double?> {
+        Binding(
+            get: {
+                guard let m = mileage else { return nil }
+                return Double(String(format: "%.1f", unitSystem.convertFromKm(m))) ?? unitSystem.convertFromKm(m)
+            },
+            set: {
+                if let val = $0 {
+                    mileage = unitSystem.convertToKm(val)
+                } else {
+                    mileage = nil
+                }
+            }
+        )
+    }
+
+    private var startRangeBinding: Binding<Double?> {
+        Binding(
+            get: {
+                guard let r = startRange else { return nil }
+                return Double(String(format: "%.0f", unitSystem.convertFromKm(r))) ?? unitSystem.convertFromKm(r)
+            },
+            set: {
+                if let val = $0 {
+                    startRange = unitSystem.convertToKm(val)
+                } else {
+                    startRange = nil
+                }
+            }
+        )
+    }
+
+    private var endRangeBinding: Binding<Double?> {
+        Binding(
+            get: {
+                guard let r = endRange else { return nil }
+                return Double(String(format: "%.0f", unitSystem.convertFromKm(r))) ?? unitSystem.convertFromKm(r)
+            },
+            set: {
+                if let val = $0 {
+                    endRange = unitSystem.convertToKm(val)
+                } else {
+                    endRange = nil
+                }
+            }
+        )
+    }
 
     // Validation
     private var isSoCInvalid: Bool {
@@ -176,11 +227,12 @@ struct AddSessionView: View {
                         Label("Mileage", systemImage: "speedometer")
                             .foregroundColor(.orange)
                         Spacer()
-                        TextField("km", value: $mileage, format: .number)
+                        TextField(unitSystem.distanceUnit, value: mileageBinding, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
+                        Text(unitSystem.distanceUnit).foregroundColor(.secondary)
                     }
                 } header: {
                     Text("Basic Info")
@@ -221,11 +273,11 @@ struct AddSessionView: View {
                     .padding(.vertical, 4)
                     
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Estimated Range (km)").font(.subheadline).foregroundColor(.secondary)
+                        Text("Estimated Range (\(unitSystem.distanceUnit))").font(.subheadline).foregroundColor(.secondary)
                         HStack {
                             Label("Start", systemImage: "car")
                                 .foregroundColor(.gray)
-                            TextField("0", value: $startRange, format: .number)
+                            TextField("0", value: startRangeBinding, format: .number)
                                 .textFieldStyle(.roundedBorder)
                                 #if os(iOS)
                                 .keyboardType(.decimalPad)
@@ -233,7 +285,7 @@ struct AddSessionView: View {
                             
                             Label("End", systemImage: "car.fill")
                                 .foregroundColor(.green)
-                            TextField("0", value: $endRange, format: .number)
+                            TextField("0", value: endRangeBinding, format: .number)
                                 .textFieldStyle(.roundedBorder)
                                 #if os(iOS)
                                 .keyboardType(.decimalPad)
@@ -323,8 +375,12 @@ struct AddSessionView: View {
                 if isHomeCharging {
                     Section {
                         Picker("Tariff Rate", selection: $homeTariff) {
-                            ForEach(HomeTariffType.allCases) { tariff in
-                                Text(tariff.rawValue).tag(tariff)
+                            ForEach(TariffRegion.allCases) { region in
+                                Section(region.rawValue) {
+                                    ForEach(region.tariffs) { tariff in
+                                        Text(tariff.rawValue).tag(tariff)
+                                    }
+                                }
                             }
                         }
                         .onChange(of: homeTariff) { _, newTariff in
@@ -373,9 +429,9 @@ struct AddSessionView: View {
                     }
                 } header: {
                     HStack {
-                        Text("Fees")
+                        Text("Fees (\(appCurrency.code))")
                         Spacer()
-                        Text("Total: \(computedTotalPrice.formatted(.currency(code: "THB").presentation(.narrow)))")
+                        Text("Total: \(appCurrency.format(computedTotalPrice))")
                             .font(.headline)
                             .foregroundColor(computedTotalPrice > 0 ? .green : .secondary)
                     }

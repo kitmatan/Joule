@@ -27,6 +27,9 @@ struct DashboardView: View {
     @EnvironmentObject private var store: SessionStore
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
+    @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
+    @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
 
     /// Wide layout on Mac and iPad (regular width); compact two-column layout on iPhone.
     private var isWide: Bool { horizontalSizeClass == .regular }
@@ -113,9 +116,11 @@ struct DashboardView: View {
         return window.distance / window.energy
     }
 
-    var costPerKm: Double {
+    var costPerDistance: Double {
         guard let window = drivingWindow, window.distance > 0 else { return 0 }
-        return window.cost / window.distance
+        let convertedDist = unitSystem.convertFromKm(window.distance)
+        guard convertedDist > 0 else { return 0 }
+        return window.cost / convertedDist
     }
 
     var averageSpeed: Double {
@@ -311,9 +316,9 @@ struct DashboardView: View {
                 .padding(.horizontal)
 
             LazyVGrid(columns: statColumns, spacing: 16) {
-                StatCard(title: "Cost This Month", value: currentMonthCost.formatted(.currency(code: "THB").presentation(.narrow)), icon: "creditcard.fill", color: .green)
+                StatCard(title: "Cost This Month", value: appCurrency.format(currentMonthCost), icon: "creditcard.fill", color: .green)
                 StatCard(title: "Energy This Month", value: String(format: "%.1f kWh", currentMonthEnergy), icon: "bolt.batteryblock.fill", color: .blue)
-                StatCard(title: "Avg Monthly Cost", value: (totalCost / Double(uniqueMonthsCount)).formatted(.currency(code: "THB").presentation(.narrow)), icon: "calendar.badge.clock", color: .green)
+                StatCard(title: "Avg Monthly Cost", value: appCurrency.format(totalCost / Double(uniqueMonthsCount)), icon: "calendar.badge.clock", color: .green)
                 StatCard(title: "Avg Monthly Energy", value: String(format: "%.1f kWh", totalEnergy / Double(uniqueMonthsCount)), icon: "bolt.fill", color: .blue)
             }
             .padding(.horizontal)
@@ -329,7 +334,7 @@ struct DashboardView: View {
                 Text("Deferred to Bill This Month")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                Text(currentMonthDeferredCost.formatted(.currency(code: "THB").presentation(.narrow)))
+                Text(appCurrency.format(currentMonthDeferredCost))
                     .font(.title3).bold()
                     .foregroundColor(.orange)
             }
@@ -341,7 +346,7 @@ struct DashboardView: View {
         .padding(.horizontal)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Deferred to Electric Bill This Month")
-        .accessibilityValue(currentMonthDeferredCost.formatted(.currency(code: "THB").presentation(.narrow)))
+        .accessibilityValue(appCurrency.format(currentMonthDeferredCost))
     }
 
     private var lifetimeTotalsSection: some View {
@@ -351,9 +356,9 @@ struct DashboardView: View {
                 .padding(.horizontal)
 
             LazyVGrid(columns: statColumns, spacing: 16) {
-                StatCard(title: "Total Spent", value: totalCost.formatted(.currency(code: "THB").presentation(.narrow)), icon: "banknote.fill", color: .green)
+                StatCard(title: "Total Spent", value: appCurrency.format(totalCost), icon: "banknote.fill", color: .green)
                 StatCard(title: "Total Energy", value: String(format: "%.1f kWh", totalEnergy), icon: "bolt.fill", color: .blue)
-                StatCard(title: "Distance", value: hasDrivingData ? String(format: "%.0f km", totalDistance) : "N/A", icon: "car.fill", color: .purple)
+                StatCard(title: "Distance", value: hasDrivingData ? unitSystem.formatDistance(km: totalDistance) : "N/A", icon: "car.fill", color: .purple)
                 StatCard(title: "Sessions", value: "\(totalSessions)", icon: "ev.charger.fill", color: .orange)
             }
             .padding(.horizontal)
@@ -367,9 +372,9 @@ struct DashboardView: View {
                 .padding(.horizontal)
 
             LazyVGrid(columns: statColumns, spacing: 16) {
-                StatCard(title: "Cost Efficiency", value: String(format: "฿%.2f/kWh", averagePricePerKWh), icon: "tag.fill", color: .orange)
-                StatCard(title: "Driving Eff.", value: hasDrivingData ? String(format: "%.1f km/kWh", energyEfficiency) : "N/A", icon: "leaf.fill", color: .mint)
-                StatCard(title: "Driving Cost", value: hasDrivingData ? String(format: "฿%.2f/km", costPerKm) : "N/A", icon: "road.lanes", color: .gray)
+                StatCard(title: "Cost Efficiency", value: appCurrency.formatRate(averagePricePerKWh), icon: "tag.fill", color: .orange)
+                StatCard(title: "Driving Eff.", value: hasDrivingData ? unitSystem.formatEfficiency(kmPerKWh: energyEfficiency) : "N/A", icon: "leaf.fill", color: .mint)
+                StatCard(title: "Driving Cost", value: hasDrivingData ? appCurrency.formatCostPerDistance(cost: costPerDistance, distanceUnit: unitSystem.distanceUnit) : "N/A", icon: "road.lanes", color: .gray)
                 StatCard(title: "Avg Speed", value: averageSpeed > 0 ? String(format: "%.1f kW", averageSpeed) : "N/A", icon: "bolt.badge.clock.fill", color: .yellow)
             }
             .padding(.horizontal)
@@ -398,7 +403,7 @@ struct DashboardView: View {
     }
 
     private var costChart: some View {
-        ChartCard(title: "Monthly Cost (THB)", insetsHorizontally: !isWide) {
+        ChartCard(title: "Monthly Cost (\(appCurrency.code))", insetsHorizontally: !isWide) {
             Chart(monthlyStats) { stat in
                 BarMark(
                     x: .value("Month", stat.month, unit: .month),
@@ -415,8 +420,8 @@ struct DashboardView: View {
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Monthly Charging Cost Trend")
-            .accessibilityValue("Total cost across last 12 months: \(totalCost.formatted(.currency(code: "THB").presentation(.narrow)))")
-            .accessibilityHint("Shows monthly charging cost trends in Thai Baht over the past year")
+            .accessibilityValue("Total cost across last 12 months: \(appCurrency.format(totalCost))")
+            .accessibilityHint("Shows monthly charging cost trends in \(appCurrency.displayName) over the past year")
         }
     }
 
@@ -508,10 +513,10 @@ struct DashboardView: View {
                         }
                         Spacer()
                         VStack(alignment: .trailing, spacing: 4) {
-                            Text(location.totalCost.formatted(.currency(code: "THB").presentation(.narrow)))
+                            Text(appCurrency.format(location.totalCost))
                                 .font(.subheadline).bold()
                             if location.pricePerKWh > 0 {
-                                Text(String(format: "฿%.2f/kWh", location.pricePerKWh))
+                                Text(appCurrency.formatRate(location.pricePerKWh))
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -520,7 +525,7 @@ struct DashboardView: View {
                     .padding()
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("\(location.name), \(location.sessionCount) sessions")
-                    .accessibilityValue("\(String(format: "%.0f kWh", location.totalEnergy)), total \(location.totalCost.formatted(.currency(code: "THB").presentation(.narrow)))\(location.pricePerKWh > 0 ? String(format: ", %.2f Baht per kilowatt-hour", location.pricePerKWh) : "")")
+                    .accessibilityValue("\(String(format: "%.0f kWh", location.totalEnergy)), total \(appCurrency.format(location.totalCost))\(location.pricePerKWh > 0 ? String(format: ", %@ per kilowatt-hour", appCurrency.formatRate(location.pricePerKWh)) : "")")
                 }
             }
             .background(Color.secondary.opacity(0.1))

@@ -9,27 +9,35 @@
 /* Begin PBXBuildFile section */
 		0A8A07D17F2B50131ED9D051 /* MacRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA13888C65E01472BAC32C37 /* MacRootView.swift */; };
 		0F609A530A6BB251D1EB70CC /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AA5D42D1286A20DF3E021B /* SessionStore.swift */; };
+		14FC08BC319AB1C515EF6C25 /* AppCurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C8D1A86F747BE705328609A /* AppCurrency.swift */; };
 		1C6E1EB082639F9E547EF4D1 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B7C2C49CB053382DB54985 /* AuthService.swift */; };
 		21FCB40EF5D43710B07A6672 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = D6D06FA4439E8178AF95BFCE /* GoogleService-Info.plist */; };
 		3CFDD52C1174A0A7DE65B030 /* AddSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744E63FB0506F80359897B86 /* AddSessionView.swift */; };
 		3D0C8720D65474C7F4027FD2 /* EVPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E6A7A7C0F1994BE34BFA20 /* EVPreset.swift */; };
+		3DE2EAD34CBFEF26CDB34950 /* TariffAndEnergyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CB2503927C3C9C365FC0FCE /* TariffAndEnergyTests.swift */; };
+		3FEF0096042456F6940D7ABF /* CSVProcessingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B7CBE58FA53041CCC033C90 /* CSVProcessingTests.swift */; };
 		43F065F08F0435C240526498 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 903D9ED9FDC661F10F9DAEBA /* GoogleSignInSwift */; };
 		4CDE924DBB7125A6B2BFA4C3 /* BatteryHealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 775A58C1A0C3FB78E89781ED /* BatteryHealth.swift */; };
+		4F2CAE017EE703763AA1E419 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FE00782551AF4470C380C289 /* Localizable.xcstrings */; };
 		5062C029AC63E9884AA19D5A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA211D9DD3C06F19CECE272A /* ContentView.swift */; };
 		59D0C9512A1F7EB5EF5953E6 /* CSVParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 894AA0713BDFFB69A7B83BBC /* CSVParser.swift */; };
 		6A7089873F18663BC356F414 /* BatteryHealthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66FF878F9A0A9B7E0F5B7314 /* BatteryHealthView.swift */; };
 		773058C2AD45A5D25E26A20D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = FEAE31B02908470FF07C8C59 /* FirebaseAuth */; };
 		865AFCEEEE9CD0466F879570 /* JouleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E36357BF3445423DC800813B /* JouleApp.swift */; };
+		884C655B1A1406971B59C773 /* VehicleProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6668F00164A974F1B5D3DE /* VehicleProfileTests.swift */; };
 		89F6509DC79A32297968FDC1 /* AppNavigationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE28281D97BAC3DF2678EB7 /* AppNavigationCoordinator.swift */; };
 		92661FADDAC3E794B6E935DC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FAFC87FA5A246312103F29F /* SettingsView.swift */; };
 		95F6DDE25A7C95F343A6F833 /* BatteryHealthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDB5446BA4A3D01E6346EFA /* BatteryHealthService.swift */; };
 		98CF0B5413C15549F7F4066F /* VehicleProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA939798ABA57BDCCC365796 /* VehicleProfile.swift */; };
 		9A13FFBAA6D2FF5AD103EC22 /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE9ECDC6FFAAE089977C8A0A /* Platform.swift */; };
 		9A78802EDB3D17D568A1F178 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B95188F17C85BA80916D030 /* DashboardView.swift */; };
+		A5CC4AAFA4C3CE28F79AF661 /* UnitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2416E44AAB7867777DF24684 /* UnitSettings.swift */; };
 		A677B45D916235F8178183C5 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 400DC804E052054BC7E7A312 /* GoogleSignIn */; };
 		A6AB82D834D34FE287E83002 /* SessionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F136979A823455B50AA53A75 /* SessionListView.swift */; };
 		AD7BF908F115951C3C405E4A /* CSVExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB1BB48603020432A57E231 /* CSVExport.swift */; };
+		D2997D6BFEEC926411C26670 /* JouleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35D6486889072F0C97BE9CA8 /* JouleTests.swift */; };
 		D76A5A2FB35F59195191CD49 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3A71AA0D6513085A5409BBF6 /* Assets.xcassets */; };
+		D8080E5C585289BF9203A9D6 /* BatteryHealthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C4DD95292BDA7907AD829D /* BatteryHealthTests.swift */; };
 		E04EF86E94E173B3E4AB8526 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 26672DE919B595DD3D3844AE /* FirebaseCore */; };
 		E2D224DA0CA98F1F575821A9 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 497D49C7B806DA75AAAA44AE /* FirebaseFirestore */; };
 		EAB5C7EEF51A5A88C8A06742 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C128488C31FAC2F33D48BCA1 /* SessionDetailView.swift */; };
@@ -38,24 +46,42 @@
 		FE28A7E2BF7B6DDBE9A6E198 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E88CBBB0F4DC2ADD8B5C1A19 /* SignInView.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		843DCE4F97638FD85EDB5114 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6770CC72E12DEF5E1030AEFD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7275385C635D3F47C48B7CD7;
+			remoteInfo = Joule;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		0CDB5446BA4A3D01E6346EFA /* BatteryHealthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealthService.swift; sourceTree = "<group>"; };
+		1B7CBE58FA53041CCC033C90 /* CSVProcessingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVProcessingTests.swift; sourceTree = "<group>"; };
+		2416E44AAB7867777DF24684 /* UnitSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitSettings.swift; sourceTree = "<group>"; };
 		24AA5D42D1286A20DF3E021B /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		2FAFC87FA5A246312103F29F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		35D6486889072F0C97BE9CA8 /* JouleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleTests.swift; sourceTree = "<group>"; };
 		3A71AA0D6513085A5409BBF6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3B95188F17C85BA80916D030 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		3DE28281D97BAC3DF2678EB7 /* AppNavigationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppNavigationCoordinator.swift; sourceTree = "<group>"; };
+		42C4DD95292BDA7907AD829D /* BatteryHealthTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealthTests.swift; sourceTree = "<group>"; };
 		4348C99C98519F8CCB2DD663 /* Joule.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Joule.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5CB2503927C3C9C365FC0FCE /* TariffAndEnergyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TariffAndEnergyTests.swift; sourceTree = "<group>"; };
 		5FB1BB48603020432A57E231 /* CSVExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExport.swift; sourceTree = "<group>"; };
 		66FF878F9A0A9B7E0F5B7314 /* BatteryHealthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealthView.swift; sourceTree = "<group>"; };
+		6C8D1A86F747BE705328609A /* AppCurrency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCurrency.swift; sourceTree = "<group>"; };
 		744E63FB0506F80359897B86 /* AddSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddSessionView.swift; sourceTree = "<group>"; };
 		767B4E7655EC6237724E840D /* ChargingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingSession.swift; sourceTree = "<group>"; };
 		775A58C1A0C3FB78E89781ED /* BatteryHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealth.swift; sourceTree = "<group>"; };
+		8430D3D8A477A2631B55EE69 /* JouleTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = JouleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		894AA0713BDFFB69A7B83BBC /* CSVParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVParser.swift; sourceTree = "<group>"; };
 		99B56310846C4E0CAEAC33E7 /* AlertCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCenter.swift; sourceTree = "<group>"; };
 		B5B7C2C49CB053382DB54985 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		BA13888C65E01472BAC32C37 /* MacRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
 		C128488C31FAC2F33D48BCA1 /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
+		CC6668F00164A974F1B5D3DE /* VehicleProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleProfileTests.swift; sourceTree = "<group>"; };
 		D6D06FA4439E8178AF95BFCE /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		DA939798ABA57BDCCC365796 /* VehicleProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleProfile.swift; sourceTree = "<group>"; };
 		E36357BF3445423DC800813B /* JouleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleApp.swift; sourceTree = "<group>"; };
@@ -63,6 +89,7 @@
 		E88CBBB0F4DC2ADD8B5C1A19 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		F136979A823455B50AA53A75 /* SessionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListView.swift; sourceTree = "<group>"; };
 		FA211D9DD3C06F19CECE272A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		FE00782551AF4470C380C289 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		FE9ECDC6FFAAE089977C8A0A /* Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -95,9 +122,11 @@
 		3BE45B50E7EF10CCC17D464D /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				6C8D1A86F747BE705328609A /* AppCurrency.swift */,
 				775A58C1A0C3FB78E89781ED /* BatteryHealth.swift */,
 				767B4E7655EC6237724E840D /* ChargingSession.swift */,
 				E5E6A7A7C0F1994BE34BFA20 /* EVPreset.swift */,
+				2416E44AAB7867777DF24684 /* UnitSettings.swift */,
 				DA939798ABA57BDCCC365796 /* VehicleProfile.swift */,
 			);
 			path = Models;
@@ -106,15 +135,30 @@
 		53499DAEFDF6803DD56D3E36 = {
 			isa = PBXGroup;
 			children = (
+				5697616420B55E19B5104826 /* JouleTests */,
 				EDF65C4B69FBD5A30A46CAAB /* Sources */,
 				88F9079D48ED2F426BDDC5E7 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		5697616420B55E19B5104826 /* JouleTests */ = {
+			isa = PBXGroup;
+			children = (
+				42C4DD95292BDA7907AD829D /* BatteryHealthTests.swift */,
+				1B7CBE58FA53041CCC033C90 /* CSVProcessingTests.swift */,
+				35D6486889072F0C97BE9CA8 /* JouleTests.swift */,
+				5CB2503927C3C9C365FC0FCE /* TariffAndEnergyTests.swift */,
+				CC6668F00164A974F1B5D3DE /* VehicleProfileTests.swift */,
+			);
+			name = JouleTests;
+			path = Tests/JouleTests;
 			sourceTree = "<group>";
 		};
 		88F9079D48ED2F426BDDC5E7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				4348C99C98519F8CCB2DD663 /* Joule.app */,
+				8430D3D8A477A2631B55EE69 /* JouleTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -140,6 +184,7 @@
 			children = (
 				3A71AA0D6513085A5409BBF6 /* Assets.xcassets */,
 				D6D06FA4439E8178AF95BFCE /* GoogleService-Info.plist */,
+				FE00782551AF4470C380C289 /* Localizable.xcstrings */,
 				25B080F5F13B47ACE7C6CADD /* App */,
 				3BE45B50E7EF10CCC17D464D /* Models */,
 				FCFD9A99A785FDC86250876C /* Services */,
@@ -164,6 +209,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		40F901109BA153C61802715F /* JouleTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FB5AAA773D1D637A1565BD13 /* Build configuration list for PBXNativeTarget "JouleTests" */;
+			buildPhases = (
+				0E81F99AEE67DF2D77DC46EF /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1D4B05B36807A6D88F7F24D /* PBXTargetDependency */,
+			);
+			name = JouleTests;
+			packageProductDependencies = (
+			);
+			productName = JouleTests;
+			productReference = 8430D3D8A477A2631B55EE69 /* JouleTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		7275385C635D3F47C48B7CD7 /* Joule */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 907B12A6740D221AE6D683FE /* Build configuration list for PBXNativeTarget "Joule" */;
@@ -198,6 +261,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					40F901109BA153C61802715F = {
+						DevelopmentTeam = M38ACZ9N67;
+						ProvisioningStyle = Automatic;
+					};
 					7275385C635D3F47C48B7CD7 = {
 						DevelopmentTeam = M38ACZ9N67;
 						ProvisioningStyle = Automatic;
@@ -210,6 +277,7 @@
 			knownRegions = (
 				Base,
 				en,
+				th,
 			);
 			mainGroup = 53499DAEFDF6803DD56D3E36;
 			minimizedProjectReferenceProxies = 1;
@@ -223,6 +291,7 @@
 			projectRoot = "";
 			targets = (
 				7275385C635D3F47C48B7CD7 /* Joule */,
+				40F901109BA153C61802715F /* JouleTests */,
 			);
 		};
 /* End PBXProject section */
@@ -234,6 +303,7 @@
 			files = (
 				D76A5A2FB35F59195191CD49 /* Assets.xcassets in Resources */,
 				21FCB40EF5D43710B07A6672 /* GoogleService-Info.plist in Resources */,
+				4F2CAE017EE703763AA1E419 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -262,12 +332,25 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		0E81F99AEE67DF2D77DC46EF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D8080E5C585289BF9203A9D6 /* BatteryHealthTests.swift in Sources */,
+				3FEF0096042456F6940D7ABF /* CSVProcessingTests.swift in Sources */,
+				D2997D6BFEEC926411C26670 /* JouleTests.swift in Sources */,
+				3DE2EAD34CBFEF26CDB34950 /* TariffAndEnergyTests.swift in Sources */,
+				884C655B1A1406971B59C773 /* VehicleProfileTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4A5967EDE7C9489AF1B4EAD0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				3CFDD52C1174A0A7DE65B030 /* AddSessionView.swift in Sources */,
 				F379D6DA4C7904312953CCE2 /* AlertCenter.swift in Sources */,
+				14FC08BC319AB1C515EF6C25 /* AppCurrency.swift in Sources */,
 				89F6509DC79A32297968FDC1 /* AppNavigationCoordinator.swift in Sources */,
 				1C6E1EB082639F9E547EF4D1 /* AuthService.swift in Sources */,
 				4CDE924DBB7125A6B2BFA4C3 /* BatteryHealth.swift in Sources */,
@@ -287,13 +370,41 @@
 				0F609A530A6BB251D1EB70CC /* SessionStore.swift in Sources */,
 				92661FADDAC3E794B6E935DC /* SettingsView.swift in Sources */,
 				FE28A7E2BF7B6DDBE9A6E198 /* SignInView.swift in Sources */,
+				A5CC4AAFA4C3CE28F79AF661 /* UnitSettings.swift in Sources */,
 				98CF0B5413C15549F7F4066F /* VehicleProfile.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		A1D4B05B36807A6D88F7F24D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7275385C635D3F47C48B7CD7 /* Joule */;
+			targetProxy = 843DCE4F97638FD85EDB5114 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		09AE42CA97BA27C84E703F54 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M38ACZ9N67;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kmatan.ChargeLogTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Joule.app/Joule";
+			};
+			name = Release;
+		};
 		5C4C164B9C536B8766AEF503 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -465,6 +576,25 @@
 			};
 			name = Release;
 		};
+		F5AE98B328E4CCF1985F72C2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M38ACZ9N67;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kmatan.ChargeLogTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Joule.app/Joule";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -482,6 +612,15 @@
 			buildConfigurations = (
 				5C4C164B9C536B8766AEF503 /* Debug */,
 				872143DE5EC60BC4332E4C46 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FB5AAA773D1D637A1565BD13 /* Build configuration list for PBXNativeTarget "JouleTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F5AE98B328E4CCF1985F72C2 /* Debug */,
+				09AE42CA97BA27C84E703F54 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

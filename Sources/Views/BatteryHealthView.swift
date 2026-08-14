@@ -6,6 +6,8 @@ struct BatteryHealthView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
+    @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
+    
     @State private var selectedTimeRange: ChartTimeRange = .all
     @State private var selectedChartMode: ChartMode = {
         if let mode = ProcessInfo.processInfo.environment["BATTERY_CHART_MODE"] {
@@ -32,10 +34,19 @@ struct BatteryHealthView: View {
     enum ChartMode: String, CaseIterable, Identifiable {
         case time = "Over Time"
         case mileage = "Vs. Mileage"
-        case range = "Range (km)"
+        case range = "Range"
         case cycles = "Cycle Wear"
         
         var id: String { rawValue }
+        
+        func title(unit: UnitSystem) -> String {
+            switch self {
+            case .time: return "Over Time"
+            case .mileage: return "Vs. Mileage"
+            case .range: return "Range (\(unit.distanceUnit))"
+            case .cycles: return "Cycle Wear"
+            }
+        }
     }
     
     private var service: BatteryHealthService {
@@ -233,11 +244,7 @@ struct BatteryHealthView: View {
         ) {
             StatCard(
                 title: "Degradation Rate",
-                value: summary.degradationPer10kKm != nil
-                    ? (summary.degradationPer10kKm! > 0.05
-                        ? String(format: "-%.2f%% / 10k km", summary.degradationPer10kKm!)
-                        : "< 0.1% / 10k km")
-                    : "Calibrating",
+                value: summary.formattedDegradationRate(unit: unitSystem),
                 icon: "gauge.with.needle.fill",
                 color: .mint
             )
@@ -262,7 +269,7 @@ struct BatteryHealthView: View {
             
             StatCard(
                 title: "Projected 100% Range",
-                value: summary.currentProjectedRangeKm != nil ? String(format: "%.0f km", summary.currentProjectedRangeKm!) : String(format: "%.0f km", summary.nominalRangeKm),
+                value: unitSystem.formatDistance(km: summary.currentProjectedRangeKm ?? summary.nominalRangeKm),
                 icon: "car.fill",
                 color: .green
             )
@@ -288,7 +295,7 @@ struct BatteryHealthView: View {
             
             Picker("Mode", selection: $selectedChartMode) {
                 ForEach(ChartMode.allCases) { mode in
-                    Text(mode.rawValue).tag(mode)
+                    Text(mode.title(unit: unitSystem)).tag(mode)
                 }
             }
             .pickerStyle(.segmented)
@@ -396,7 +403,7 @@ struct BatteryHealthView: View {
             
             ForEach(mileagePoints) { point in
                 PointMark(
-                    x: .value("Mileage", point.mileage!),
+                    x: .value("Mileage", unitSystem.convertFromKm(point.mileage!)),
                     y: .value("SoH", point.stateOfHealth)
                 )
                 .foregroundStyle(pointColor(for: point.confidence))
@@ -406,7 +413,7 @@ struct BatteryHealthView: View {
             let sortedMileageTrend = trendPoints.filter { $0.mileage != nil }.sorted { ($0.mileage ?? 0) < ($1.mileage ?? 0) }
             ForEach(sortedMileageTrend) { trend in
                 LineMark(
-                    x: .value("Mileage", trend.mileage!),
+                    x: .value("Mileage", unitSystem.convertFromKm(trend.mileage!)),
                     y: .value("SoH", trend.smoothedSoH)
                 )
                 .foregroundStyle(.mint)
@@ -430,31 +437,31 @@ struct BatteryHealthView: View {
                 AxisGridLine()
                 AxisValueLabel {
                     if let d = value.as(Double.self) {
-                        Text(String(format: "%.0fk", d / 1000.0))
+                        Text(String(format: "%.0fk %@", d / 1000.0, unitSystem.distanceUnit))
                     }
                 }
             }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("State of Health Versus Mileage")
-        .accessibilityValue(summary?.degradationPer10kKm != nil ? "Degradation rate \(String(format: "%.2f%% per 10,000 km", summary!.degradationPer10kKm!))" : "Plot of battery health versus odometer distance")
-        .accessibilityHint("Plots capacity retention against distance driven in thousands of kilometers")
+        .accessibilityValue(summary?.degradationPer10kDistance(unit: unitSystem) != nil ? "Degradation rate \(String(format: "%.2f%% per %@", summary!.degradationPer10kDistance(unit: unitSystem)!, unitSystem.degradationDistanceDescription))" : "Plot of battery health versus odometer distance")
+        .accessibilityHint("Plots capacity retention against distance driven in thousands of \(unitSystem.distanceUnitLong.lowercased())")
     }
     
     // MARK: - Chart 3: Projected Range Over Time
     private func rangeOverTimeChart(summary: BatteryHealthSummary) -> some View {
         let rangePoints = filteredPoints.filter { $0.projectedFullRangeKm != nil }
-        let nominal = summary.nominalRangeKm
-        let minBound = max(50.0, nominal * 0.75)
-        let maxBound = nominal * 1.15
+        let nominalConverted = unitSystem.convertFromKm(summary.nominalRangeKm)
+        let minBound = max(unitSystem.convertFromKm(50.0), nominalConverted * 0.75)
+        let maxBound = nominalConverted * 1.15
         let standardTag = VehicleProfile.rangeStandard.rawValue
         
         return Chart {
-            RuleMark(y: .value("Rated Range", summary.nominalRangeKm))
+            RuleMark(y: .value("Rated Range", nominalConverted))
                 .foregroundStyle(Color.green.opacity(0.5))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                 .annotation(position: .top, alignment: .trailing) {
-                    Text("Factory \(Int(summary.nominalRangeKm)) km (\(standardTag))")
+                    Text("Factory \(Int(nominalConverted)) \(unitSystem.distanceUnit) (\(standardTag))")
                         .font(.caption2)
                         .foregroundColor(.green)
                 }
@@ -462,7 +469,7 @@ struct BatteryHealthView: View {
             ForEach(rangePoints) { point in
                 PointMark(
                     x: .value("Date", point.date),
-                    y: .value("Range", point.projectedFullRangeKm!)
+                    y: .value("Range", unitSystem.convertFromKm(point.projectedFullRangeKm!))
                 )
                 .foregroundStyle(.green.opacity(0.7))
                 .symbolSize(35)
@@ -472,7 +479,7 @@ struct BatteryHealthView: View {
             ForEach(validTrend) { trend in
                 LineMark(
                     x: .value("Date", trend.date),
-                    y: .value("Range", trend.projectedFullRangeKm!)
+                    y: .value("Range", unitSystem.convertFromKm(trend.projectedFullRangeKm!))
                 )
                 .foregroundStyle(.green)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
@@ -485,16 +492,16 @@ struct BatteryHealthView: View {
                 AxisGridLine()
                 AxisValueLabel {
                     if let intVal = value.as(Int.self) {
-                        Text("\(intVal) km")
+                        Text("\(intVal) \(unitSystem.distanceUnit)")
                     } else if let dVal = value.as(Double.self) {
-                        Text("\(Int(dVal)) km")
+                        Text("\(Int(dVal)) \(unitSystem.distanceUnit)")
                     }
                 }
             }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Projected 100% Driving Range Over Time")
-        .accessibilityValue("Estimated full range \(summary.currentProjectedRangeKm != nil ? String(format: "%.0f km", summary.currentProjectedRangeKm!) : String(format: "%.0f km", summary.nominalRangeKm)) compared to nominal \(Int(summary.nominalRangeKm)) km")
+        .accessibilityValue("Estimated full range \(unitSystem.formatDistance(km: summary.currentProjectedRangeKm ?? summary.nominalRangeKm)) compared to nominal \(unitSystem.formatDistance(km: summary.nominalRangeKm))")
         .accessibilityHint("Tracks estimated driving range on full charge over time")
     }
     

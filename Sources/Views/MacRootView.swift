@@ -270,8 +270,7 @@ struct MacHistoryView: View {
                     HStack {
                         Text(month)
                         Spacer()
-                        Text(sessions.reduce(0) { $0 + $1.totalPrice }
-                            .formatted(.currency(code: "THB").presentation(.narrow)))
+                        Text(VehicleProfile.currency.format(sessions.reduce(0) { $0 + $1.totalPrice }))
                         Text("•")
                         Text(String(format: "%.0f kWh", sessions.reduce(0) { $0 + $1.energyAdded }))
                     }
@@ -329,6 +328,7 @@ struct MacHistoryView: View {
 /// Compact row tuned for the narrow Mac list column.
 struct MacSessionRow: View {
     let session: ChargingSession
+    @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -338,7 +338,7 @@ struct MacSessionRow: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                 Spacer(minLength: 8)
-                Text(session.totalPrice.formatted(.currency(code: "THB").presentation(.narrow)))
+                Text(appCurrency.format(session.totalPrice))
                     .font(.subheadline).bold()
                     .foregroundColor(session.paymentStatus == .deferred ? .orange : .primary)
                     .lineLimit(1)
@@ -368,6 +368,6 @@ struct MacSessionRow: View {
         .padding(.vertical, 3)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(session.locationName ?? "Charging Session"), \(session.date.formatted(.dateTime.month(.abbreviated).day().locale(Locale(identifier: "en_US_POSIX"))))")
-        .accessibilityValue("\(session.chargingType?.rawValue ?? "") \(String(format: "%.1f kWh", session.energyAdded)), \(session.totalPrice.formatted(.currency(code: "THB").presentation(.narrow)))\(session.paymentStatus == .deferred ? ", Deferred" : "")")
+        .accessibilityValue("\(session.chargingType?.rawValue ?? "") \(String(format: "%.1f kWh", session.energyAdded)), \(appCurrency.format(session.totalPrice))\(session.paymentStatus == .deferred ? ", Deferred" : "")")
     }
 }

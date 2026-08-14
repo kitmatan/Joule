@@ -42,11 +42,38 @@ final class AuthService: ObservableObject {
 
     init(alerts: AlertCenter) {
         self.alerts = alerts
-        // Fires immediately with the persisted session, so a returning user never sees the
-        // sign-in screen flash before being restored. Firebase persists its own session, so there
-        // is no need to replay GoogleSignIn's previous sign-in on launch.
+        
+        if let clientID = FirebaseApp.app()?.options.clientID {
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        }
+        
+        // Listen to Firebase Auth state changes
         stateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-            self?.state = user.map { .signedIn(userID: $0.uid) } ?? .signedOut
+            if let user = user {
+                self?.state = .signedIn(userID: user.uid)
+            } else {
+                // If Firebase reports no user, attempt to restore previous Google Sign-In session if available
+                if GIDSignIn.sharedInstance.hasPreviousSignIn() {
+                    GIDSignIn.sharedInstance.restorePreviousSignIn { resultUser, error in
+                        guard let resultUser, error == nil, let idToken = resultUser.idToken?.tokenString else {
+                            self?.state = .signedOut
+                            return
+                        }
+                        
+                        let credential = GoogleAuthProvider.credential(
+                            withIDToken: idToken,
+                            accessToken: resultUser.accessToken.tokenString
+                        )
+                        Auth.auth().signIn(with: credential) { _, signInError in
+                            if signInError != nil {
+                                self?.state = .signedOut
+                            }
+                        }
+                    }
+                } else {
+                    self?.state = .signedOut
+                }
+            }
         }
     }
 

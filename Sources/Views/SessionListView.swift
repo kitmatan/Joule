@@ -224,6 +224,8 @@ struct SessionListView: View {
 
 struct SessionRow: View {
     let session: ChargingSession
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
     
     var body: some View {
         HStack(spacing: 16) {
@@ -255,29 +257,31 @@ struct SessionRow: View {
                 .foregroundColor(.secondary)
                 .lineLimit(1)
                 
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 8) {
-                        if let type = session.chargingType {
-                            metricView(icon: "powerplug.fill", text: type.rawValue, color: type == .dc ? .orange : .blue)
-                        }
-                        metricView(icon: "bolt.fill", text: String(format: "%.1f kWh", session.energyAdded))
-                        metricView(icon: "clock.fill", text: String(format: "%.0f min", session.duration / 60))
-                        if session.speed > 0 {
-                            metricView(icon: "gauge.medium", text: String(format: "%.0f kW", session.speed))
-                        }
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 8) {
+                Group {
+                    if dynamicTypeSize.isAccessibilitySize {
+                        VStack(alignment: .leading, spacing: 4) {
                             if let type = session.chargingType {
                                 metricView(icon: "powerplug.fill", text: type.rawValue, color: type == .dc ? .orange : .blue)
                             }
                             metricView(icon: "bolt.fill", text: String(format: "%.1f kWh", session.energyAdded))
-                        }
-                        HStack(spacing: 8) {
                             metricView(icon: "clock.fill", text: String(format: "%.0f min", session.duration / 60))
                             if session.speed > 0 {
                                 metricView(icon: "gauge.medium", text: String(format: "%.0f kW", session.speed))
+                            }
+                        }
+                    } else {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 8) {
+                                if let type = session.chargingType {
+                                    metricView(icon: "powerplug.fill", text: type.rawValue, color: type == .dc ? .orange : .blue)
+                                }
+                                metricView(icon: "bolt.fill", text: String(format: "%.1f kWh", session.energyAdded))
+                            }
+                            HStack(spacing: 8) {
+                                metricView(icon: "clock.fill", text: String(format: "%.0f min", session.duration / 60))
+                                if session.speed > 0 {
+                                    metricView(icon: "gauge.medium", text: String(format: "%.0f kW", session.speed))
+                                }
                             }
                         }
                     }
@@ -296,19 +300,19 @@ struct SessionRow: View {
                         Image(systemName: "list.bullet.rectangle.portrait")
                             .foregroundColor(.orange)
                             .font(.caption2)
-                        Text(session.totalPrice.formatted(.currency(code: "THB").presentation(.narrow)))
+                        Text(appCurrency.format(session.totalPrice))
                             .font(.subheadline)
                             .bold()
                             .foregroundColor(.orange)
                     }
                 } else {
-                    Text(session.totalPrice.formatted(.currency(code: "THB").presentation(.narrow)))
+                    Text(appCurrency.format(session.totalPrice))
                         .font(.subheadline)
                         .bold()
                 }
                 
                 if session.energyAdded > 0 {
-                    Text(String(format: "฿%.2f/kWh", session.totalPrice / session.energyAdded))
+                    Text(appCurrency.formatRate(session.totalPrice / session.energyAdded))
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
@@ -317,7 +321,7 @@ struct SessionRow: View {
         .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(session.locationName ?? "Charging Session")\(session.vendorName != nil ? ", \(session.vendorName!)" : ""), \(session.date.formatted(.dateTime.month(.abbreviated).day().year().locale(Locale(identifier: "en_US_POSIX"))))")
-        .accessibilityValue("\(session.chargingType?.rawValue ?? "") charging, \(String(format: "%.1f kWh", session.energyAdded)) added in \(String(format: "%.0f minutes", session.duration / 60)), \(session.totalPrice.formatted(.currency(code: "THB").presentation(.narrow)))\(session.paymentStatus == .deferred ? ", Deferred" : "")")
+        .accessibilityValue("\(session.chargingType?.rawValue ?? "") charging, \(String(format: "%.1f kWh", session.energyAdded)) added in \(String(format: "%.0f minutes", session.duration / 60)), \(appCurrency.format(session.totalPrice))\(session.paymentStatus == .deferred ? ", Deferred" : "")")
     }
     
     @ViewBuilder

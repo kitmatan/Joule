@@ -5,6 +5,8 @@ struct SettingsView: View {
     @EnvironmentObject private var store: SessionStore
     @Environment(\.dismiss) private var dismiss
     
+    @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
+    @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
     @AppStorage("vehicle_preset_id") private var presetId: String = EVPresetCatalog.defaultPresetId
     @AppStorage("vehicle_name") private var vehicleName: String = VehicleProfile.defaultVehicleName
     @AppStorage("battery_chemistry") private var chemistry: BatteryChemistry = VehicleProfile.defaultChemistry
@@ -15,7 +17,7 @@ struct SettingsView: View {
     @AppStorage("ac_charging_efficiency") private var acEfficiency: Double = VehicleProfile.defaultACEfficiency
     @AppStorage("dc_charging_efficiency") private var dcEfficiency: Double = VehicleProfile.defaultDCEfficiency
     @AppStorage("home_wall_charger_kw") private var wallChargerKW: Double = VehicleProfile.defaultWallChargerKW
-    @AppStorage("home_tariff_type") private var tariffType: HomeTariffType = .standardNonTOU
+    @AppStorage("home_tariff_type") private var tariffType: HomeTariffType = .peaStandardNonTOU
     @AppStorage("home_custom_tariff_rate") private var customTariffRate: Double = VehicleProfile.defaultTariffPerKWh
     
     @State private var showingPresetSheet = ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "presets"
@@ -26,10 +28,40 @@ struct SettingsView: View {
         EVPresetCatalog.preset(forId: presetId)
     }
     
+    private var nominalRangeBinding: Binding<Double> {
+        Binding(
+            get: {
+                Double(String(format: "%.0f", unitSystem.convertFromKm(nominalRangeKm))) ?? unitSystem.convertFromKm(nominalRangeKm)
+            },
+            set: {
+                nominalRangeKm = unitSystem.convertToKm($0)
+            }
+        )
+    }
+    
     var body: some View {
         NavigationStack {
             Form {
-                // Section 1: Vehicle Model & Presets
+                // Section 1: General Preferences (Units & Currency)
+                Section {
+                    Picker("Units", selection: $unitSystem) {
+                        ForEach(UnitSystem.allCases) { sys in
+                            Text(sys.displayName).tag(sys)
+                        }
+                    }
+                    
+                    Picker("Currency", selection: $appCurrency) {
+                        ForEach(AppCurrency.allCases) { curr in
+                            Text(curr.displayName).tag(curr)
+                        }
+                    }
+                } header: {
+                    Text("Units & Currency")
+                } footer: {
+                    Text("Select your preferred distance/efficiency units and local currency formatting.")
+                }
+                
+                // Section 2: Vehicle Model & Presets
                 Section {
                     Button {
                         showingPresetSheet = true
@@ -59,7 +91,7 @@ struct SettingsView: View {
                     Text("Choose an EV preset or customize your vehicle's specific configuration below.")
                 }
                 
-                // Section 2: Battery Specifications
+                // Section 3: Battery Specifications
                 Section {
                     Picker("Battery Chemistry", selection: $chemistry) {
                         ForEach(BatteryChemistry.allCases) { chem in
@@ -93,12 +125,12 @@ struct SettingsView: View {
                         Label("Rated Range (\(rangeStandard.rawValue))", systemImage: "road.lanes")
                             .foregroundColor(.purple)
                         Spacer()
-                        TextField("km", value: $nominalRangeKm, format: .number)
+                        TextField(unitSystem.distanceUnit, value: nominalRangeBinding, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                        Text("km").foregroundColor(.secondary)
+                        Text(unitSystem.distanceUnit).foregroundColor(.secondary)
                     }
                     
                     HStack {
@@ -118,16 +150,23 @@ struct SettingsView: View {
                     Text("\(chemistry.fullName): \(chemistry.recommendedDailyTarget). Used as baseline for State of Health (SoH) and degradation analytics.")
                 }
                 
-                // Section 3: Home Charging & Tariffs
+                // Section 4: Home Charging & Tariffs
                 Section {
                     Picker("Tariff Model", selection: $tariffType) {
-                        ForEach(HomeTariffType.allCases) { tariff in
-                            Text(tariff.rawValue).tag(tariff)
+                        ForEach(TariffRegion.allCases) { region in
+                            Section(region.rawValue) {
+                                ForEach(region.tariffs) { tariff in
+                                    Text(tariff.rawValue).tag(tariff)
+                                }
+                            }
                         }
                     }
                     .onChange(of: tariffType) { _, newType in
                         if newType != .custom {
                             customTariffRate = newType.defaultRate
+                            if newType.region != .custom {
+                                appCurrency = newType.associatedCurrency
+                            }
                         }
                     }
                     
@@ -136,19 +175,19 @@ struct SettingsView: View {
                             Label("Custom Tariff Rate", systemImage: "tag.fill")
                                 .foregroundColor(.orange)
                             Spacer()
-                            TextField("฿/kWh", value: $customTariffRate, format: .number)
+                            TextField(appCurrency.rateUnitSuffix, value: $customTariffRate, format: .number)
                                 .multilineTextAlignment(.trailing)
                                 #if os(iOS)
                                 .keyboardType(.decimalPad)
                                 #endif
-                            Text("฿/kWh").foregroundColor(.secondary)
+                            Text(appCurrency.rateUnitSuffix).foregroundColor(.secondary)
                         }
                     } else {
                         HStack {
                             Label("Active Rate", systemImage: "tag.fill")
                                 .foregroundColor(.secondary)
                             Spacer()
-                            Text(String(format: "฿%.2f / kWh", tariffType.defaultRate))
+                            Text(appCurrency.formatRateSpaced(tariffType.defaultRate))
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -363,8 +402,9 @@ struct PresetPickerView: View {
     let onSelect: (EVPreset) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
+    @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
     
-    var filteredBrands: [String] {
+    private var filteredBrands: [String] {
         if searchText.isEmpty {
             return EVPresetCatalog.brands
         }
@@ -409,7 +449,7 @@ struct PresetPickerView: View {
                                                     .clipShape(Capsule())
                                             }
                                             
-                                            Text(String(format: "%.1f kWh • %.0f km (%@) • %.1f kW AC", preset.nominalCapacityKWh, preset.nominalRangeKm, preset.rangeStandard.rawValue, preset.defaultWallChargerKW))
+                                            Text(String(format: "%.1f kWh • %@ (%@) • %.1f kW AC", preset.nominalCapacityKWh, unitSystem.formatDistance(km: preset.nominalRangeKm), preset.rangeStandard.rawValue, preset.defaultWallChargerKW))
                                                 .font(.caption)
                                                 .foregroundColor(.secondary)
                                         }

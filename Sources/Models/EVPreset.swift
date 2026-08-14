@@ -91,7 +91,28 @@ enum RangeStandard: String, CaseIterable, Identifiable, Codable {
         case .custom: return "Custom Range Standard"
         }
     }
+    
+    /// Relative rating multiplier normalized against WLTP (1.00).
+    var relativeToWLTPFactor: Double {
+        switch self {
+        case .wltp: return 1.00
+        case .nedc: return 1.14
+        case .cltc: return 1.22
+        case .epa: return 0.89
+        case .custom: return 1.00
+        }
+    }
+    
+    /// Converts a nominal range rating from this standard to a target standard.
+    func convert(range: Double, to target: RangeStandard) -> Double {
+        guard self != target, self != .custom, target != .custom, self.relativeToWLTPFactor > 0 else {
+            return range
+        }
+        let wltpEquivalent = range / self.relativeToWLTPFactor
+        return wltpEquivalent * target.relativeToWLTPFactor
+    }
 }
+
 
 /// A structured vehicle preset model.
 struct EVPreset: Identifiable, Hashable {

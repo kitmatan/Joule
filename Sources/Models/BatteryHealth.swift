@@ -166,6 +166,29 @@ struct BatteryHealthSummary {
     
     let assessment: BatteryAssessment
     
+    /// Degradation rate adjusted for active unit system (per 10k km or per 10k miles).
+    func degradationPer10kDistance(unit: UnitSystem) -> Double? {
+        guard let rate = degradationPer10kKm else { return nil }
+        switch unit {
+        case .metric:
+            return rate
+        case .imperial:
+            return rate * 1.609344
+        }
+    }
+    
+    /// Formatted degradation rate string e.g. "-0.85% / 10k km" or "-1.37% / 10k mi".
+    func formattedDegradationRate(unit: UnitSystem) -> String {
+        guard let rate = degradationPer10kDistance(unit: unit) else {
+            return "Calibrating"
+        }
+        if rate > 0.05 {
+            return String(format: "-%.2f%% / %@", rate, unit.degradationDistanceUnit)
+        } else {
+            return "< 0.1% / \(unit.degradationDistanceUnit)"
+        }
+    }
+    
     enum BatteryAssessment {
         case excellent
         case good
