@@ -24,10 +24,55 @@ final class JouleTests: XCTestCase {
         XCTAssertEqual(imperial.distanceUnit, "mi")
         XCTAssertEqual(metric.efficiencyUnit, "km/kWh")
         XCTAssertEqual(imperial.efficiencyUnit, "mi/kWh")
+        XCTAssertEqual(metric.consumptionUnit, "kWh/100km")
+        XCTAssertEqual(imperial.consumptionUnit, "kWh/100mi")
 
         // Distance formatting
         XCTAssertEqual(metric.formatDistance(km: 150.0), "150 km")
         XCTAssertEqual(imperial.formatDistance(km: 160.9344), "100 mi")
+
+        // Driving Efficiency (Distance per Energy)
+        XCTAssertEqual(metric.formatEfficiency(kmPerKWh: 6.25), "6.2 km/kWh")
+        XCTAssertEqual(imperial.formatEfficiency(kmPerKWh: 6.25), "3.9 mi/kWh")
+
+        // Driving Consumption (Energy per Distance in kWh/100km and kWh/100mi)
+        // 6.25 km/kWh -> 100 / 6.25 = 16.0 kWh/100km
+        XCTAssertEqual(metric.formatConsumption(kmPerKWh: 6.25), "16.0 kWh/100km")
+        XCTAssertEqual(metric.consumptionValue(kmPerKWh: 6.25), 16.0, accuracy: 0.01)
+        XCTAssertEqual(metric.formatConsumption(energy: 40.0, distanceKm: 250.0), "16.0 kWh/100km")
+
+        // Imperial: 6.25 km/kWh = 3.88357 mi/kWh -> 100 / 3.88357 = 25.749 kWh/100mi
+        XCTAssertEqual(imperial.formatConsumption(kmPerKWh: 6.25), "25.7 kWh/100mi")
+        XCTAssertEqual(imperial.consumptionValue(kmPerKWh: 6.25), 25.749, accuracy: 0.01)
+
+        // Edge cases
+        XCTAssertEqual(metric.formatConsumption(kmPerKWh: 0), "N/A")
+        XCTAssertEqual(metric.formatConsumption(energy: 0, distanceKm: 100), "N/A")
+        XCTAssertEqual(metric.formatConsumption(energy: 50, distanceKm: 0), "N/A")
+    }
+
+    func testEfficiencyChartUnits() {
+        let metric = UnitSystem.metric
+        let imperial = UnitSystem.imperial
+
+        XCTAssertEqual(EfficiencyChartUnit.consumption.label(for: metric), "kWh/100km")
+        XCTAssertEqual(EfficiencyChartUnit.distancePerEnergy.label(for: metric), "km/kWh")
+
+        XCTAssertEqual(EfficiencyChartUnit.consumption.label(for: imperial), "kWh/100mi")
+        XCTAssertEqual(EfficiencyChartUnit.distancePerEnergy.label(for: imperial), "mi/kWh")
+
+        // Driving efficiency point conversion
+        let point = DrivingEfficiencyPoint(
+            date: Date(),
+            distanceKm: 200.0,
+            energyKWh: 32.0,
+            kmPerKWh: 200.0 / 32.0, // 6.25 km/kWh
+            kwhPer100km: (32.0 / 200.0) * 100.0 // 16.0 kWh/100km
+        )
+
+        XCTAssertEqual(point.value(for: .consumption, unitSystem: metric), 16.0, accuracy: 0.01)
+        XCTAssertEqual(point.value(for: .distancePerEnergy, unitSystem: metric), 6.25, accuracy: 0.01)
+        XCTAssertEqual(point.value(for: .distancePerEnergy, unitSystem: imperial), 6.25 * 0.621371192, accuracy: 0.01)
     }
 
     func testAppCurrencyFormatting() {

@@ -38,6 +38,14 @@ enum UnitSystem: String, CaseIterable, Identifiable, Codable {
         case .imperial: return "mi/kWh"
         }
     }
+
+    /// Driving consumption unit string.
+    var consumptionUnit: String {
+        switch self {
+        case .metric: return "kWh/100km"
+        case .imperial: return "kWh/100mi"
+        }
+    }
     
     /// Rate per distance unit suffix e.g. "/km" or "/mi".
     var perDistanceUnit: String {
@@ -91,5 +99,52 @@ enum UnitSystem: String, CaseIterable, Identifiable, Codable {
     func formatEfficiency(kmPerKWh: Double, decimals: Int = 1) -> String {
         let value = convertFromKm(kmPerKWh)
         return String(format: "%.\(decimals)f %@", value, efficiencyUnit)
+    }
+
+    /// Formats driving consumption (provided in km/kWh base) to the active unit (kWh/100km or kWh/100mi).
+    func formatConsumption(kmPerKWh: Double, decimals: Int = 1) -> String {
+        let eff = convertFromKm(kmPerKWh)
+        guard eff > 0 else { return "N/A" }
+        let value = 100.0 / eff
+        return String(format: "%.\(decimals)f %@", value, consumptionUnit)
+    }
+
+    /// Formats driving consumption directly from energy (kWh) and distance (km).
+    func formatConsumption(energy: Double, distanceKm: Double, decimals: Int = 1) -> String {
+        let dist = convertFromKm(distanceKm)
+        guard dist > 0, energy > 0 else { return "N/A" }
+        let value = (energy / dist) * 100.0
+        return String(format: "%.\(decimals)f %@", value, consumptionUnit)
+    }
+
+    /// Computes consumption value in the active unit (kWh/100km or kWh/100mi) from km/kWh base.
+    func consumptionValue(kmPerKWh: Double) -> Double {
+        let eff = convertFromKm(kmPerKWh)
+        guard eff > 0 else { return 0 }
+        return 100.0 / eff
+    }
+
+    /// Computes consumption value in the active unit (kWh/100km or kWh/100mi) from energy (kWh) and distance (km).
+    func consumptionValue(energy: Double, distanceKm: Double) -> Double {
+        let dist = convertFromKm(distanceKm)
+        guard dist > 0 else { return 0 }
+        return (energy / dist) * 100.0
+    }
+}
+
+/// Unit modes for driving efficiency charts.
+enum EfficiencyChartUnit: String, CaseIterable, Identifiable, Codable {
+    case consumption = "kWh/100km"
+    case distancePerEnergy = "km/kWh"
+
+    var id: String { rawValue }
+
+    func label(for unitSystem: UnitSystem) -> String {
+        switch self {
+        case .consumption:
+            return unitSystem.consumptionUnit
+        case .distancePerEnergy:
+            return unitSystem.efficiencyUnit
+        }
     }
 }

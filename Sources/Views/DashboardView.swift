@@ -23,6 +23,25 @@ struct LocationStat: Identifiable {
     var pricePerKWh: Double { totalEnergy > 0 ? totalCost / totalEnergy : 0 }
 }
 
+struct DrivingEfficiencyPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let distanceKm: Double
+    let energyKWh: Double
+    let kmPerKWh: Double
+    let kwhPer100km: Double
+
+    func value(for unitMode: EfficiencyChartUnit, unitSystem: UnitSystem) -> Double {
+        switch unitMode {
+        case .distancePerEnergy:
+            return unitSystem.convertFromKm(kmPerKWh)
+        case .consumption:
+            let dist = unitSystem.convertFromKm(distanceKm)
+            return dist > 0 ? (energyKWh / dist) * 100.0 : 0
+        }
+    }
+}
+
 struct DashboardView: View {
     @EnvironmentObject private var store: SessionStore
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -30,6 +49,32 @@ struct DashboardView: View {
     
     @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
     @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
+    @AppStorage("dashboard_efficiency_chart_unit") private var efficiencyChartUnit: EfficiencyChartUnit = .consumption
+
+    @State private var selectedCostMonth: Date? = nil
+    @State private var selectedEnergyMonth: Date? = nil
+    @State private var selectedEfficiencyDate: Date? = nil
+
+    private var selectedCostStat: MonthlyStat? {
+        guard let selectedCostMonth else { return nil }
+        return monthlyStats.min(by: {
+            abs($0.month.timeIntervalSince(selectedCostMonth)) < abs($1.month.timeIntervalSince(selectedCostMonth))
+        })
+    }
+
+    private var selectedEnergyStat: MonthlyStat? {
+        guard let selectedEnergyMonth else { return nil }
+        return monthlyStats.min(by: {
+            abs($0.month.timeIntervalSince(selectedEnergyMonth)) < abs($1.month.timeIntervalSince(selectedEnergyMonth))
+        })
+    }
+
+    private var selectedEfficiencyPoint: DrivingEfficiencyPoint? {
+        guard let selectedEfficiencyDate, !drivingEfficiencyPoints.isEmpty else { return nil }
+        return drivingEfficiencyPoints.min(by: {
+            abs($0.date.timeIntervalSince(selectedEfficiencyDate)) < abs($1.date.timeIntervalSince(selectedEfficiencyDate))
+        })
+    }
 
     /// Wide layout on Mac and iPad (regular width); compact two-column layout on iPhone.
     private var isWide: Bool { horizontalSizeClass == .regular }
@@ -123,10 +168,77 @@ struct DashboardView: View {
         return window.cost / convertedDist
     }
 
-    var averageSpeed: Double {
-        let speeds = store.sessions.map(\.speed).filter { $0 > 0 }
-        guard !speeds.isEmpty else { return 0 }
-        return speeds.reduce(0, +) / Double(speeds.count)
+    // MARK: - Driving Efficiency Data
+    var drivingEfficiencyPoints: [DrivingEfficiencyPoint] {
+        let logged = store.sessions
+            .filter { $0.mileage != nil }
+            .sorted { $0.date < $1.date }
+
+        guard logged.count >= 2 else { return [] }
+
+        var points: [DrivingEfficiencyPoint] = []
+        for i in 1..<logged.count {
+            let start = logged[i - 1]
+            let end = logged[i]
+            guard let startMileage = start.mileage, let endMileage = end.mileage, endMileage > startMileage else {
+                continue
+            }
+            let distance = endMileage - startMileage
+            let powering = store.sessions.filter { $0.date >= start.date && $0.date < end.date }
+            let energy = powering.reduce(0) { $0 + $1.energyAdded }
+            guard energy > 0 else { continue }
+
+            let kmPerKWh = distance / energy
+            let kwhPer100km = (energy / distance) * 100.0
+            points.append(DrivingEfficiencyPoint(
+                date: end.date,
+                distanceKm: distance,
+                energyKWh: energy,
+                kmPerKWh: kmPerKWh,
+                kwhPer100km: kwhPer100km
+            ))
+        }
+        return points
+    }
+
+    var averageDrivingEfficiencyForUnit: Double {
+        switch efficiencyChartUnit {
+        case .distancePerEnergy:
+            return unitSystem.convertFromKm(energyEfficiency)
+        case .consumption:
+            let dist = unitSystem.convertFromKm(totalDistance)
+            guard let window = drivingWindow, dist > 0 else { return 0 }
+            return (window.energy / dist) * 100.0
+        }
+    }
+
+    private var drivingEfficiencyDateSpanDays: Double {
+        let dates = drivingEfficiencyPoints.map(\.date)
+        guard let minD = dates.min(), let maxD = dates.max() else { return 0 }
+        return max(1.0, maxD.timeIntervalSince(minD) / 86400.0)
+    }
+
+    private var drivingEfficiencyDateDomain: ClosedRange<Date>? {
+        let dates = drivingEfficiencyPoints.map(\.date)
+        guard let minD = dates.min(), let maxD = dates.max() else { return nil }
+        let span = maxD.timeIntervalSince(minD)
+        if span < 86400 {
+            return minD.addingTimeInterval(-43200)...maxD.addingTimeInterval(43200)
+        }
+        let buffer = span * 0.08
+        return minD.addingTimeInterval(-buffer)...maxD.addingTimeInterval(buffer)
+    }
+
+    private func formatEfficiencyDate(_ date: Date) -> String {
+        if drivingEfficiencyDateSpanDays <= 90 {
+            return date.formatted(.dateTime.month(.abbreviated).day())
+        } else if drivingEfficiencyDateSpanDays <= 365 * 2 {
+            let month = date.formatted(.dateTime.month(.abbreviated))
+            let year = date.formatted(.dateTime.year(.twoDigits))
+            return "\(month) '\(year)"
+        } else {
+            return date.formatted(.dateTime.year())
+        }
     }
 
     // MARK: - Chart Data
@@ -160,10 +272,6 @@ struct DashboardView: View {
 
     var showsUntypedEnergy: Bool {
         monthlyStats.contains { $0.untypedEnergy > 0 }
-    }
-
-    var recentSpeedSessions: [ChargingSession] {
-        Array(store.sessions.filter { $0.speed > 0 }.prefix(15)).reversed()
     }
 
     var topLocations: [LocationStat] {
@@ -375,7 +483,7 @@ struct DashboardView: View {
                 StatCard(title: "Cost Efficiency", value: appCurrency.formatRate(averagePricePerKWh), icon: "tag.fill", color: .orange)
                 StatCard(title: "Driving Eff.", value: hasDrivingData ? unitSystem.formatEfficiency(kmPerKWh: energyEfficiency) : "N/A", icon: "leaf.fill", color: .mint)
                 StatCard(title: "Driving Cost", value: hasDrivingData ? appCurrency.formatCostPerDistance(cost: costPerDistance, distanceUnit: unitSystem.distanceUnit) : "N/A", icon: "road.lanes", color: .gray)
-                StatCard(title: "Avg Speed", value: averageSpeed > 0 ? String(format: "%.1f kW", averageSpeed) : "N/A", icon: "bolt.badge.clock.fill", color: .yellow)
+                StatCard(title: "Driving Eff. (100\(unitSystem.distanceUnit))", value: hasDrivingData ? unitSystem.formatConsumption(kmPerKWh: energyEfficiency) : "N/A", icon: "gauge.with.needle.fill", color: .teal)
             }
             .padding(.horizontal)
         }
@@ -391,27 +499,62 @@ struct DashboardView: View {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20)], spacing: 20) {
                     costChart
                     energyChart
-                    speedChart
+                    drivingEfficiencyChart
                 }
                 .padding(.horizontal)
             } else {
                 costChart
                 energyChart
-                speedChart
+                drivingEfficiencyChart
             }
         }
     }
 
     private var costChart: some View {
         ChartCard(title: "Monthly Cost (\(appCurrency.code))", insetsHorizontally: !isWide) {
-            Chart(monthlyStats) { stat in
-                BarMark(
-                    x: .value("Month", stat.month, unit: .month),
-                    y: .value("Cost", stat.cost)
-                )
-                .foregroundStyle(.green.gradient)
-                .cornerRadius(4)
+            Chart {
+                ForEach(monthlyStats) { stat in
+                    let isDimmed = selectedCostStat != nil && selectedCostStat?.id != stat.id
+                    BarMark(
+                        x: .value("Month", stat.month, unit: .month),
+                        y: .value("Cost", stat.cost)
+                    )
+                    .foregroundStyle(.green.gradient)
+                    .opacity(isDimmed ? 0.45 : 1.0)
+                    .cornerRadius(4)
+                }
+
+                if let sel = selectedCostStat {
+                    RuleMark(x: .value("Selected Month", sel.month, unit: .month))
+                        .foregroundStyle(Color.secondary.opacity(0.35))
+                        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                        .offset(yStart: -10)
+                        .annotation(position: .top, spacing: 4, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
+                            ChartTooltipCard {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(sel.month.formatted(.dateTime.year().month(.wide)))
+                                        .font(.caption2)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.secondary)
+                                    HStack(spacing: 5) {
+                                        Circle().fill(Color.green).frame(width: 7, height: 7)
+                                        Text(appCurrency.format(sel.cost))
+                                            .font(.subheadline)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.primary)
+                                    }
+                                    let totalKWh = sel.acEnergy + sel.dcEnergy + sel.untypedEnergy
+                                    if totalKWh > 0 {
+                                        Text(String(format: "%.1f kWh total", totalKWh))
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                }
             }
+            .chartXSelection(value: $selectedCostMonth)
             .chartXAxis {
                 AxisMarks(values: .stride(by: .month)) { _ in
                     AxisGridLine()
@@ -427,30 +570,85 @@ struct DashboardView: View {
 
     private var energyChart: some View {
         ChartCard(title: "Monthly Energy by Type (kWh)", insetsHorizontally: !isWide) {
-            Chart(monthlyStats) { stat in
-                BarMark(
-                    x: .value("Month", stat.month, unit: .month),
-                    y: .value("kWh", stat.acEnergy)
-                )
-                .foregroundStyle(by: .value("Type", "AC"))
-                .cornerRadius(4)
-
-                BarMark(
-                    x: .value("Month", stat.month, unit: .month),
-                    y: .value("kWh", stat.dcEnergy)
-                )
-                .foregroundStyle(by: .value("Type", "DC"))
-                .cornerRadius(4)
-
-                if showsUntypedEnergy {
+            Chart {
+                ForEach(monthlyStats) { stat in
+                    let isDimmed = selectedEnergyStat != nil && selectedEnergyStat?.id != stat.id
                     BarMark(
                         x: .value("Month", stat.month, unit: .month),
-                        y: .value("kWh", stat.untypedEnergy)
+                        y: .value("kWh", stat.acEnergy)
                     )
-                    .foregroundStyle(by: .value("Type", "Unspecified"))
+                    .foregroundStyle(by: .value("Type", "AC"))
+                    .opacity(isDimmed ? 0.45 : 1.0)
                     .cornerRadius(4)
+
+                    BarMark(
+                        x: .value("Month", stat.month, unit: .month),
+                        y: .value("kWh", stat.dcEnergy)
+                    )
+                    .foregroundStyle(by: .value("Type", "DC"))
+                    .opacity(isDimmed ? 0.45 : 1.0)
+                    .cornerRadius(4)
+
+                    if showsUntypedEnergy {
+                        BarMark(
+                            x: .value("Month", stat.month, unit: .month),
+                            y: .value("kWh", stat.untypedEnergy)
+                        )
+                        .foregroundStyle(by: .value("Type", "Unspecified"))
+                        .opacity(isDimmed ? 0.45 : 1.0)
+                        .cornerRadius(4)
+                    }
+                }
+
+                if let sel = selectedEnergyStat {
+                    RuleMark(x: .value("Selected Month", sel.month, unit: .month))
+                        .foregroundStyle(Color.secondary.opacity(0.35))
+                        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                        .offset(yStart: -10)
+                        .annotation(position: .top, spacing: 4, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
+                            ChartTooltipCard {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(sel.month.formatted(.dateTime.year().month(.wide)))
+                                        .font(.caption2)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.secondary)
+                                    let totalKWh = sel.acEnergy + sel.dcEnergy + sel.untypedEnergy
+                                    Text(String(format: "Total: %.1f kWh", totalKWh))
+                                        .font(.subheadline)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.primary)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        if sel.acEnergy > 0 {
+                                            HStack(spacing: 4) {
+                                                Circle().fill(Color.blue).frame(width: 6, height: 6)
+                                                Text(String(format: "AC: %.1f kWh", sel.acEnergy))
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
+                                        if sel.dcEnergy > 0 {
+                                            HStack(spacing: 4) {
+                                                Circle().fill(Color.orange).frame(width: 6, height: 6)
+                                                Text(String(format: "DC: %.1f kWh", sel.dcEnergy))
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
+                                        if sel.untypedEnergy > 0 {
+                                            HStack(spacing: 4) {
+                                                Circle().fill(Color.gray).frame(width: 6, height: 6)
+                                                Text(String(format: "Unspecified: %.1f kWh", sel.untypedEnergy))
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                 }
             }
+            .chartXSelection(value: $selectedEnergyMonth)
             .chartForegroundStyleScale(
                 domain: showsUntypedEnergy ? ["AC", "DC", "Unspecified"] : ["AC", "DC"],
                 range: showsUntypedEnergy ? [Color.blue, .orange, .gray] : [Color.blue, .orange]
@@ -468,26 +666,154 @@ struct DashboardView: View {
         }
     }
 
-    private var speedChart: some View {
-        ChartCard(title: "Charging Speed — Recent Sessions (kW)", insetsHorizontally: !isWide) {
-            Chart(recentSpeedSessions) { session in
-                LineMark(
-                    x: .value("Date", session.date),
-                    y: .value("Speed", session.speed)
-                )
-                .symbol(Circle())
-                .foregroundStyle(.orange)
+    private var drivingEfficiencyChart: some View {
+        ChartCard(
+            title: efficiencyChartUnit == .consumption
+                ? "Driving Efficiency — Recent (\(unitSystem.consumptionUnit))"
+                : "Driving Efficiency — Recent (\(unitSystem.efficiencyUnit))",
+            insetsHorizontally: !isWide
+        ) {
+            VStack(spacing: 12) {
+                Picker("Efficiency Unit", selection: $efficiencyChartUnit) {
+                    ForEach(EfficiencyChartUnit.allCases) { unit in
+                        Text(unit.label(for: unitSystem)).tag(unit)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.bottom, 2)
 
-                AreaMark(
-                    x: .value("Date", session.date),
-                    y: .value("Speed", session.speed)
-                )
-                .foregroundStyle(.orange.opacity(0.1))
+                if drivingEfficiencyPoints.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "leaf.circle")
+                            .font(.system(size: 32))
+                            .foregroundColor(.secondary)
+                        Text("No Driving Efficiency Data")
+                            .font(.subheadline).bold()
+                            .foregroundColor(.primary)
+                        Text("Log mileage on at least two charging sessions to view your driving efficiency trends over time.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.vertical, 24)
+                } else {
+                    let chart = Chart {
+                        ForEach(drivingEfficiencyPoints) { point in
+                            let yVal = point.value(for: efficiencyChartUnit, unitSystem: unitSystem)
+                            LineMark(
+                                x: .value("Date", point.date),
+                                y: .value("Efficiency", yVal)
+                            )
+                            .symbol(Circle())
+                            .foregroundStyle(.teal)
+
+                            AreaMark(
+                                x: .value("Date", point.date),
+                                y: .value("Efficiency", yVal)
+                            )
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.teal.opacity(0.25), .teal.opacity(0.02)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                        }
+
+                        if averageDrivingEfficiencyForUnit > 0 {
+                            RuleMark(y: .value("Average", averageDrivingEfficiencyForUnit))
+                                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                                .foregroundStyle(.mint.opacity(0.8))
+                                .annotation(position: .top, alignment: .trailing) {
+                                    Text(String(format: "Avg: %.1f %@", averageDrivingEfficiencyForUnit, efficiencyChartUnit.label(for: unitSystem)))
+                                        .font(.caption2).bold()
+                                        .foregroundColor(.mint)
+                                        .padding(.horizontal, 4)
+                                        .padding(.vertical, 2)
+                                        .background(Color(uiColor: .systemBackground).opacity(0.85))
+                                        .cornerRadius(4)
+                                }
+                        }
+
+                        if let sel = selectedEfficiencyPoint {
+                            let selVal = sel.value(for: efficiencyChartUnit, unitSystem: unitSystem)
+                            RuleMark(x: .value("Selected Date", sel.date))
+                                .foregroundStyle(Color.secondary.opacity(0.35))
+                                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                                .offset(yStart: -10)
+                                .annotation(position: .top, spacing: 6, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
+                                    ChartTooltipCard {
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            Text(sel.date.formatted(.dateTime.year().month(.abbreviated).day()))
+                                                .font(.caption2)
+                                                .fontWeight(.semibold)
+                                                .foregroundColor(.secondary)
+                                            HStack(spacing: 4) {
+                                                Circle().fill(Color.teal).frame(width: 7, height: 7)
+                                                Text(String(format: "%.1f %@", selVal, efficiencyChartUnit.label(for: unitSystem)))
+                                                    .font(.subheadline)
+                                                    .fontWeight(.bold)
+                                                    .foregroundColor(.primary)
+                                            }
+                                            let dist = unitSystem.convertFromKm(sel.distanceKm)
+                                            Text(String(format: "%.0f %@ • %.1f kWh", dist, unitSystem.distanceUnit, sel.energyKWh))
+                                                .font(.caption2)
+                                                .foregroundColor(.secondary)
+                                        }
+                                    }
+                                }
+
+                            PointMark(
+                                x: .value("Selected Date", sel.date),
+                                y: .value("Efficiency", selVal)
+                            )
+                            .symbol(Circle())
+                            .symbolSize(90)
+                            .foregroundStyle(.teal)
+                        }
+                    }
+                    .chartXSelection(value: $selectedEfficiencyDate)
+                    .chartXAxis {
+                        AxisMarks(preset: .aligned, values: .automatic(desiredCount: 4)) { value in
+                            AxisGridLine()
+                            AxisTick()
+                            AxisValueLabel {
+                                if let date = value.as(Date.self) {
+                                    Text(formatEfficiencyDate(date))
+                                }
+                            }
+                        }
+                    }
+                    .chartYAxis {
+                        AxisMarks { value in
+                            AxisGridLine()
+                            if let doubleValue = value.as(Double.self) {
+                                AxisValueLabel {
+                                    Text(String(format: "%.1f", doubleValue))
+                                }
+                            }
+                        }
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Driving Efficiency Trend")
+                    .accessibilityValue(
+                        efficiencyChartUnit == .consumption
+                            ? "Average consumption \(unitSystem.formatConsumption(kmPerKWh: energyEfficiency))"
+                            : "Average efficiency \(unitSystem.formatEfficiency(kmPerKWh: energyEfficiency))"
+                    )
+                    .accessibilityHint("Line chart showing driving efficiency trends over time, switchable between \(unitSystem.efficiencyUnit) and \(unitSystem.consumptionUnit)")
+
+                    Group {
+                        if let domain = drivingEfficiencyDateDomain {
+                            chart.chartXScale(domain: domain)
+                        } else {
+                            chart
+                        }
+                    }
+                }
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Recent Charging Speeds")
-            .accessibilityValue("Average speed \(averageSpeed > 0 ? String(format: "%.1f kW", averageSpeed) : "N/A")")
-            .accessibilityHint("Line chart showing power delivery rates for recent charging sessions")
         }
     }
 
@@ -589,7 +915,7 @@ struct ChartCard<Content: View>: View {
                 .padding(.horizontal, insetsHorizontally ? 16 : 4)
 
             content
-                .frame(minHeight: 200, idealHeight: 220)
+                .frame(minHeight: 220, idealHeight: 240)
                 .padding()
                 .background(Color.secondary.opacity(0.1))
                 .cornerRadius(12)

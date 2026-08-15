@@ -20,6 +20,65 @@ struct BatteryHealthView: View {
         }
         return .mileage
     }()
+
+    @State private var selectedDate: Date? = nil
+    @State private var selectedMileage: Double? = nil
+    @State private var selectedRangeDate: Date? = nil
+    @State private var selectedCycle: Double? = nil
+
+    private var selectedHealthPoint: BatteryHealthDataPoint? {
+        guard let selectedDate, !filteredPoints.isEmpty else { return nil }
+        return filteredPoints.min(by: {
+            abs($0.date.timeIntervalSince(selectedDate)) < abs($1.date.timeIntervalSince(selectedDate))
+        })
+    }
+
+    private var selectedHealthTrend: BatteryHealthTrendPoint? {
+        guard let selectedDate, !trendPoints.isEmpty else { return nil }
+        return trendPoints.min(by: {
+            abs($0.date.timeIntervalSince(selectedDate)) < abs($1.date.timeIntervalSince(selectedDate))
+        })
+    }
+
+    private var selectedMileagePoint: BatteryHealthDataPoint? {
+        guard let selectedMileage else { return nil }
+        let mileagePoints = filteredPoints.filter { $0.mileage != nil }
+        guard !mileagePoints.isEmpty else { return nil }
+        return mileagePoints.min(by: {
+            let m0 = unitSystem.convertFromKm($0.mileage!)
+            let m1 = unitSystem.convertFromKm($1.mileage!)
+            return abs(m0 - selectedMileage) < abs(m1 - selectedMileage)
+        })
+    }
+
+    private var selectedMileageTrend: BatteryHealthTrendPoint? {
+        guard let selectedMileage else { return nil }
+        let validTrend = trendPoints.filter { $0.mileage != nil }
+        guard !validTrend.isEmpty else { return nil }
+        return validTrend.min(by: {
+            let m0 = unitSystem.convertFromKm($0.mileage!)
+            let m1 = unitSystem.convertFromKm($1.mileage!)
+            return abs(m0 - selectedMileage) < abs(m1 - selectedMileage)
+        })
+    }
+
+    private var selectedRangePoint: BatteryHealthDataPoint? {
+        guard let selectedRangeDate else { return nil }
+        let rangePoints = filteredPoints.filter { $0.projectedFullRangeKm != nil }
+        guard !rangePoints.isEmpty else { return nil }
+        return rangePoints.min(by: {
+            abs($0.date.timeIntervalSince(selectedRangeDate)) < abs($1.date.timeIntervalSince(selectedRangeDate))
+        })
+    }
+
+    private var selectedRangeTrend: BatteryHealthTrendPoint? {
+        guard let selectedRangeDate else { return nil }
+        let validTrend = trendPoints.filter { $0.projectedFullRangeKm != nil }
+        guard !validTrend.isEmpty else { return nil }
+        return validTrend.min(by: {
+            abs($0.date.timeIntervalSince(selectedRangeDate)) < abs($1.date.timeIntervalSince(selectedRangeDate))
+        })
+    }
     
     private var isWide: Bool { horizontalSizeClass == .regular }
     
@@ -78,6 +137,65 @@ struct BatteryHealthView: View {
         service.calculateTrend(from: filteredPoints)
     }
     
+    private var dateSpanDays: Double {
+        let dates = filteredPoints.map(\.date)
+        guard let minD = dates.min(), let maxD = dates.max() else { return 0 }
+        return max(1.0, maxD.timeIntervalSince(minD) / 86400.0)
+    }
+
+    private var dateDomain: ClosedRange<Date>? {
+        let dates = filteredPoints.map(\.date)
+        guard let minD = dates.min(), let maxD = dates.max() else { return nil }
+        let span = maxD.timeIntervalSince(minD)
+        if span < 86400 {
+            return minD.addingTimeInterval(-43200)...maxD.addingTimeInterval(43200)
+        }
+        let buffer = span * 0.08
+        return minD.addingTimeInterval(-buffer)...maxD.addingTimeInterval(buffer)
+    }
+
+    private var mileageDomain: ClosedRange<Double>? {
+        let mileages = filteredPoints.compactMap(\.mileage).map { unitSystem.convertFromKm($0) }
+        guard let minM = mileages.min(), let maxM = mileages.max(), maxM > minM else { return nil }
+        let buffer = (maxM - minM) * 0.08
+        return max(0, minM - buffer)...(maxM + buffer)
+    }
+
+    private func formatMileageAxis(_ value: Double) -> String {
+        let mileages = filteredPoints.compactMap(\.mileage).map { unitSystem.convertFromKm($0) }
+        let maxM = mileages.max() ?? value
+        if maxM < 5000 {
+            let roundedVal = Int(value.rounded())
+            if roundedVal >= 1000 {
+                return "\(roundedVal.formatted(.number)) \(unitSystem.distanceUnit)"
+            } else {
+                return "\(roundedVal) \(unitSystem.distanceUnit)"
+            }
+        } else if maxM < 20000 {
+            let kVal = value / 1000.0
+            if kVal.truncatingRemainder(dividingBy: 1.0) == 0 {
+                return String(format: "%.0fk %@", kVal, unitSystem.distanceUnit)
+            } else {
+                return String(format: "%.1fk %@", kVal, unitSystem.distanceUnit)
+            }
+        } else {
+            let kVal = (value / 1000.0).rounded()
+            return String(format: "%.0fk %@", kVal, unitSystem.distanceUnit)
+        }
+    }
+
+    private func formatAxisDate(_ date: Date) -> String {
+        if dateSpanDays <= 90 {
+            return date.formatted(.dateTime.month(.abbreviated).day())
+        } else if dateSpanDays <= 365 * 2 {
+            let month = date.formatted(.dateTime.month(.abbreviated))
+            let year = date.formatted(.dateTime.year(.twoDigits))
+            return "\(month) '\(year)"
+        } else {
+            return date.formatted(.dateTime.year())
+        }
+    }
+
     private var summary: BatteryHealthSummary? {
         service.calculateSummary(from: store.sessions)
     }
@@ -384,7 +502,7 @@ struct BatteryHealthView: View {
     
     // MARK: - Chart 1: SoH Over Time
     private var sohOverTimeChart: some View {
-        Chart {
+        let chart = Chart {
             // 100% Reference Baseline
             RuleMark(y: .value("100% Nominal", 100.0))
                 .foregroundStyle(Color.secondary.opacity(0.4))
@@ -429,7 +547,47 @@ struct BatteryHealthView: View {
                 )
                 .interpolationMethod(.monotone)
             }
+
+            if let selPoint = selectedHealthPoint {
+                RuleMark(x: .value("Selected Date", selPoint.date))
+                    .foregroundStyle(Color.secondary.opacity(0.35))
+                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                    .offset(yStart: -10)
+                    .annotation(position: .top, spacing: 6, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
+                        ChartTooltipCard {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(selPoint.date.formatted(.dateTime.year().month(.abbreviated).day()))
+                                    .font(.caption2)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.secondary)
+                                HStack(spacing: 5) {
+                                    Circle().fill(pointColor(for: selPoint.confidence)).frame(width: 7, height: 7)
+                                    Text(String(format: "%.1f%% SoH", selPoint.stateOfHealth))
+                                        .font(.subheadline)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.primary)
+                                }
+                                Text(String(format: "%.1f kWh • %@", selPoint.estimatedCapacityKWh, selPoint.confidence.rawValue))
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                if let trend = selectedHealthTrend {
+                                    Text(String(format: "Trend: %.1f%%", trend.smoothedSoH))
+                                        .font(.caption2)
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                        }
+                    }
+
+                PointMark(
+                    x: .value("Selected Date", selPoint.date),
+                    y: .value("SoH", selPoint.stateOfHealth)
+                )
+                .foregroundStyle(pointColor(for: selPoint.confidence))
+                .symbolSize(90)
+            }
         }
+        .chartXSelection(value: $selectedDate)
         .chartYScale(domain: 80...105)
         .chartYAxis {
             AxisMarks(position: .leading, values: [80, 85, 90, 95, 100]) { value in
@@ -442,22 +600,35 @@ struct BatteryHealthView: View {
             }
         }
         .chartXAxis {
-            AxisMarks(values: .automatic) { _ in
+            AxisMarks(preset: .aligned, values: .automatic(desiredCount: 4)) { value in
                 AxisGridLine()
-                AxisValueLabel(format: .dateTime.month(.abbreviated).year(.twoDigits))
+                AxisTick()
+                AxisValueLabel {
+                    if let date = value.as(Date.self) {
+                        Text(formatAxisDate(date))
+                    }
+                }
             }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("State of Health Over Time")
         .accessibilityValue(summary != nil ? "Current SoH \(String(format: "%.1f%%", summary!.currentSoH)) across \(filteredPoints.count) analyzed points" : "Historical battery degradation curve")
         .accessibilityHint("Shows individual charging session estimates and smoothed trend line over time")
+
+        return Group {
+            if let domain = dateDomain {
+                chart.chartXScale(domain: domain)
+            } else {
+                chart
+            }
+        }
     }
     
     // MARK: - Chart 2: SoH Vs Mileage
     private var sohVsMileageChart: some View {
         let mileagePoints = filteredPoints.filter { $0.mileage != nil }
         
-        return Chart {
+        let chart = Chart {
             RuleMark(y: .value("100% Nominal", 100.0))
                 .foregroundStyle(Color.secondary.opacity(0.4))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
@@ -480,8 +651,63 @@ struct BatteryHealthView: View {
                 .foregroundStyle(.mint)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .interpolationMethod(.monotone)
+
+                AreaMark(
+                    x: .value("Mileage", unitSystem.convertFromKm(trend.mileage!)),
+                    yStart: .value("Baseline", 80.0),
+                    yEnd: .value("SoH", trend.smoothedSoH)
+                )
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [Color.mint.opacity(0.2), Color.mint.opacity(0.02)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .interpolationMethod(.monotone)
+            }
+
+            if let selPoint = selectedMileagePoint, let mileage = selPoint.mileage {
+                let convertedMileage = unitSystem.convertFromKm(mileage)
+                RuleMark(x: .value("Selected Mileage", convertedMileage))
+                    .foregroundStyle(Color.secondary.opacity(0.35))
+                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                    .offset(yStart: -10)
+                    .annotation(position: .top, spacing: 6, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
+                        ChartTooltipCard {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("\(Int(convertedMileage.rounded())) \(unitSystem.distanceUnit)")
+                                    .font(.caption2)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.secondary)
+                                HStack(spacing: 5) {
+                                    Circle().fill(pointColor(for: selPoint.confidence)).frame(width: 7, height: 7)
+                                    Text(String(format: "%.1f%% SoH", selPoint.stateOfHealth))
+                                        .font(.subheadline)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.primary)
+                                }
+                                Text(String(format: "%.1f kWh • %@", selPoint.estimatedCapacityKWh, selPoint.confidence.rawValue))
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                if let trend = selectedMileageTrend {
+                                    Text(String(format: "Trend: %.1f%%", trend.smoothedSoH))
+                                        .font(.caption2)
+                                        .foregroundColor(.mint)
+                                }
+                            }
+                        }
+                    }
+
+                PointMark(
+                    x: .value("Selected Mileage", convertedMileage),
+                    y: .value("SoH", selPoint.stateOfHealth)
+                )
+                .foregroundStyle(pointColor(for: selPoint.confidence))
+                .symbolSize(90)
             }
         }
+        .chartXSelection(value: $selectedMileage)
         .chartYScale(domain: 80...105)
         .chartYAxis {
             AxisMarks(position: .leading, values: [80, 85, 90, 95, 100]) { value in
@@ -494,11 +720,12 @@ struct BatteryHealthView: View {
             }
         }
         .chartXAxis {
-            AxisMarks(values: .automatic) { value in
+            AxisMarks(preset: .aligned, values: .automatic(desiredCount: 4)) { value in
                 AxisGridLine()
+                AxisTick()
                 AxisValueLabel {
                     if let d = value.as(Double.self) {
-                        Text(String(format: "%.0fk %@", d / 1000.0, unitSystem.distanceUnit))
+                        Text(formatMileageAxis(d))
                     }
                 }
             }
@@ -507,6 +734,14 @@ struct BatteryHealthView: View {
         .accessibilityLabel("State of Health Versus Mileage")
         .accessibilityValue(summary?.degradationPer10kDistance(unit: unitSystem) != nil ? "Degradation rate \(String(format: "%.2f%% per %@", summary!.degradationPer10kDistance(unit: unitSystem)!, unitSystem.degradationDistanceDescription))" : "Plot of battery health versus odometer distance")
         .accessibilityHint("Plots capacity retention against distance driven in thousands of \(unitSystem.distanceUnitLong.lowercased())")
+
+        return Group {
+            if let domain = mileageDomain {
+                chart.chartXScale(domain: domain)
+            } else {
+                chart
+            }
+        }
     }
     
     // MARK: - Chart 3: Projected Range Over Time
@@ -517,7 +752,7 @@ struct BatteryHealthView: View {
         let maxBound = nominalConverted * 1.15
         let standardTag = VehicleProfile.rangeStandard.rawValue
         
-        return Chart {
+        let chart = Chart {
             RuleMark(y: .value("Rated Range", nominalConverted))
                 .foregroundStyle(Color.green.opacity(0.5))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
@@ -545,8 +780,59 @@ struct BatteryHealthView: View {
                 .foregroundStyle(.green)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .interpolationMethod(.monotone)
+
+                AreaMark(
+                    x: .value("Date", trend.date),
+                    yStart: .value("Baseline", minBound),
+                    yEnd: .value("Range", unitSystem.convertFromKm(trend.projectedFullRangeKm!))
+                )
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [Color.green.opacity(0.2), Color.green.opacity(0.02)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .interpolationMethod(.monotone)
+            }
+
+            if let selPoint = selectedRangePoint, let rangeKm = selPoint.projectedFullRangeKm {
+                let convertedRange = unitSystem.convertFromKm(rangeKm)
+                RuleMark(x: .value("Selected Date", selPoint.date))
+                    .foregroundStyle(Color.secondary.opacity(0.35))
+                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                    .offset(yStart: -10)
+                    .annotation(position: .top, spacing: 6, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
+                        ChartTooltipCard {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(selPoint.date.formatted(.dateTime.year().month(.abbreviated).day()))
+                                    .font(.caption2)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.secondary)
+                                HStack(spacing: 5) {
+                                    Circle().fill(Color.green).frame(width: 7, height: 7)
+                                    Text("\(Int(convertedRange.rounded())) \(unitSystem.distanceUnit)")
+                                        .font(.subheadline)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.primary)
+                                }
+                                let diff = Int(convertedRange.rounded() - nominalConverted.rounded())
+                                Text(String(format: "%+d %@ vs rated", diff, unitSystem.distanceUnit))
+                                    .font(.caption2)
+                                    .foregroundColor(diff < 0 ? .orange : .secondary)
+                            }
+                        }
+                    }
+
+                PointMark(
+                    x: .value("Selected Date", selPoint.date),
+                    y: .value("Range", convertedRange)
+                )
+                .foregroundStyle(.green)
+                .symbolSize(90)
             }
         }
+        .chartXSelection(value: $selectedRangeDate)
         .chartYScale(domain: minBound...maxBound)
         .chartYAxis {
             AxisMarks(position: .leading) { value in
@@ -560,10 +846,29 @@ struct BatteryHealthView: View {
                 }
             }
         }
+        .chartXAxis {
+            AxisMarks(preset: .aligned, values: .automatic(desiredCount: 4)) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel {
+                    if let date = value.as(Date.self) {
+                        Text(formatAxisDate(date))
+                    }
+                }
+            }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Projected 100% Driving Range Over Time")
         .accessibilityValue("Estimated full range \(unitSystem.formatDistance(km: summary.currentProjectedRangeKm ?? summary.nominalRangeKm)) compared to nominal \(unitSystem.formatDistance(km: summary.nominalRangeKm))")
         .accessibilityHint("Tracks estimated driving range on full charge over time")
+
+        return Group {
+            if let domain = dateDomain {
+                chart.chartXScale(domain: domain)
+            } else {
+                chart
+            }
+        }
     }
     
     // MARK: - Chart 4: Cycle Wear vs Theoretical Life
@@ -584,6 +889,19 @@ struct BatteryHealthView: View {
                 )
                 .foregroundStyle(by: .value("Type", benchmarkLabel))
                 .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+
+                AreaMark(
+                    x: .value("Cycles", cycle),
+                    yStart: .value("Baseline", 80.0),
+                    yEnd: .value("Theoretical SoH", theoreticalSoH)
+                )
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [Color.blue.opacity(0.12), Color.blue.opacity(0.01)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             }
             
             // Actual Measured Position
@@ -593,7 +911,53 @@ struct BatteryHealthView: View {
             )
             .foregroundStyle(by: .value("Type", "Your Vehicle"))
             .symbolSize(120)
+
+            if let cycle = selectedCycle {
+                let isNearVehicle = abs(cycle - summary.equivalentFullCycles) < (maxCycles * 0.08)
+                let xPos = isNearVehicle ? summary.equivalentFullCycles : cycle
+                let theoreticalSoH = max(0, 100.0 - (20.0 * (xPos / benchmarkCycleLife)))
+                let yVal = isNearVehicle ? summary.currentSoH : theoreticalSoH
+
+                RuleMark(x: .value("Selected Cycles", xPos))
+                    .foregroundStyle(Color.secondary.opacity(0.35))
+                    .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                    .offset(yStart: -10)
+                    .annotation(position: .top, spacing: 6, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
+                        ChartTooltipCard {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(isNearVehicle ? "Your Vehicle" : "\(chemistryName) Benchmark")
+                                    .font(.caption2)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.secondary)
+                                HStack(spacing: 5) {
+                                    Circle().fill(isNearVehicle ? Color.blue : Color.secondary).frame(width: 7, height: 7)
+                                    Text(String(format: "%.1f%% SoH", yVal))
+                                        .font(.subheadline)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.primary)
+                                }
+                                Text(String(format: "%.1f Full Cycles", xPos))
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                if isNearVehicle {
+                                    let diff = summary.currentSoH - theoreticalSoH
+                                    Text(String(format: "%+.1f%% vs benchmark", diff))
+                                        .font(.caption2)
+                                        .foregroundColor(diff >= 0 ? .green : .orange)
+                                }
+                            }
+                        }
+                    }
+
+                PointMark(
+                    x: .value("Selected Cycles", xPos),
+                    y: .value("Actual SoH", yVal)
+                )
+                .foregroundStyle(isNearVehicle ? Color.blue : Color.secondary)
+                .symbolSize(80)
+            }
         }
+        .chartXSelection(value: $selectedCycle)
         .chartForegroundStyleScale([
             "Your Vehicle": Color.blue,
             benchmarkLabel: Color.secondary
@@ -610,11 +974,12 @@ struct BatteryHealthView: View {
             }
         }
         .chartXAxis {
-            AxisMarks { value in
+            AxisMarks(preset: .aligned, values: .automatic(desiredCount: 4)) { value in
                 AxisGridLine()
+                AxisTick()
                 AxisValueLabel {
                     if let d = value.as(Double.self) {
-                        Text(String(format: "%.0f cyc", d))
+                        Text("\(Int(d.rounded())) cyc")
                     }
                 }
             }

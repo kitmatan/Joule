@@ -31,8 +31,8 @@ Supports **any electric vehicle (EV)** out of the box with an extensive built-in
 
 - 📊 **Comprehensive Dashboard**:
   - Monthly stats (Cost, Energy, Average monthly costs).
-  - Driving efficiency calculations (km/kWh, ฿/km, average charging speed).
-  - Interactive Swift Charts (Monthly Cost breakdown, Stacked AC/DC energy, Charging speed trends).
+  - Driving efficiency calculations (km/kWh, kWh/100km, ฿/km).
+  - Interactive Swift Charts (Monthly Cost breakdown, Stacked AC/DC energy, Driving efficiency trends with km/kWh and kWh/100km toggle).
   - Top charging locations with per-unit price analysis.
   
 - 🔋 **Battery Health & Longitudinal Analytics**:
