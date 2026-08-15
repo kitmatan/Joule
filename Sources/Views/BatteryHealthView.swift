@@ -108,12 +108,20 @@ struct BatteryHealthView: View {
         }
     }
     
+    private var targetVehicle: Vehicle {
+        store.activeVehicle
+    }
+    
     private var service: BatteryHealthService {
-        BatteryHealthService()
+        BatteryHealthService(vehicle: targetVehicle)
+    }
+    
+    private var vehicleSessions: [ChargingSession] {
+        store.sessions(for: targetVehicle.id)
     }
     
     private var allPoints: [BatteryHealthDataPoint] {
-        service.calculateDataPoints(from: store.sessions)
+        service.calculateDataPoints(from: vehicleSessions)
     }
     
     private var filteredPoints: [BatteryHealthDataPoint] {
@@ -197,7 +205,7 @@ struct BatteryHealthView: View {
     }
 
     private var summary: BatteryHealthSummary? {
-        service.calculateSummary(from: store.sessions)
+        service.calculateSummary(from: vehicleSessions)
     }
     
     @State private var showingSettings = false
@@ -222,6 +230,9 @@ struct BatteryHealthView: View {
         .navigationTitle("Battery Health")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                GarageSwitcherMenu(allowAllOption: false)
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     showingSettings = true
@@ -875,8 +886,8 @@ struct BatteryHealthView: View {
     private func cycleWearChart(summary: BatteryHealthSummary) -> some View {
         let maxCycles = max(300.0, summary.equivalentFullCycles * 2.5)
         let sampleSteps = stride(from: 0.0, through: maxCycles, by: maxCycles / 20.0)
-        let benchmarkCycleLife = BatteryConstants.cycleLifeTo80Percent
-        let chemistryName = VehicleProfile.chemistry.rawValue
+        let benchmarkCycleLife = targetVehicle.cycleLifeTo80
+        let chemistryName = targetVehicle.chemistry.rawValue
         let benchmarkLabel = "\(chemistryName) Benchmark (\(Int(benchmarkCycleLife)) cyc)"
         
         return Chart {
@@ -1046,11 +1057,12 @@ struct BatteryHealthView: View {
                         .font(.title3)
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("\(VehicleProfile.vehicleName) (\(VehicleProfile.chemistry.rawValue)) Battery Care")
+                        Text("\(targetVehicle.name) (\(targetVehicle.chemistry.rawValue)) Battery Care")
                             .font(.subheadline).bold()
-                        Text(VehicleProfile.batteryCareTip)
+                        Text(targetVehicle.batteryCareTip)
                             .font(.caption)
                             .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .padding()

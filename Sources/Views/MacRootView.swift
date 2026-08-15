@@ -12,6 +12,25 @@ struct MacRootView: View {
     var body: some View {
         NavigationSplitView {
             List(selection: $navCoordinator.macSidebarSelection) {
+                Section("Garage") {
+                    ForEach(store.vehicles) { vehicle in
+                        Button {
+                            store.selectVehicle(id: vehicle.id)
+                        } label: {
+                            HStack {
+                                Label(vehicle.name, systemImage: "car.side.fill")
+                                Spacer()
+                                if store.selectedVehicleId == vehicle.id || (store.selectedVehicleId == nil && vehicle.isDefault) {
+                                    Image(systemName: "checkmark")
+                                        .font(.caption2)
+                                        .foregroundStyle(.tint)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
                 Section("Overview") {
                     Label("Dashboard", systemImage: "chart.bar.xaxis")
                         .tag(MacSidebarDestination.dashboard)
@@ -24,7 +43,7 @@ struct MacRootView: View {
                 Section("History") {
                     ForEach(SessionFilter.allCases) { filter in
                         Label(filter.sidebarTitle, systemImage: filter.icon)
-                            .badge(store.sessions.filter { filter.matches($0) }.count)
+                            .badge(store.sessions(for: store.selectedVehicleId).filter { filter.matches($0) }.count)
                             .tag(MacSidebarDestination.history(filter))
                     }
                 }
@@ -67,7 +86,7 @@ struct MacRootView: View {
         }
         .fileExporter(
             isPresented: $navCoordinator.showingExporter,
-            document: CSVDocument(text: CSVExporter.generateCSV(from: store.sessions)),
+            document: CSVDocument(text: CSVExporter.generateCSV(from: store.sessions, vehicles: store.vehicles)),
             contentType: .commaSeparatedText,
             defaultFilename: "Joule_Export"
         ) { _ in }
@@ -159,11 +178,16 @@ struct MacHistoryView: View {
     @State private var sessionToEdit: ChargingSession?
     @State private var sessionToDelete: ChargingSession?
 
+    var displayedSessions: [ChargingSession] {
+        store.sessions(for: store.selectedVehicleId)
+    }
+
     var filteredSessions: [ChargingSession] {
-        store.sessions.filter { session in
+        displayedSessions.filter { session in
             guard filter.matches(session) else { return false }
             guard !searchText.isEmpty else { return true }
-            let haystack = [session.locationName, session.vendorName, session.notes]
+            let vehicleName = session.vehicleId.flatMap { store.vehicleName(for: $0) }
+            let haystack = [session.locationName, session.vendorName, session.notes, vehicleName]
                 .compactMap { $0 }
                 .joined(separator: " ")
             return haystack.localizedCaseInsensitiveContains(searchText)
@@ -334,16 +358,30 @@ struct MacHistoryView: View {
 
 /// Compact row tuned for the narrow Mac list column.
 struct MacSessionRow: View {
+    @EnvironmentObject private var store: SessionStore
     let session: ChargingSession
     @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
-                Text(session.locationName ?? "Unknown Location")
-                    .font(.headline)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                HStack(spacing: 6) {
+                    Text(session.locationName ?? "Unknown Location")
+                        .font(.headline)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                    
+                    if store.vehicles.count > 1, let vId = session.vehicleId, !vId.isEmpty {
+                        let vName = store.vehicleName(for: vId)
+                        Text(vName)
+                            .font(.caption2).bold()
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color.blue.opacity(0.12))
+                            .foregroundColor(.blue)
+                            .clipShape(Capsule())
+                    }
+                }
                 Spacer(minLength: 8)
                 Text(appCurrency.format(session.totalPrice))
                     .font(.subheadline).bold()

@@ -10,6 +10,7 @@ struct AddSessionView: View {
         self.sessionToEdit = sessionToEdit
         
         if let session = sessionToEdit {
+            _selectedVehicleId = State(initialValue: session.vehicleId ?? "")
             _locationName = State(initialValue: session.locationName ?? "")
             _vendorName = State(initialValue: session.vendorName ?? "")
             _date = State(initialValue: session.date)
@@ -35,6 +36,7 @@ struct AddSessionView: View {
     @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
     @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
 
+    @State private var selectedVehicleId: String = ""
     @State private var locationName = ""
     @State private var vendorName = ""
     @State private var date = Date()
@@ -55,6 +57,13 @@ struct AddSessionView: View {
     @State private var paymentStatus: PaymentStatus = .paidUpfront
     @State private var homeTariff: HomeTariffType = VehicleProfile.tariffType
     @State private var notes = ""
+
+    private var currentVehicle: Vehicle {
+        if !selectedVehicleId.isEmpty, let v = store.vehicle(for: selectedVehicleId) {
+            return v
+        }
+        return store.activeVehicle
+    }
 
     private var isHomeCharging: Bool { locationType == .home }
 
@@ -155,6 +164,24 @@ struct AddSessionView: View {
     var body: some View {
         NavigationStack {
             Form {
+                if store.vehicles.count > 1 {
+                    Section {
+                        Picker("Vehicle", selection: $selectedVehicleId) {
+                            ForEach(store.vehicles) { v in
+                                Text(v.name).tag(v.id)
+                            }
+                        }
+                        .onChange(of: selectedVehicleId) { _, newId in
+                            if let v = store.vehicle(for: newId) {
+                                homeTariff = v.tariffType
+                                applyHomeEstimate()
+                            }
+                        }
+                    } header: {
+                        Label("Vehicle", systemImage: "car.side.fill")
+                    }
+                }
+                
                 Section {
                     Picker("Location Type", selection: $locationType) {
                         Text("Public").tag(LocationType.publicStation)
@@ -466,6 +493,14 @@ struct AddSessionView: View {
                         .disabled(!canSave)
                 }
             }
+            .onAppear {
+                if selectedVehicleId.isEmpty {
+                    selectedVehicleId = store.selectedVehicleId ?? store.activeVehicle.id
+                }
+                if let v = store.vehicle(for: selectedVehicleId) {
+                    homeTariff = v.tariffType
+                }
+            }
         }
     }
     
@@ -483,16 +518,16 @@ struct AddSessionView: View {
               let end = endPercentage,
               end > start else { return nil }
 
-        let energy = (VehicleProfile.wallEnergyKWh(socDelta: end - start) * 10).rounded() / 10
+        let energy = (currentVehicle.wallEnergyKWh(socDelta: end - start) * 10).rounded() / 10
         let endsFull = end >= VehicleProfile.fullChargeSoC
-        let minutes = VehicleProfile.durationMinutes(wallEnergyKWh: energy, endsFull: endsFull).rounded()
+        let minutes = currentVehicle.durationMinutes(wallEnergyKWh: energy, endsFull: endsFull).rounded()
 
         return (energy, minutes)
     }
 
     private func homeFee(forEnergy kWh: Double) -> Double {
-        let rate = homeTariff == .custom ? VehicleProfile.customTariffRate : homeTariff.defaultRate
-        return (VehicleProfile.homeCost(wallEnergyKWh: kWh, rateOverride: rate) * 100).rounded() / 100
+        let rate = homeTariff == .custom ? currentVehicle.customTariffRate : homeTariff.defaultRate
+        return (currentVehicle.homeCost(wallEnergyKWh: kWh, rateOverride: rate) * 100).rounded() / 100
     }
 
     private func applyHomeEstimate(overwriting: Bool = true) {
@@ -516,6 +551,7 @@ struct AddSessionView: View {
         var newSession = sessionToEdit ?? ChargingSession()
         let values = resolved
 
+        newSession.vehicleId = selectedVehicleId.isEmpty ? store.activeVehicle.id : selectedVehicleId
         newSession.locationName = locationName.isEmpty ? "Unknown Location" : locationName
         newSession.vendorName = vendorName.isEmpty ? nil : vendorName
         newSession.date = date

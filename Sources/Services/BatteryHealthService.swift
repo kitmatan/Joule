@@ -20,6 +20,13 @@ struct BatteryHealthService {
         self.dcEfficiency = dcEfficiency
     }
     
+    init(vehicle: Vehicle) {
+        self.nominalCapacityKWh = vehicle.nominalCapacityKWh
+        self.nominalRangeKm = vehicle.nominalRangeKm
+        self.acEfficiency = vehicle.acEfficiency
+        self.dcEfficiency = vehicle.dcEfficiency
+    }
+    
     /// Resolves charging efficiency for a session based on type, location, and speed.
     func efficiency(for session: ChargingSession) -> Double {
         if let type = session.chargingType {

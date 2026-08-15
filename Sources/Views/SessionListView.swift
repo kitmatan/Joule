@@ -53,11 +53,16 @@ struct SessionListView: View {
     @State private var searchText = ""
     @State private var filter: SessionFilter = .all
 
+    var displayedSessions: [ChargingSession] {
+        store.sessions(for: store.selectedVehicleId)
+    }
+
     var filteredSessions: [ChargingSession] {
-        store.sessions.filter { session in
+        displayedSessions.filter { session in
             guard filter.matches(session) else { return false }
             guard !searchText.isEmpty else { return true }
-            let haystack = [session.locationName, session.vendorName, session.notes]
+            let vehicleName = session.vehicleId.flatMap { store.vehicleName(for: $0) }
+            let haystack = [session.locationName, session.vendorName, session.notes, vehicleName]
                 .compactMap { $0 }
                 .joined(separator: " ")
             return haystack.localizedCaseInsensitiveContains(searchText)
@@ -160,6 +165,9 @@ struct SessionListView: View {
             }
             .navigationTitle("History")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    GarageSwitcherMenu(allowAllOption: true)
+                }
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 16) {
                         Menu {
@@ -256,6 +264,7 @@ struct SessionListView: View {
 }
 
 struct SessionRow: View {
+    @EnvironmentObject private var store: SessionStore
     let session: ChargingSession
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
@@ -274,10 +283,23 @@ struct SessionRow: View {
             
             // Details
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.locationName ?? "Unknown Location")
-                    .font(.headline)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                HStack(spacing: 6) {
+                    Text(session.locationName ?? "Unknown Location")
+                        .font(.headline)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                    
+                    if store.vehicles.count > 1, let vId = session.vehicleId, !vId.isEmpty {
+                        let vName = store.vehicleName(for: vId)
+                        Text(vName)
+                            .font(.caption2).bold()
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color.blue.opacity(0.12))
+                            .foregroundColor(.blue)
+                            .clipShape(Capsule())
+                    }
+                }
                 
                 HStack(spacing: 4) {
                     if let vendor = session.vendorName, !vendor.isEmpty {

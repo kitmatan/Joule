@@ -25,8 +25,8 @@ struct CSVDocument: FileDocument {
 }
 
 enum CSVExporter {
-    static func generateCSV(from sessions: [ChargingSession]) -> String {
-        var csv = "ID,Date,Location,Vendor,Mileage (km),Duration (min),Energy Added (kWh),Average Speed (kW),Start SoC (%),End SoC (%),Start Range (km),End Range (km),Charging Fee,Booking Fee,Overtime Fee,Price Per Unit,Total Price,Notes,Type,LocationType,PaymentStatus\n"
+    static func generateCSV(from sessions: [ChargingSession], vehicles: [Vehicle] = []) -> String {
+        var csv = "ID,Date,Location,Vendor,Mileage (km),Duration (min),Energy Added (kWh),Average Speed (kW),Start SoC (%),End SoC (%),Start Range (km),End Range (km),Charging Fee,Booking Fee,Overtime Fee,Price Per Unit,Total Price,Notes,Type,LocationType,PaymentStatus,Vehicle\n"
 
         let formatter = DateFormatter()
         // Fixed-format dates must not be written through the user's calendar: under a Buddhist-era
@@ -54,6 +54,15 @@ enum CSVExporter {
             let typeStr = session.chargingType?.rawValue ?? ""
             let locTypeStr = session.locationType?.rawValue ?? ""
             let payStatStr = session.paymentStatus?.rawValue ?? ""
+            
+            var vehicleName = ""
+            if let vId = session.vehicleId, !vId.isEmpty {
+                if let matched = vehicles.first(where: { $0.id == vId }) {
+                    vehicleName = matched.name
+                } else {
+                    vehicleName = vId
+                }
+            }
 
             let row = [
                 escapeCSV(idStr),
@@ -76,7 +85,8 @@ enum CSVExporter {
                 escapeCSV(session.notes),
                 escapeCSV(typeStr),
                 escapeCSV(locTypeStr),
-                escapeCSV(payStatStr)
+                escapeCSV(payStatStr),
+                escapeCSV(vehicleName)
             ].joined(separator: ",") + "\n"
 
             csv.append(row)

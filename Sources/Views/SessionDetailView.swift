@@ -27,14 +27,33 @@ struct SessionDetailView: View {
 
 /// Platform-neutral detail content, shared by the iOS push view and the macOS detail pane.
 struct SessionDetailContent: View {
+    @EnvironmentObject private var store: SessionStore
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
     @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
 
     var session: ChargingSession
 
+    private var sessionVehicle: Vehicle? {
+        if let vId = session.vehicleId {
+            return store.vehicle(for: vId)
+        }
+        return store.activeVehicle
+    }
+
     private var efficiency: Double {
         session.energyAdded > 0 ? session.totalPrice / session.energyAdded : 0
+    }
+
+    private var sessionSavings: GasSavingsSummary {
+        let vehicle = sessionVehicle ?? store.activeVehicle
+        return GasComparisonSettings.calculateSavings(
+            energyKWh: session.energyAdded,
+            evCost: session.totalPrice,
+            ratedEfficiencyKmPerKWh: vehicle.ratedEfficiencyKmPerKWh,
+            currency: appCurrency,
+            unitSystem: unitSystem
+        )
     }
 
     var body: some View {
@@ -86,6 +105,11 @@ struct SessionDetailContent: View {
                     .padding(.horizontal)
                 
                 VStack(spacing: 0) {
+                    if let vehicle = sessionVehicle {
+                        DetailRow(title: "Vehicle", value: vehicle.name, icon: "car.side.fill")
+                        Divider().padding(.leading, 44)
+                    }
+                    
                     if let mileage = session.mileage {
                         DetailRow(title: "Mileage", value: unitSystem.formatDistance(km: mileage), icon: "speedometer")
                         Divider().padding(.leading, 44)
@@ -146,6 +170,35 @@ struct SessionDetailContent: View {
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("Estimated Pack Capacity")
                         .accessibilityValue("\(String(format: "%.1f kWh", point.estimatedCapacityKWh)), \(String(format: "%.1f%%", point.stateOfHealth)) State of Health, \(point.confidence.description) confidence")
+                    }
+
+                    if sessionSavings.gasCost > 0 {
+                        Divider().padding(.leading, 44)
+                        HStack {
+                            Image(systemName: "fuelpump.fill")
+                                .foregroundColor(.orange)
+                                .frame(width: 24)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Gas Equivalent")
+                                    .font(.body)
+                                Text(appCurrency.format(sessionSavings.gasCost))
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(appCurrency.format(sessionSavings.netSavings))
+                                    .foregroundColor(.green)
+                                    .font(.subheadline).bold()
+                                Text(String(format: "Saved (%.0f%%)", sessionSavings.savingsPercentage))
+                                    .font(.caption2)
+                                    .foregroundColor(.green)
+                            }
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 16)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Cost Savings vs Gas: Saved \(appCurrency.format(sessionSavings.netSavings)), gas equivalent \(appCurrency.format(sessionSavings.gasCost))")
                     }
                 }
                 .background(Color.secondary.opacity(0.1))

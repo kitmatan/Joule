@@ -97,6 +97,7 @@ struct CSVParser {
         let typeIdx = colIndex(["type"], fallback: 18)
         let locTypeIdx = colIndex(["locationtype", "location type"], fallback: 19)
         let payStatIdx = colIndex(["paymentstatus", "payment status", "payment"], fallback: 20)
+        let vehicleIdx = colIndex(["vehicle", "car", "vehicleid"], fallback: 21)
 
         var result = CSVImportResult()
         let formatter = DateFormatter()
@@ -141,6 +142,7 @@ struct CSVParser {
             let ppu = number(valAt(ppuIdx)) ?? 0
             let total = number(valAt(totalIdx)) ?? 0
             let notes = optional(valAt(notesIdx))
+            let vehicleId = optional(valAt(vehicleIdx))
 
             let chargingType = ChargingType(rawValue: trimmed(valAt(typeIdx)))
             let locationType = LocationType(rawValue: trimmed(valAt(locTypeIdx)))
@@ -148,6 +150,7 @@ struct CSVParser {
 
             let session = ChargingSession(
                 id: id,
+                vehicleId: vehicleId,
                 locationName: locationName,
                 vendorName: vendorName,
                 date: date,

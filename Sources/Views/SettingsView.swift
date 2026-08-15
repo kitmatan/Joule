@@ -19,8 +19,13 @@ struct SettingsView: View {
     @AppStorage("home_wall_charger_kw") private var wallChargerKW: Double = VehicleProfile.defaultWallChargerKW
     @AppStorage("home_tariff_type") private var tariffType: HomeTariffType = .peaStandardNonTOU
     @AppStorage("home_custom_tariff_rate") private var customTariffRate: Double = VehicleProfile.defaultTariffPerKWh
+    @AppStorage("gas_baseline_preset") private var gasPreset: GasBaselinePreset = GasComparisonSettings.defaultPreset
+    @AppStorage("gas_fuel_efficiency_km_per_l") private var gasEfficiencyKmPerL: Double = GasComparisonSettings.defaultEfficiencyKmPerL
+    @AppStorage("gas_custom_fuel_price") private var gasFuelPrice: Double = GasComparisonSettings.defaultFuelPriceTHB
     
     @State private var showingPresetSheet = ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "presets"
+    @State private var showingGarageManagement = false
+    @State private var showingAddVehicle = false
     @State private var showingSignOutAlert = false
     @State private var showingResetAlert = false
     
@@ -39,9 +44,87 @@ struct SettingsView: View {
         )
     }
     
+    private var gasEfficiencyBinding: Binding<Double> {
+        Binding(
+            get: {
+                switch unitSystem {
+                case .metric:
+                    return gasEfficiencyKmPerL
+                case .imperial:
+                    let mpg = GasComparisonSettings.convertKmPerLToMPG(gasEfficiencyKmPerL)
+                    return (mpg * 10).rounded() / 10
+                }
+            },
+            set: { newValue in
+                switch unitSystem {
+                case .metric:
+                    gasEfficiencyKmPerL = max(0.1, newValue)
+                case .imperial:
+                    gasEfficiencyKmPerL = max(0.1, GasComparisonSettings.convertMPGToKmPerL(newValue))
+                }
+            }
+        )
+    }
+    
+    private var effectiveGasCostPerDistance: Double {
+        let eff = GasComparisonSettings.activeEfficiency(unitSystem: unitSystem)
+        guard eff > 0 else { return 0 }
+        let price = gasFuelPrice > 0 ? gasFuelPrice : GasComparisonSettings.defaultFuelPrice(for: appCurrency, unitSystem: unitSystem)
+        return price / eff
+    }
+    
     var body: some View {
         NavigationStack {
             Form {
+                // Section 0: Multi-Vehicle Garage
+                Section {
+                    HStack(spacing: 12) {
+                        Image(systemName: "car.side.fill")
+                            .font(.title2)
+                            .foregroundColor(.blue)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 6) {
+                                Text(store.activeVehicle.name)
+                                    .font(.headline)
+                                Text("Active")
+                                    .font(.caption2).bold()
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.blue.opacity(0.15))
+                                    .foregroundColor(.blue)
+                                    .clipShape(Capsule())
+                            }
+                            Text(String(format: "%@ • %.1f kWh • %@", store.activeVehicle.chemistry.badgeTitle, store.activeVehicle.nominalCapacityKWh, unitSystem.formatDistance(km: store.activeVehicle.nominalRangeKm)))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                    
+                    Button {
+                        showingGarageManagement = true
+                    } label: {
+                        HStack {
+                            Label("Manage Garage (\(store.vehicles.count) \(store.vehicles.count == 1 ? "Vehicle" : "Vehicles"))…", systemImage: "car.2.fill")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    Button {
+                        showingAddVehicle = true
+                    } label: {
+                        Label("Add New Vehicle…", systemImage: "plus.circle")
+                    }
+                } header: {
+                    Text("Multi-Vehicle Garage")
+                } footer: {
+                    Text("Manage multiple EV profiles with custom battery chemistries, tariffs, and gas baselines.")
+                }
+
                 // Section 1: General Preferences (Units & Currency)
                 Section {
                     Picker("Units", selection: $unitSystem) {
@@ -232,6 +315,53 @@ struct SettingsView: View {
                     Text("Standard AC conversion efficiency (90%) and DC dispenser efficiency (95%).")
                 }
                 
+                // Section 5: Gas Comparison Baseline
+                Section {
+                    Picker("Gas Baseline Archetype", selection: $gasPreset) {
+                        ForEach(GasBaselinePreset.allCases) { preset in
+                            Text(preset.title(for: unitSystem)).tag(preset)
+                        }
+                    }
+                    .onChange(of: gasPreset) { _, newPreset in
+                        if newPreset != .custom {
+                            gasEfficiencyKmPerL = newPreset.defaultEfficiencyKmPerL
+                        }
+                    }
+                    
+                    HStack {
+                        Label("Fuel Economy", systemImage: "fuelpump.fill")
+                            .foregroundColor(.orange)
+                        Spacer()
+                        TextField(GasComparisonSettings.efficiencyUnit(unitSystem: unitSystem), value: gasEfficiencyBinding, format: .number)
+                            .multilineTextAlignment(.trailing)
+                            #if os(iOS)
+                            .keyboardType(.decimalPad)
+                            #endif
+                            .onChange(of: gasEfficiencyKmPerL) { _, _ in
+                                if gasPreset != .custom && gasEfficiencyKmPerL != gasPreset.defaultEfficiencyKmPerL {
+                                    gasPreset = .custom
+                                }
+                            }
+                        Text(GasComparisonSettings.efficiencyUnit(unitSystem: unitSystem)).foregroundColor(.secondary)
+                    }
+                    
+                    HStack {
+                        Label("Fuel Price", systemImage: "tag.fill")
+                            .foregroundColor(.green)
+                        Spacer()
+                        TextField("\(appCurrency.symbol)/\(GasComparisonSettings.fuelVolumeUnit(unitSystem: unitSystem))", value: $gasFuelPrice, format: .number)
+                            .multilineTextAlignment(.trailing)
+                            #if os(iOS)
+                            .keyboardType(.decimalPad)
+                            #endif
+                        Text("\(appCurrency.symbol)/\(GasComparisonSettings.fuelVolumeUnit(unitSystem: unitSystem))").foregroundColor(.secondary)
+                    }
+                } header: {
+                    Text("Gas Engine Baseline (Savings Calculator)")
+                } footer: {
+                    Text("\(gasPreset.subtitle) Equivalent gas running cost: \(appCurrency.formatCostPerDistance(cost: effectiveGasCostPerDistance, distanceUnit: unitSystem.distanceUnit)).")
+                }
+                
                 // Section 5: Cloud Sync & Storage
                 Section {
                     if auth.isSignedIn {
@@ -398,6 +528,12 @@ struct SettingsView: View {
                     VehicleProfile.applyPreset(preset)
                 }
                 .frame(minWidth: Platform.isMac ? 500 : nil, minHeight: Platform.isMac ? 600 : nil)
+            }
+            .sheet(isPresented: $showingGarageManagement) {
+                GarageManagementView()
+            }
+            .sheet(isPresented: $showingAddVehicle) {
+                VehicleEditorView(mode: .create)
             }
             .confirmationDialog("Sign Out?", isPresented: $showingSignOutAlert, titleVisibility: .visible) {
                 Button("Sign Out", role: .destructive) {

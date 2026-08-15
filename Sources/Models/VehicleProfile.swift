@@ -211,6 +211,11 @@ struct VehicleProfile {
         return kWh * rate
     }
     
+    /// Rated driving efficiency in km/kWh based on rated range and nominal pack capacity.
+    static var ratedEfficiencyKmPerKWh: Double {
+        nominalCapacityKWh > 0 ? nominalRangeKm / nominalCapacityKWh : 6.0
+    }
+    
     /// Reset vehicle parameters back to the active preset or factory defaults.
     static func resetToDefaults() {
         if let preset = EVPresetCatalog.preset(forId: presetId) {
@@ -229,5 +234,6 @@ struct VehicleProfile {
         dcEfficiency = defaultDCEfficiency
         tariffType = .peaStandardNonTOU
         customTariffRate = defaultTariffPerKWh
+        GasComparisonSettings.resetToDefaults()
     }
 }

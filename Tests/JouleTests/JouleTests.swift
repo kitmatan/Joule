@@ -170,4 +170,38 @@ Date,Location,Vendor,Energy (kWh),Duration (min),Speed (kW),Charging Fee,Booking
         XCTAssertEqual(sessions[2].chargingFee, 65.00)
         XCTAssertEqual(sessions[2].totalPrice, 65.00)
     }
+
+    func testDashboardHeroMetrics() {
+        let vehicle = Vehicle(
+            name: "Aion V Plus",
+            chemistry: .lfp,
+            nominalCapacityKWh: 72.0,
+            nominalRangeKm: 505.0,
+            isDefault: true
+        )
+        
+        let session1 = ChargingSession(
+            date: Date(),
+            duration: 1800,
+            energyAdded: 35.0,
+            chargingFee: 175.0,
+            totalPrice: 175.0,
+            endPercentage: 80
+        )
+        
+        XCTAssertEqual(vehicle.name, "Aion V Plus")
+        XCTAssertEqual(vehicle.chemistry.rawValue, "LFP")
+        XCTAssertEqual(session1.endPercentage, 80)
+        XCTAssertEqual(session1.energyAdded, 35.0)
+        
+        let savings = GasComparisonSettings.calculateSavings(
+            energyKWh: 35.0,
+            evCost: 175.0,
+            ratedEfficiencyKmPerKWh: 6.5,
+            currency: .thb,
+            unitSystem: .metric
+        )
+        XCTAssertGreaterThan(savings.gasCost, 0)
+        XCTAssertGreaterThan(savings.netSavings, 0)
+    }
 }

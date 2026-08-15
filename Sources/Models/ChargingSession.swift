@@ -26,6 +26,7 @@ enum PaymentStatus: String, Codable, CaseIterable, Identifiable {
 
 struct ChargingSession: Identifiable, Codable {
     @DocumentID var id: String?
+    var vehicleId: String?
     var locationName: String?
     var vendorName: String?
     var date: Date
@@ -49,6 +50,7 @@ struct ChargingSession: Identifiable, Codable {
     
     init(
         id: String? = nil,
+        vehicleId: String? = nil,
         locationName: String? = nil,
         vendorName: String? = nil,
         date: Date = Date(),
@@ -71,6 +73,7 @@ struct ChargingSession: Identifiable, Codable {
         notes: String? = nil
     ) {
         self.id = id
+        self.vehicleId = vehicleId
         self.locationName = locationName
         self.vendorName = vendorName
         self.date = date
@@ -95,6 +98,7 @@ struct ChargingSession: Identifiable, Codable {
 
     enum CodingKeys: String, CodingKey {
         case id
+        case vehicleId
         case locationName
         case vendorName
         case date
@@ -120,6 +124,7 @@ struct ChargingSession: Identifiable, Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decodeIfPresent(String.self, forKey: .id)
+        self.vehicleId = try container.decodeIfPresent(String.self, forKey: .vehicleId)
         self.locationName = try container.decodeIfPresent(String.self, forKey: .locationName)
         self.vendorName = try container.decodeIfPresent(String.self, forKey: .vendorName)
         self.date = try container.decodeIfPresent(Date.self, forKey: .date) ?? Date()
@@ -145,6 +150,7 @@ struct ChargingSession: Identifiable, Codable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeIfPresent(id, forKey: .id)
+        try container.encodeIfPresent(vehicleId, forKey: .vehicleId)
         try container.encodeIfPresent(locationName, forKey: .locationName)
         try container.encodeIfPresent(vendorName, forKey: .vendorName)
         try container.encode(date, forKey: .date)
@@ -225,6 +231,11 @@ struct ChargingSession: Identifiable, Codable {
         // Prefer non-empty ID (prefer Firestore-style document IDs over local UUIDs if possible)
         if result.id == nil || result.id?.isEmpty == true {
             result.id = other.id
+        }
+
+        // Vehicle ID
+        if (result.vehicleId == nil || result.vehicleId?.isEmpty == true) && other.vehicleId != nil {
+            result.vehicleId = other.vehicleId
         }
 
         // Location & Vendor

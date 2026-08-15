@@ -38,23 +38,76 @@ class SessionStore: ObservableObject {
     private static let maxBatchSize = 500
 
     @Published var sessions: [ChargingSession] = []
+    @Published var vehicles: [Vehicle] = []
+    @Published var selectedVehicleId: String? = nil
     @Published private(set) var syncStatus: SyncStatus = .localOnly
 
     private let alerts: AlertCenter
     private var db = Firestore.firestore()
     private var listenerRegistration: ListenerRegistration?
+    private var vehicleListenerRegistration: ListenerRegistration?
     private(set) var userID: String?
 
     init(alerts: AlertCenter) {
         self.alerts = alerts
         // Synchronously load from local storage so UI renders instantly on startup.
-        let local = loadLocalSessions()
-        self.sessions = local
+        let localSessions = loadLocalSessions()
+        self.sessions = localSessions
+        
+        let localVehicles = loadLocalVehicles()
+        self.vehicles = localVehicles
+        
+        let savedActiveId = UserDefaults.standard.string(forKey: "active_vehicle_id")
+        if let savedActiveId, localVehicles.contains(where: { $0.id == savedActiveId }) {
+            self.selectedVehicleId = savedActiveId
+        } else {
+            self.selectedVehicleId = localVehicles.first(where: { $0.isDefault })?.id ?? localVehicles.first?.id
+        }
+        
         self.syncStatus = .localOnly
     }
 
     deinit {
         listenerRegistration?.remove()
+        vehicleListenerRegistration?.remove()
+    }
+
+    // MARK: - Active & Default Vehicle Resolution
+
+    var activeVehicle: Vehicle {
+        if let selectedVehicleId, let vehicle = vehicles.first(where: { $0.id == selectedVehicleId }) {
+            return vehicle
+        }
+        return vehicles.first(where: { $0.isDefault }) ?? vehicles.first ?? Vehicle.createDefaultFromLegacy()
+    }
+    
+    var defaultVehicle: Vehicle {
+        vehicles.first(where: { $0.isDefault }) ?? vehicles.first ?? Vehicle.createDefaultFromLegacy()
+    }
+    
+    func vehicle(for id: String?) -> Vehicle? {
+        guard let id else { return nil }
+        return vehicles.first(where: { $0.id == id })
+    }
+    
+    func vehicleName(for id: String?) -> String {
+        guard let id, let vehicle = vehicle(for: id) else {
+            return activeVehicle.name
+        }
+        return vehicle.name
+    }
+    
+    /// Returns sessions filtered for a specific vehicle or all sessions if vehicleId is nil.
+    func sessions(for vehicleId: String?) -> [ChargingSession] {
+        guard let vehicleId else { return sessions }
+        let defaultId = defaultVehicle.id
+        return sessions.filter { session in
+            if let sid = session.vehicleId, !sid.isEmpty {
+                return sid == vehicleId
+            }
+            // Legacy / unassigned sessions belong to the primary default vehicle
+            return vehicleId == defaultId || vehicles.count <= 1
+        }
     }
 
     // MARK: - Local Persistence
@@ -66,6 +119,15 @@ class SessionStore: ObservableObject {
             try? fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
         }
         return folder.appendingPathComponent("joule_sessions.json")
+    }
+
+    private var localStorageVehiclesURL: URL {
+        let fileManager = FileManager.default
+        let folder = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? URL.documentsDirectory
+        if !fileManager.fileExists(atPath: folder.path) {
+            try? fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
+        }
+        return folder.appendingPathComponent("joule_vehicles.json")
     }
 
     private func loadLocalSessions() -> [ChargingSession] {
@@ -93,6 +155,153 @@ class SessionStore: ObservableObject {
         } catch {
             print("Failed to save local sessions: \(error)")
         }
+    }
+
+    private func loadLocalVehicles() -> [Vehicle] {
+        guard FileManager.default.fileExists(atPath: localStorageVehiclesURL.path) else {
+            let initial = Vehicle.createDefaultFromLegacy()
+            persistVehicles([initial])
+            return [initial]
+        }
+        do {
+            let data = try Data(contentsOf: localStorageVehiclesURL)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let decoded = try decoder.decode([Vehicle].self, from: data)
+            if decoded.isEmpty {
+                let initial = Vehicle.createDefaultFromLegacy()
+                persistVehicles([initial])
+                return [initial]
+            }
+            return decoded
+        } catch {
+            print("Failed to load local vehicles: \(error)")
+            let initial = Vehicle.createDefaultFromLegacy()
+            persistVehicles([initial])
+            return [initial]
+        }
+    }
+
+    private func persistLocalVehicles() {
+        persistVehicles(vehicles)
+    }
+
+    private func persistVehicles(_ list: [Vehicle]) {
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = .prettyPrinted
+            let data = try encoder.encode(list)
+            try data.write(to: localStorageVehiclesURL, options: .atomic)
+        } catch {
+            print("Failed to save local vehicles: \(error)")
+        }
+    }
+
+    // MARK: - Vehicle Management & CRUD
+
+    func addVehicle(_ vehicle: Vehicle, setAsActive: Bool = true) {
+        var newVehicle = vehicle
+        if vehicles.isEmpty {
+            newVehicle.isDefault = true
+        } else if newVehicle.isDefault {
+            for i in 0..<vehicles.count {
+                vehicles[i].isDefault = false
+            }
+        }
+        vehicles.append(newVehicle)
+        persistLocalVehicles()
+        
+        if setAsActive {
+            selectVehicle(id: newVehicle.id)
+        }
+        
+        if let userID {
+            try? vehiclesCollection(for: userID).document(newVehicle.id).setData(from: newVehicle)
+        }
+    }
+
+    func updateVehicle(_ vehicle: Vehicle) {
+        guard let index = vehicles.firstIndex(where: { $0.id == vehicle.id }) else {
+            addVehicle(vehicle)
+            return
+        }
+        
+        if vehicle.isDefault {
+            for i in 0..<vehicles.count {
+                if vehicles[i].id != vehicle.id {
+                    vehicles[i].isDefault = false
+                }
+            }
+        }
+        
+        vehicles[index] = vehicle
+        persistLocalVehicles()
+        
+        if let userID {
+            try? vehiclesCollection(for: userID).document(vehicle.id).setData(from: vehicle)
+        }
+    }
+
+    func setDefaultVehicle(_ vehicle: Vehicle) {
+        for i in 0..<vehicles.count {
+            vehicles[i].isDefault = (vehicles[i].id == vehicle.id)
+            if let userID {
+                try? vehiclesCollection(for: userID).document(vehicles[i].id).setData(from: vehicles[i])
+            }
+        }
+        persistLocalVehicles()
+    }
+
+    func deleteVehicle(_ vehicle: Vehicle, reassignSessionsTo replacementId: String? = nil) {
+        guard vehicles.count > 1 else {
+            alerts.report(AppAlert(title: "Cannot Delete Vehicle", message: "Your garage must have at least one vehicle profile."))
+            return
+        }
+        
+        let targetReassignId = replacementId ?? vehicles.first(where: { $0.id != vehicle.id })?.id
+        
+        // Reassign sessions
+        var sessionsModified = false
+        for i in 0..<sessions.count {
+            if sessions[i].vehicleId == vehicle.id {
+                sessions[i].vehicleId = targetReassignId
+                sessionsModified = true
+                if let userID, let docId = sessions[i].id {
+                    try? sessionsCollection(for: userID).document(docId).setData(from: sessions[i])
+                }
+            }
+        }
+        if sessionsModified {
+            persistLocalSessions()
+        }
+        
+        // Remove vehicle
+        vehicles.removeAll { $0.id == vehicle.id }
+        
+        // Ensure one vehicle remains default
+        if !vehicles.contains(where: { $0.isDefault }) {
+            vehicles[0].isDefault = true
+            if let userID {
+                try? vehiclesCollection(for: userID).document(vehicles[0].id).setData(from: vehicles[0])
+            }
+        }
+        
+        if selectedVehicleId == vehicle.id {
+            selectedVehicleId = vehicles.first(where: { $0.isDefault })?.id ?? vehicles.first?.id
+            UserDefaults.standard.set(selectedVehicleId, forKey: "active_vehicle_id")
+        }
+        
+        persistLocalVehicles()
+        
+        if let userID {
+            vehiclesCollection(for: userID).document(vehicle.id).delete()
+        }
+    }
+
+    func selectVehicle(id: String?) {
+        selectedVehicleId = id
+        UserDefaults.standard.set(id, forKey: "active_vehicle_id")
     }
 
     // MARK: - Deduplication
@@ -185,6 +394,10 @@ class SessionStore: ObservableObject {
         db.collection("users").document(userID).collection("sessions")
     }
 
+    private func vehiclesCollection(for userID: String) -> CollectionReference {
+        db.collection("users").document(userID).collection("vehicles")
+    }
+
     /// The flat, pre-auth collection. Read once per user by the migration below, never written.
     private var legacySessionsCollection: CollectionReference {
         db.collection("sessions")
@@ -192,14 +405,16 @@ class SessionStore: ObservableObject {
 
     // MARK: - Connection & Cloud Sync
 
-    /// Binds the store to a signed-in user and synchronizes local and cloud sessions.
+    /// Binds the store to a signed-in user and synchronizes local and cloud sessions and vehicles.
     func connect(userID: String) {
         guard self.userID != userID else { return }
         self.userID = userID
         self.syncStatus = .syncing
         
         startListening(userID: userID)
+        startListeningVehicles(userID: userID)
         syncLocalSessionsToCloud(userID: userID)
+        syncLocalVehiclesToCloud(userID: userID)
         migrateLegacySessionsIfNeeded(userID: userID)
     }
 
@@ -207,11 +422,17 @@ class SessionStore: ObservableObject {
         userID = nil
         listenerRegistration?.remove()
         listenerRegistration = nil
+        vehicleListenerRegistration?.remove()
+        vehicleListenerRegistration = nil
         syncStatus = .localOnly
         
         if clearLocalData {
             sessions = []
             try? FileManager.default.removeItem(at: localStorageURL)
+            try? FileManager.default.removeItem(at: localStorageVehiclesURL)
+            let defaultV = Vehicle.createDefaultFromLegacy()
+            vehicles = [defaultV]
+            selectedVehicleId = defaultV.id
         }
     }
 
@@ -222,6 +443,18 @@ class SessionStore: ObservableObject {
         }
         syncStatus = .syncing
         
+        // Sync vehicles
+        vehiclesCollection(for: userID)
+            .getDocuments { [weak self] snapshot, _ in
+                guard let self, let docs = snapshot?.documents, !docs.isEmpty else { return }
+                let cloudVehicles = docs.compactMap { try? $0.data(as: Vehicle.self) }
+                if !cloudVehicles.isEmpty {
+                    self.vehicles = cloudVehicles
+                    self.persistLocalVehicles()
+                }
+            }
+        
+        // Sync sessions
         sessionsCollection(for: userID)
             .order(by: "date", descending: true)
             .getDocuments { [weak self] snapshot, error in
@@ -272,6 +505,60 @@ class SessionStore: ObservableObject {
             }
     }
 
+    private func startListeningVehicles(userID: String) {
+        vehicleListenerRegistration?.remove()
+        vehicleListenerRegistration = vehiclesCollection(for: userID)
+            .addSnapshotListener { [weak self] querySnapshot, error in
+                guard let self else { return }
+                guard self.userID == userID else { return }
+
+                if let error {
+                    print("Failed to load cloud vehicles: \(error.localizedDescription)")
+                    return
+                }
+
+                guard let documents = querySnapshot?.documents, !documents.isEmpty else {
+                    // If cloud vehicles are empty, upload local vehicles
+                    self.syncLocalVehiclesToCloud(userID: userID)
+                    return
+                }
+
+                let cloudVehicles = documents.compactMap { document -> Vehicle? in
+                    try? document.data(as: Vehicle.self)
+                }
+                if !cloudVehicles.isEmpty {
+                    self.vehicles = cloudVehicles
+                    if self.selectedVehicleId == nil || !cloudVehicles.contains(where: { $0.id == self.selectedVehicleId }) {
+                        self.selectedVehicleId = cloudVehicles.first(where: { $0.isDefault })?.id ?? cloudVehicles.first?.id
+                    }
+                    self.persistLocalVehicles()
+                }
+            }
+    }
+
+    private func syncLocalVehiclesToCloud(userID: String) {
+        let localVehicles = self.vehicles
+        guard !localVehicles.isEmpty else { return }
+
+        let collection = vehiclesCollection(for: userID)
+        collection.getDocuments { [weak self] snapshot, error in
+            guard let self else { return }
+            if let error {
+                print("Could not query existing cloud vehicles: \(error)")
+                return
+            }
+
+            let remoteDocs = snapshot?.documents ?? []
+            let remoteIDs = Set(remoteDocs.map(\.documentID))
+
+            for vehicle in localVehicles {
+                if !remoteIDs.contains(vehicle.id) {
+                    try? collection.document(vehicle.id).setData(from: vehicle)
+                }
+            }
+        }
+    }
+
     /// Automatically uploads any local-only sessions to the user's Firestore collection upon sign-in.
     private func syncLocalSessionsToCloud(userID: String) {
         let localSessions = self.sessions
@@ -302,6 +589,9 @@ class SessionStore: ObservableObject {
                 let docRef = (session.id != nil && !session.id!.isEmpty) ? collection.document(session.id!) : collection.document()
                 var updated = session
                 updated.id = docRef.documentID
+                if updated.vehicleId == nil || updated.vehicleId?.isEmpty == true {
+                    updated.vehicleId = self.activeVehicle.id
+                }
                 return (docRef, updated)
             }
             
@@ -320,6 +610,9 @@ class SessionStore: ObservableObject {
 
     func saveSession(_ session: ChargingSession) {
         var sessionToSave = session
+        if sessionToSave.vehicleId == nil || sessionToSave.vehicleId?.isEmpty == true {
+            sessionToSave.vehicleId = activeVehicle.id
+        }
         
         if let userID {
             // Signed-in Cloud Mode

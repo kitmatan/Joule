@@ -50,6 +50,9 @@ struct DashboardView: View {
     @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
     @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
     @AppStorage("dashboard_efficiency_chart_unit") private var efficiencyChartUnit: EfficiencyChartUnit = .consumption
+    @AppStorage("gas_baseline_preset") private var gasPreset: GasBaselinePreset = GasComparisonSettings.defaultPreset
+    @AppStorage("gas_fuel_efficiency_km_per_l") private var gasEfficiencyKmPerL: Double = GasComparisonSettings.defaultEfficiencyKmPerL
+    @AppStorage("gas_custom_fuel_price") private var gasFuelPrice: Double = GasComparisonSettings.defaultFuelPriceTHB
 
     @State private var selectedCostMonth: Date? = nil
     @State private var selectedEnergyMonth: Date? = nil
@@ -90,19 +93,23 @@ struct DashboardView: View {
     }
 
     // MARK: - Computed Properties (Totals)
-    var totalSessions: Int { store.sessions.count }
+    var displayedSessions: [ChargingSession] {
+        store.sessions(for: store.selectedVehicleId)
+    }
+
+    var totalSessions: Int { displayedSessions.count }
 
     var totalCost: Double {
-        store.sessions.reduce(0) { $0 + $1.totalPrice }
+        displayedSessions.reduce(0) { $0 + $1.totalPrice }
     }
 
     var totalEnergy: Double {
-        store.sessions.reduce(0) { $0 + $1.energyAdded }
+        displayedSessions.reduce(0) { $0 + $1.energyAdded }
     }
 
     /// Odometer span, together with the energy and cost that actually powered it.
     var drivingWindow: (distance: Double, energy: Double, cost: Double)? {
-        let logged = store.sessions
+        let logged = displayedSessions
             .filter { $0.mileage != nil }
             .sorted { $0.date < $1.date }
 
@@ -111,7 +118,7 @@ struct DashboardView: View {
         let odometers = logged.compactMap(\.mileage)
         guard let startOdo = odometers.min(), let endOdo = odometers.max(), endOdo > startOdo else { return nil }
 
-        let powering = store.sessions.filter { $0.date >= firstLogged.date && $0.date < lastLogged.date }
+        let powering = displayedSessions.filter { $0.date >= firstLogged.date && $0.date < lastLogged.date }
         return (
             distance: endOdo - startOdo,
             energy: powering.reduce(0) { $0 + $1.energyAdded },
@@ -125,14 +132,14 @@ struct DashboardView: View {
 
     // MARK: - Computed Properties (Monthly)
     var uniqueMonthsCount: Int {
-        let uniqueMonths = Set(store.sessions.map {
+        let uniqueMonths = Set(displayedSessions.map {
             Calendar.current.dateComponents([.year, .month], from: $0.date)
         })
         return max(1, uniqueMonths.count)
     }
 
     var currentMonthSessions: [ChargingSession] {
-        store.sessions.filter {
+        displayedSessions.filter {
             Calendar.current.isDate($0.date, equalTo: Date(), toGranularity: .month)
         }
     }
@@ -168,9 +175,42 @@ struct DashboardView: View {
         return window.cost / convertedDist
     }
 
+    // MARK: - Gas Comparison & Cost Savings
+    var lifetimeGasSavings: GasSavingsSummary {
+        let vehicle = store.activeVehicle
+        if hasDrivingData {
+            return GasComparisonSettings.calculateSavings(
+                distanceKm: totalDistance,
+                evCost: drivingWindow?.cost ?? totalCost,
+                currency: appCurrency,
+                unitSystem: unitSystem
+            )
+        } else {
+            return GasComparisonSettings.calculateSavings(
+                energyKWh: totalEnergy,
+                evCost: totalCost,
+                ratedEfficiencyKmPerKWh: vehicle.ratedEfficiencyKmPerKWh,
+                currency: appCurrency,
+                unitSystem: unitSystem
+            )
+        }
+    }
+
+    var currentMonthGasSavings: GasSavingsSummary {
+        let vehicle = store.activeVehicle
+        let eff = energyEfficiency > 0 ? energyEfficiency : vehicle.ratedEfficiencyKmPerKWh
+        return GasComparisonSettings.calculateSavings(
+            energyKWh: currentMonthEnergy,
+            evCost: currentMonthCost,
+            ratedEfficiencyKmPerKWh: eff,
+            currency: appCurrency,
+            unitSystem: unitSystem
+        )
+    }
+
     // MARK: - Driving Efficiency Data
     var drivingEfficiencyPoints: [DrivingEfficiencyPoint] {
-        let logged = store.sessions
+        let logged = displayedSessions
             .filter { $0.mileage != nil }
             .sorted { $0.date < $1.date }
 
@@ -184,7 +224,7 @@ struct DashboardView: View {
                 continue
             }
             let distance = endMileage - startMileage
-            let powering = store.sessions.filter { $0.date >= start.date && $0.date < end.date }
+            let powering = displayedSessions.filter { $0.date >= start.date && $0.date < end.date }
             let energy = powering.reduce(0) { $0 + $1.energyAdded }
             guard energy > 0 else { continue }
 
@@ -256,7 +296,7 @@ struct DashboardView: View {
             byMonth[month] = MonthlyStat(month: month)
         }
 
-        for session in store.sessions where session.date >= cutoff {
+        for session in displayedSessions where session.date >= cutoff {
             let month = calendar.startOfMonth(for: session.date)
             var stat = byMonth[month] ?? MonthlyStat(month: month)
             stat.cost += session.totalPrice
@@ -274,10 +314,18 @@ struct DashboardView: View {
         monthlyStats.contains { $0.untypedEnergy > 0 }
     }
 
+    // MARK: - Location Stats
     var topLocations: [LocationStat] {
-        let grouped = Dictionary(grouping: store.sessions) { session in
-            session.locationName?.isEmpty == false ? session.locationName! : "Unknown Location"
+        let withNames = displayedSessions.compactMap { session -> (name: String, session: ChargingSession)? in
+            guard let name = session.locationName, !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return nil
+            }
+            return (name: name.trimmingCharacters(in: .whitespacesAndNewlines), session: session)
         }
+
+        let grouped = Dictionary(grouping: withNames, by: { $0.name })
+            .mapValues { $0.map(\.session) }
+
         return grouped
             .map { name, sessions in
                 LocationStat(
@@ -293,24 +341,29 @@ struct DashboardView: View {
     }
 
     @State private var showingSettings = false
+    @State private var showingAddSession = false
+    @State private var navigateToBatteryHealth = false
 
     // MARK: - Body
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    if store.sessions.isEmpty {
+                    heroSection
+
+                    if displayedSessions.isEmpty {
                         ContentUnavailableView(
                             "No Charging Data",
                             systemImage: "bolt.car",
-                            description: Text("Log your first charging session in History or Import CSV to view your analytics.")
+                            description: Text("Log your first charging session or import a CSV file to view your analytics.")
                         )
-                        .padding(.top, 40)
+                        .padding(.top, 16)
                     } else {
                         monthlySection
                         if currentMonthDeferredCost > 0 {
                             pendingBillCard
                         }
+                        gasSavingsSection
                         batteryHealthPreviewSection
                         lifetimeTotalsSection
                         averagesSection
@@ -325,7 +378,13 @@ struct DashboardView: View {
                 .frame(maxWidth: .infinity)
             }
             .navigationTitle("Dashboard")
+            .navigationDestination(isPresented: $navigateToBatteryHealth) {
+                BatteryHealthView()
+            }
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    GarageSwitcherMenu(allowAllOption: true)
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingSettings = true
@@ -339,12 +398,42 @@ struct DashboardView: View {
             .sheet(isPresented: $showingSettings) {
                 SettingsView()
             }
+            .sheet(isPresented: $showingAddSession) {
+                AddSessionView()
+            }
         }
+    }
+
+    // MARK: - Hero Section
+    private var heroSection: some View {
+        DashboardHeroCard(
+            vehicle: store.activeVehicle,
+            isAllVehicles: store.selectedVehicleId == nil && store.vehicles.count > 1,
+            vehicleCount: store.vehicles.count,
+            sessions: displayedSessions,
+            currentMonthCost: currentMonthCost,
+            currentMonthEnergy: currentMonthEnergy,
+            gasSavings: currentMonthGasSavings,
+            batteryHealth: batteryHealthSummary,
+            energyEfficiency: energyEfficiency,
+            averagePricePerKWh: averagePricePerKWh,
+            hasDrivingData: hasDrivingData,
+            currency: appCurrency,
+            unitSystem: unitSystem,
+            isWide: isWide,
+            onAddSession: {
+                showingAddSession = true
+            },
+            onOpenBatteryHealth: {
+                navigateToBatteryHealth = true
+            }
+        )
     }
 
     // MARK: - Battery Health Preview
     private var batteryHealthSummary: BatteryHealthSummary? {
-        BatteryHealthService().calculateSummary(from: store.sessions)
+        let targetSessions = store.sessions(for: store.activeVehicle.id)
+        return BatteryHealthService(vehicle: store.activeVehicle).calculateSummary(from: targetSessions)
     }
 
     @ViewBuilder
@@ -425,11 +514,159 @@ struct DashboardView: View {
 
             LazyVGrid(columns: statColumns, spacing: 16) {
                 StatCard(title: "Cost This Month", value: appCurrency.format(currentMonthCost), icon: "creditcard.fill", color: .green)
+                StatCard(title: "Saved vs. Gas", value: currentMonthCost > 0 || currentMonthEnergy > 0 ? appCurrency.format(currentMonthGasSavings.netSavings) : "N/A", icon: "banknote.fill", color: .mint)
                 StatCard(title: "Energy This Month", value: String(format: "%.1f kWh", currentMonthEnergy), icon: "bolt.batteryblock.fill", color: .blue)
                 StatCard(title: "Avg Monthly Cost", value: appCurrency.format(totalCost / Double(uniqueMonthsCount)), icon: "calendar.badge.clock", color: .green)
-                StatCard(title: "Avg Monthly Energy", value: String(format: "%.1f kWh", totalEnergy / Double(uniqueMonthsCount)), icon: "bolt.fill", color: .blue)
             }
             .padding(.horizontal)
+        }
+    }
+
+    // MARK: - Cost Savings vs. Gas Section
+    @ViewBuilder
+    private var gasSavingsSection: some View {
+        let savings = lifetimeGasSavings
+        if savings.gasCost > 0 {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Cost Savings vs. Gas")
+                        .font(.title2).bold()
+                    Spacer()
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("Baseline")
+                            Image(systemName: "slider.horizontal.3")
+                        }
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                    }
+                }
+                .padding(.horizontal)
+
+                VStack(spacing: 16) {
+                    // Top Hero Row: Total Savings & Percentage Badge
+                    HStack(alignment: .firstTextBaseline) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Estimated Savings")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            HStack(spacing: 8) {
+                                Text(appCurrency.format(savings.netSavings))
+                                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                                    .foregroundColor(.green)
+
+                                if savings.savingsPercentage > 0 {
+                                    Text(String(format: "%.0f%% Saved", savings.savingsPercentage))
+                                        .font(.caption).bold()
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.green.opacity(0.18))
+                                        .foregroundColor(.green)
+                                        .clipShape(Capsule())
+                                }
+                            }
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 2) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "leaf.fill")
+                                    .foregroundColor(.mint)
+                                    .font(.subheadline)
+                                Text(String(format: "%.0f %@", savings.fuelAvoided, savings.fuelUnit))
+                                    .font(.subheadline).bold()
+                                    .foregroundColor(.primary)
+                            }
+                            Text("Fuel Avoided")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    Divider()
+
+                    // Comparison Breakdown Grid
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "bolt.fill")
+                                    .foregroundColor(.blue)
+                                    .font(.caption)
+                                Text("EV Spent")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Text(appCurrency.format(savings.evCost))
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            if savings.evCostPerDistance > 0 {
+                                Text(appCurrency.formatCostPerDistance(cost: savings.evCostPerDistance, distanceUnit: unitSystem.distanceUnit))
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "fuelpump.fill")
+                                    .foregroundColor(.orange)
+                                    .font(.caption)
+                                Text("Gas Equivalent")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Text(appCurrency.format(savings.gasCost))
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            if savings.gasCostPerDistance > 0 {
+                                Text(appCurrency.formatCostPerDistance(cost: savings.gasCostPerDistance, distanceUnit: unitSystem.distanceUnit))
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "banknote.fill")
+                                    .foregroundColor(.green)
+                                    .font(.caption)
+                                Text("Per \(unitSystem.distanceUnit)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Text(appCurrency.format(savings.costDifferencePerDistance))
+                                .font(.headline)
+                                .foregroundColor(.green)
+                            Text("Saved/\(unitSystem.distanceUnit)")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
+                    // Baseline info footer
+                    HStack(spacing: 6) {
+                        Image(systemName: "info.circle")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("Baseline: \(gasPreset.title(for: unitSystem)) @ \(appCurrency.formatRate(GasComparisonSettings.effectiveFuelPrice(currency: appCurrency, unitSystem: unitSystem), unit: GasComparisonSettings.fuelVolumeUnit(unitSystem: unitSystem)))")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                        Spacer()
+                    }
+                    .padding(.top, 2)
+                }
+                .padding(16)
+                .background(Color.secondary.opacity(0.1))
+                .cornerRadius(12)
+                .padding(.horizontal)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Cost Savings vs Gas: \(appCurrency.format(savings.netSavings)) saved (\(String(format: "%.0f%%", savings.savingsPercentage))), \(String(format: "%.0f %@", savings.fuelAvoided, savings.fuelUnit)) fuel avoided")
+            }
         }
     }
 
