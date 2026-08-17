@@ -377,7 +377,7 @@ struct DashboardView: View {
                 .frame(maxWidth: isWide ? 1100 : .infinity)
                 .frame(maxWidth: .infinity)
             }
-            .navigationTitle("Dashboard")
+            .navigationTitle("")
             .navigationDestination(isPresented: $navigateToBatteryHealth) {
                 BatteryHealthView()
             }
@@ -413,10 +413,14 @@ struct DashboardView: View {
             sessions: displayedSessions,
             currentMonthCost: currentMonthCost,
             currentMonthEnergy: currentMonthEnergy,
+            totalCost: totalCost,
+            totalEnergy: totalEnergy,
             gasSavings: currentMonthGasSavings,
+            lifetimeGasSavings: lifetimeGasSavings,
             batteryHealth: batteryHealthSummary,
             energyEfficiency: energyEfficiency,
             averagePricePerKWh: averagePricePerKWh,
+            costPerDistance: costPerDistance,
             hasDrivingData: hasDrivingData,
             currency: appCurrency,
             unitSystem: unitSystem,

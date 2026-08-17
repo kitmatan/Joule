@@ -9,10 +9,14 @@ struct DashboardHeroCard: View {
     let sessions: [ChargingSession]
     let currentMonthCost: Double
     let currentMonthEnergy: Double
+    let totalCost: Double
+    let totalEnergy: Double
     let gasSavings: GasSavingsSummary
+    let lifetimeGasSavings: GasSavingsSummary
     let batteryHealth: BatteryHealthSummary?
     let energyEfficiency: Double
     let averagePricePerKWh: Double
+    let costPerDistance: Double
     let hasDrivingData: Bool
     let currency: AppCurrency
     let unitSystem: UnitSystem
@@ -23,12 +27,93 @@ struct DashboardHeroCard: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    /// Toggles the main spend metric between the current month and lifetime totals.
+    @AppStorage("heroShowsTotalSpend") private var showsTotalSpend: Bool = false
+
+    /// Toggles the rate tile between average charging price and driving cost per distance.
+    @AppStorage("heroShowsDrivingCost") private var showsDrivingCost: Bool = false
+
+    /// Toggles the efficiency tile between km/kWh (distance per energy) and kWh/100km (consumption).
+    @AppStorage("heroShowsConsumption") private var showsConsumption: Bool = false
+
     private var latestSession: ChargingSession? {
         sessions.sorted { $0.date > $1.date }.first
     }
 
     private var currentMonthName: String {
         Date().formatted(.dateTime.month(.wide))
+    }
+
+    // MARK: - Spend Toggle State
+
+    private var spendTitle: String {
+        showsTotalSpend ? String(localized: "Total Spent") : String(format: String(localized: "Spent in %@"), currentMonthName)
+    }
+
+    private var spendCost: Double {
+        showsTotalSpend ? totalCost : currentMonthCost
+    }
+
+    private var spendEnergy: Double {
+        showsTotalSpend ? totalEnergy : currentMonthEnergy
+    }
+
+    private var spendSavings: GasSavingsSummary {
+        showsTotalSpend ? lifetimeGasSavings : gasSavings
+    }
+
+    // MARK: - Efficiency Toggle State
+
+    private var efficiencyTitle: String {
+        showsConsumption ? String(localized: "Consumption") : String(localized: "Efficiency")
+    }
+
+    private var hasEfficiencyData: Bool {
+        hasDrivingData && energyEfficiency > 0
+    }
+
+    private var efficiencyValue: String {
+        guard hasEfficiencyData else { return "—" }
+        let value = showsConsumption
+            ? unitSystem.consumptionValue(kmPerKWh: energyEfficiency)
+            : unitSystem.convertFromKm(energyEfficiency)
+        return String(format: "%.1f", value)
+    }
+
+    private var efficiencyUnitLabel: String {
+        guard hasEfficiencyData else { return "" }
+        return showsConsumption ? unitSystem.consumptionUnit : unitSystem.efficiencyUnit
+    }
+
+    /// Value and unit combined, for VoiceOver and non-visual contexts.
+    private var efficiencySpokenValue: String {
+        hasEfficiencyData ? "\(efficiencyValue) \(efficiencyUnitLabel)" : efficiencyValue
+    }
+
+    // MARK: - Rate Toggle State
+
+    private var rateTitle: String {
+        showsDrivingCost ? String(localized: "Driving Cost") : String(localized: "Avg Rate")
+    }
+
+    private var hasRateData: Bool {
+        showsDrivingCost ? (hasDrivingData && costPerDistance > 0) : averagePricePerKWh > 0
+    }
+
+    private var rateValue: String {
+        guard hasRateData else { return "—" }
+        let amount = showsDrivingCost ? costPerDistance : averagePricePerKWh
+        return String(format: "%@%.2f", currency.symbol, amount)
+    }
+
+    private var rateUnitLabel: String {
+        guard hasRateData else { return "" }
+        return showsDrivingCost ? "per \(unitSystem.distanceUnit)" : "per kWh"
+    }
+
+    /// Value and unit combined, for VoiceOver and non-visual contexts.
+    private var rateSpokenValue: String {
+        hasRateData ? "\(rateValue) \(rateUnitLabel)" : rateValue
     }
 
     var body: some View {
@@ -144,41 +229,15 @@ struct DashboardHeroCard: View {
 
     private var mainMetricsRow: some View {
         HStack(alignment: .center, spacing: 14) {
-            // Left: Monthly Cost & Gas Savings Highlight
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Spent in \(currentMonthName)")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.secondary)
-
-                Text(currency.format(currentMonthCost))
-                    .font(.system(size: isWide ? 32 : 26, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
-                    .minimumScaleFactor(0.8)
-                    .lineLimit(1)
-
-                if gasSavings.netSavings > 0 {
-                    HStack(spacing: 5) {
-                        Image(systemName: "leaf.fill")
-                            .font(.caption2)
-                            .foregroundColor(.green)
-                        
-                        Text(String(format: "Saved %@", currency.format(gasSavings.netSavings)))
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.green)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.green.opacity(colorScheme == .dark ? 0.2 : 0.12))
-                    .clipShape(Capsule())
-                } else if currentMonthEnergy > 0 {
-                    Text(String(format: "%.1f kWh charged", currentMonthEnergy))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+            // Left: Spend (tap to switch month / lifetime) & Gas Savings Highlight
+            Button(action: toggleSpendScope) {
+                spendColumn
             }
+            .buttonStyle(.plain)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(spendTitle): \(currency.format(spendCost))")
+            .accessibilityHint(showsTotalSpend ? "Double tap to show this month's spend" : "Double tap to show total spend")
 
             // Right: Clean, Uncluttered Battery Health Chip
             if let health = batteryHealth {
@@ -190,6 +249,64 @@ struct DashboardHeroCard: View {
                 latestChargeChip(latest: latest)
             }
         }
+    }
+
+    // MARK: - Spend Column (Tappable Month / Total Toggle)
+
+    private var spendColumn: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 4) {
+                Text(spendTitle)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+
+                Image(systemName: "arrow.left.arrow.right.circle.fill")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.secondary.opacity(0.6))
+            }
+
+            Text(currency.format(spendCost))
+                .font(.system(size: isWide ? 32 : 26, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+                .minimumScaleFactor(0.8)
+                .lineLimit(1)
+                .contentTransition(.numericText())
+
+            if spendSavings.netSavings > 0 {
+                HStack(spacing: 5) {
+                    Image(systemName: "leaf.fill")
+                        .font(.caption2)
+                        .foregroundColor(.green)
+
+                    Text(String(format: "Saved %@", currency.format(spendSavings.netSavings)))
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.green)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.green.opacity(colorScheme == .dark ? 0.2 : 0.12))
+                .clipShape(Capsule())
+            } else if spendEnergy > 0 {
+                Text(String(format: "%.1f kWh charged", spendEnergy))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+    }
+
+    private func toggleSpendScope() {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            showsTotalSpend.toggle()
+        }
+#if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+#endif
     }
 
     // MARK: - Battery Health Chip (Clean & Uncluttered)
@@ -286,47 +403,109 @@ struct DashboardHeroCard: View {
 
     private var quickMetricsStrip: some View {
         HStack(spacing: 8) {
-            // Energy
-            metricTile(
-                title: "Energy",
-                value: String(format: "%.1f kWh", currentMonthEnergy),
-                icon: "bolt.batteryblock.fill",
-                color: .blue
-            )
+            // Energy — follows the spend toggle (month vs. lifetime)
+            Button(action: toggleSpendScope) {
+                metricTile(
+                    title: showsTotalSpend ? "Total Energy" : "Energy",
+                    value: String(format: "%.1f", spendEnergy),
+                    unit: "kWh",
+                    icon: "bolt.batteryblock.fill",
+                    color: .blue,
+                    isToggleable: true
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(showsTotalSpend ? String(localized: "Total Energy") : String(localized: "Energy")): \(String(format: "%.1f kWh", spendEnergy))")
+            .accessibilityHint(showsTotalSpend ? "Double tap to show this month's energy" : "Double tap to show total energy")
 
-            // Driving Efficiency
-            metricTile(
-                title: "Efficiency",
-                value: hasDrivingData ? unitSystem.formatEfficiency(kmPerKWh: energyEfficiency) : "—",
-                icon: "leaf.fill",
-                color: .mint
-            )
+            // Driving Efficiency (tap to switch between km/kWh and kWh/100km)
+            Button(action: toggleEfficiencyUnit) {
+                metricTile(
+                    title: efficiencyTitle,
+                    value: efficiencyValue,
+                    unit: efficiencyUnitLabel,
+                    icon: showsConsumption ? "gauge.with.needle.fill" : "leaf.fill",
+                    color: showsConsumption ? .teal : .mint,
+                    isToggleable: true
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(efficiencyTitle): \(efficiencySpokenValue)")
+            .accessibilityHint(showsConsumption ? "Double tap to show \(unitSystem.efficiencyUnit)" : "Double tap to show \(unitSystem.consumptionUnit)")
 
-            // Cost Rate
-            metricTile(
-                title: "Avg Rate",
-                value: averagePricePerKWh > 0 ? currency.formatRate(averagePricePerKWh) : "—",
-                icon: "tag.fill",
-                color: .orange
-            )
+            // Cost Rate (tap to switch between charging rate and driving cost)
+            Button(action: toggleRateScope) {
+                metricTile(
+                    title: rateTitle,
+                    value: rateValue,
+                    unit: rateUnitLabel,
+                    icon: showsDrivingCost ? "road.lanes" : "tag.fill",
+                    color: showsDrivingCost ? .purple : .orange,
+                    isToggleable: true
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(rateTitle): \(rateSpokenValue)")
+            .accessibilityHint(showsDrivingCost ? "Double tap to show average charging rate" : "Double tap to show driving cost per \(unitSystem.distanceUnit)")
         }
     }
 
-    private func metricTile(title: String, value: String, icon: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 4) {
+    private func toggleEfficiencyUnit() {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            showsConsumption.toggle()
+        }
+#if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+#endif
+    }
+
+    private func toggleRateScope() {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            showsDrivingCost.toggle()
+        }
+#if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+#endif
+    }
+
+    /// A compact metric tile. The unit is rendered on its own line so long units
+    /// (e.g. "kWh/100km") stay legible in the three-across iPhone layout.
+    private func metricTile(title: String, value: String, unit: String, icon: String, color: Color, isToggleable: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 3) {
                 Image(systemName: icon)
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(color)
+                    .layoutPriority(1)
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+
+                if isToggleable {
+                    Image(systemName: "arrow.left.arrow.right.circle.fill")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.secondary.opacity(0.6))
+                        .layoutPriority(1)
+                }
             }
             Text(value)
-                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .font(.system(size: 15, weight: .bold, design: .rounded))
                 .foregroundColor(.primary)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.6)
+
+            if !unit.isEmpty {
+                Text(unit)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 10)
@@ -335,6 +514,7 @@ struct DashboardHeroCard: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(Color.secondary.opacity(colorScheme == .dark ? 0.12 : 0.06))
         )
+        .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     // MARK: - Action Buttons Row

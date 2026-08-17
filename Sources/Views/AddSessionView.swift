@@ -476,7 +476,7 @@ struct AddSessionView: View {
                     Label("Notes", systemImage: "note.text")
                 }
             }
-            .navigationTitle(sessionToEdit == nil ? "Joule." : "Edit Session")
+            .navigationTitle(sessionToEdit == nil ? "New Session" : "Edit Session")
             .onAppear {
                 applyHomeEstimate(overwriting: false)
             }
