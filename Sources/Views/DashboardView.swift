@@ -295,13 +295,13 @@ struct DashboardView: View {
                         )
                         .padding(.top, 16)
                     } else {
+                        batteryHealthPreviewSection
+                        gasSavingsSection
                         monthlySection
                         smartChargingSection
                         if currentMonthDeferredCost > 0 {
                             pendingBillCard
                         }
-                        gasSavingsSection
-                        batteryHealthPreviewSection
                         lifetimeTotalsSection
                         averagesSection
                         chartsSection
