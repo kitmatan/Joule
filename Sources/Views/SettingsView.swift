@@ -74,6 +74,45 @@ struct SettingsView: View {
         return price / eff
     }
     
+    private func loadActiveVehicleFromStore() {
+        let current = store.activeVehicle
+        vehicleName = current.name
+        presetId = current.presetId
+        chemistry = current.chemistry
+        rangeStandard = current.rangeStandard
+        nominalCapacityKWh = current.nominalCapacityKWh
+        nominalRangeKm = current.nominalRangeKm
+        cycleLifeTo80 = current.cycleLifeTo80
+        acEfficiency = current.acEfficiency
+        dcEfficiency = current.dcEfficiency
+        wallChargerKW = current.wallChargerKW
+        tariffType = current.tariffType
+        customTariffRate = current.customTariffRate
+        gasPreset = current.gasPreset
+        gasEfficiencyKmPerL = current.gasEfficiencyKmPerL
+        gasFuelPrice = current.gasCustomFuelPrice
+    }
+    
+    private func syncCurrentVehicleToStore() {
+        var vehicle = store.activeVehicle
+        vehicle.name = vehicleName
+        vehicle.presetId = presetId
+        vehicle.chemistry = chemistry
+        vehicle.rangeStandard = rangeStandard
+        vehicle.nominalCapacityKWh = nominalCapacityKWh
+        vehicle.nominalRangeKm = nominalRangeKm
+        vehicle.cycleLifeTo80 = cycleLifeTo80
+        vehicle.acEfficiency = acEfficiency
+        vehicle.dcEfficiency = dcEfficiency
+        vehicle.wallChargerKW = wallChargerKW
+        vehicle.tariffType = tariffType
+        vehicle.customTariffRate = customTariffRate
+        vehicle.gasPreset = gasPreset
+        vehicle.gasEfficiencyKmPerL = gasEfficiencyKmPerL
+        vehicle.gasCustomFuelPrice = gasFuelPrice
+        store.updateVehicle(vehicle)
+    }
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -107,7 +146,7 @@ struct SettingsView: View {
                         showingGarageManagement = true
                     } label: {
                         HStack {
-                            Label("Manage Garage (\(store.vehicles.count) \(store.vehicles.count == 1 ? "Vehicle" : "Vehicles"))…", systemImage: "car.2.fill")
+                            Label(String(format: String(localized: "Manage Garage (%lld)…"), Int64(store.vehicles.count)), systemImage: "car.2.fill")
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.caption)
@@ -257,9 +296,9 @@ struct SettingsView: View {
                 Section {
                     Picker("Tariff Model", selection: $tariffType) {
                         ForEach(TariffRegion.allCases) { region in
-                            Section(region.rawValue) {
+                            Section(LocalizedStringKey(region.rawValue)) {
                                 ForEach(region.tariffs) { tariff in
-                                    Text(tariff.rawValue).tag(tariff)
+                                    Text(LocalizedStringKey(tariff.rawValue)).tag(tariff)
                                 }
                             }
                         }
@@ -306,10 +345,8 @@ struct SettingsView: View {
                             #endif
                         Text("kW").foregroundColor(.secondary)
                     }
-                } header: {
-                    Text("Home Charging & Tariff")
                 } footer: {
-                    Text(tariffType.description)
+                    Text(LocalizedStringKey(tariffType.description))
                 }
                 
                 // Section 4: Hardware Efficiencies
@@ -538,14 +575,24 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
+                        syncCurrentVehicleToStore()
                         dismiss()
                     }
                     .bold()
                 }
             }
+            .onAppear {
+                loadActiveVehicleFromStore()
+            }
+            .onDisappear {
+                syncCurrentVehicleToStore()
+            }
+            .onChange(of: store.selectedVehicleId) { _, _ in
+                loadActiveVehicleFromStore()
+            }
             .sheet(isPresented: $showingPresetSheet) {
                 PresetPickerView(selectedPresetId: $presetId) { preset in
-                    VehicleProfile.applyPreset(preset)
+                    handleApplyPreset(preset)
                 }
                 .frame(minWidth: Platform.isMac ? 500 : nil, minHeight: Platform.isMac ? 600 : nil)
             }
@@ -566,7 +613,7 @@ struct SettingsView: View {
             }
             .confirmationDialog("Reset Vehicle Settings?", isPresented: $showingResetAlert, titleVisibility: .visible) {
                 Button("Reset to Defaults", role: .destructive) {
-                    VehicleProfile.resetToDefaults()
+                    handleResetToDefaults()
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
@@ -577,6 +624,46 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    private func handleApplyPreset(_ preset: EVPreset) {
+        vehicleName = preset.displayName
+        chemistry = preset.chemistry
+        rangeStandard = preset.rangeStandard
+        nominalCapacityKWh = preset.nominalCapacityKWh
+        nominalRangeKm = preset.nominalRangeKm
+        cycleLifeTo80 = preset.expectedCycleLife
+        wallChargerKW = preset.defaultWallChargerKW
+        syncCurrentVehicleToStore()
+    }
+
+    private func handleResetToDefaults() {
+        if let preset = selectedPreset {
+            vehicleName = preset.displayName
+            chemistry = preset.chemistry
+            rangeStandard = preset.rangeStandard
+            nominalCapacityKWh = preset.nominalCapacityKWh
+            nominalRangeKm = preset.nominalRangeKm
+            cycleLifeTo80 = preset.expectedCycleLife
+            wallChargerKW = preset.defaultWallChargerKW
+        } else {
+            presetId = EVPresetCatalog.defaultPresetId
+            vehicleName = VehicleProfile.defaultVehicleName
+            chemistry = VehicleProfile.defaultChemistry
+            rangeStandard = VehicleProfile.defaultRangeStandard
+            nominalCapacityKWh = VehicleProfile.defaultNominalCapacityKWh
+            nominalRangeKm = VehicleProfile.defaultNominalRangeKm
+            cycleLifeTo80 = VehicleProfile.defaultCycleLife
+            wallChargerKW = VehicleProfile.defaultWallChargerKW
+        }
+        acEfficiency = VehicleProfile.defaultACEfficiency
+        dcEfficiency = VehicleProfile.defaultDCEfficiency
+        tariffType = .peaStandardNonTOU
+        customTariffRate = VehicleProfile.defaultTariffPerKWh
+        gasPreset = GasComparisonSettings.defaultPreset
+        gasEfficiencyKmPerL = GasComparisonSettings.defaultEfficiencyKmPerL
+        gasFuelPrice = GasComparisonSettings.defaultFuelPriceTHB
+        syncCurrentVehicleToStore()
     }
 }
 

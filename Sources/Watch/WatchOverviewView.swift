@@ -50,7 +50,7 @@ struct WatchOverviewView: View {
         HStack(spacing: 4) {
             Image(systemName: "leaf.fill")
                 .font(.system(size: 10, weight: .bold))
-            Text("Saved \(snapshot.currency.format(snapshot.monthSavings))")
+            Text(String(format: String(localized: "Saved %@"), snapshot.currency.format(snapshot.monthSavings)))
                 .font(.system(size: 12, weight: .semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)

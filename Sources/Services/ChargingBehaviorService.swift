@@ -360,27 +360,27 @@ struct ChargingBehaviorService {
                         summary: "You regularly charge your LFP battery to 100%, enabling the Battery Management System to balance cell voltages.",
                         impactDescription: "LFP has a flat voltage curve; 100% calibration prevents State of Charge estimation drift and ensures full usable range.",
                         actionableAdvice: "Keep charging to 100% every 1–2 weeks.",
-                        observedMetricFormatted: "Last 100%: \(days) \(days == 1 ? "day" : "days") ago"
+                        observedMetricFormatted: String(format: String(localized: "Last 100%: %lld days ago"), Int64(days))
                     ))
                 } else if days > 28 {
                     list.append(ChargingRecommendation(
                         category: .bmsCalibration,
                         level: .caution,
                         title: "100% LFP Top-Off Recommended",
-                        summary: "It has been over \(days) days since your last 100% charge.",
+                        summary: String(format: String(localized: "It has been over %lld days since your last 100%% charge."), Int64(days)),
                         impactDescription: "Without periodic 100% calibration, LFP cell voltages can drift apart and cause inaccurate remaining range readings.",
                         actionableAdvice: "Plug into an AC charger and charge to 100% soon to let the BMS balance cells.",
-                        observedMetricFormatted: "Last 100%: \(days) days ago"
+                        observedMetricFormatted: String(format: String(localized: "Last 100%: %lld days ago"), Int64(days))
                     ))
                 } else {
                     list.append(ChargingRecommendation(
                         category: .bmsCalibration,
                         level: .tip,
                         title: "Schedule Periodic 100% Charge",
-                        summary: "Your LFP pack was last charged to 100% \(days) days ago.",
+                        summary: String(format: String(localized: "Your LFP pack was last charged to 100%% %lld days ago."), Int64(days)),
                         impactDescription: "LFP chemistry benefits from a 100% top-off every 1 to 2 weeks for optimal cell balancing.",
                         actionableAdvice: "Plan a 100% AC top-off in the coming week.",
-                        observedMetricFormatted: "Last 100%: \(days) days ago"
+                        observedMetricFormatted: String(format: String(localized: "Last 100%: %lld days ago"), Int64(days))
                     ))
                 }
             } else if metrics.sessionsEndingAt100Count > 0 {
@@ -478,33 +478,33 @@ struct ChargingBehaviorService {
         recommendations: [ChargingRecommendation]
     ) -> String {
         guard metrics.totalSessions > 0 else {
-            return "Log charging sessions to analyze your charging habits and receive personalized battery longevity recommendations."
+            return String(localized: "Log charging sessions to analyze your charging habits and receive personalized battery longevity recommendations.")
         }
 
         var parts: [String] = []
 
         if score >= 90.0 {
-            parts.append("Your charging behavior is exceptionally gentle on your \(vehicle.name)'s \(vehicle.chemistry.rawValue) battery pack.")
+            parts.append(String(localized: "Your charging behavior is exceptionally gentle on your battery pack."))
         } else if score >= 75.0 {
-            parts.append("Your charging habits are generally healthy with solid battery preservation.")
+            parts.append(String(localized: "Your charging habits are generally healthy with solid battery preservation."))
         } else if score >= 55.0 {
-            parts.append("Your charging routine causes moderate thermal or voltage stress on your battery pack.")
+            parts.append(String(localized: "Your charging routine causes moderate thermal or voltage stress on your battery pack."))
         } else {
-            parts.append("Frequent high-stress charging patterns detected that may accelerate battery degradation.")
+            parts.append(String(localized: "Frequent high-stress charging patterns detected that may accelerate battery degradation."))
         }
 
         // Chemistry specific context
         if vehicle.chemistry == .lfp {
             if let days = metrics.daysSinceLastFullCharge, days > 28 {
-                parts.append("Your LFP battery is overdue for a 100% AC calibration charge to balance cell voltages.")
+                parts.append(String(localized: "Your LFP battery is overdue for a 100% AC calibration charge to balance cell voltages."))
             } else {
-                parts.append("Regular AC charging and periodic 100% calibration will keep your LFP cells balanced.")
+                parts.append(String(localized: "Regular AC charging and periodic 100% calibration will keep your LFP cells balanced."))
             }
         } else if vehicle.chemistry == .nmc || vehicle.chemistry == .nca {
             if metrics.sessionsEndingAt100Percentage > 0.35 {
-                parts.append("Setting an 80%–90% daily charge limit will significantly reduce high-voltage cathode stress.")
+                parts.append(String(localized: "Setting an 80%–90% daily charge limit will significantly reduce high-voltage cathode stress."))
             } else {
-                parts.append("Maintaining an 80% daily charge ceiling keeps your NMC/NCA cells in the optimal longevity window.")
+                parts.append(String(localized: "Maintaining an 80% daily charge ceiling keeps your NMC/NCA cells in the optimal longevity window."))
             }
         }
 

@@ -296,6 +296,7 @@ struct DashboardView: View {
                         .padding(.top, 16)
                     } else {
                         monthlySection
+                        smartChargingSection
                         if currentMonthDeferredCost > 0 {
                             pendingBillCard
                         }
@@ -411,7 +412,7 @@ struct DashboardView: View {
                                     .font(.title3).bold()
                                     .foregroundColor(.primary)
 
-                                Text(health.assessment.title)
+                                Text(LocalizedStringKey(health.assessment.title))
                                     .font(.caption2).bold()
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
@@ -458,6 +459,42 @@ struct DashboardView: View {
                 StatCard(title: "Energy This Month", value: String(format: "%.1f kWh", currentMonthEnergy), icon: "bolt.batteryblock.fill", color: .blue)
                 StatCard(title: "Avg Monthly Cost", value: appCurrency.format(totalCost / Double(uniqueMonthsCount)), icon: "calendar.badge.clock", color: .green)
             }
+            .padding(.horizontal)
+        }
+    }
+
+    // MARK: - Smart Charging & TOU Section
+    @ViewBuilder
+    private var smartChargingSection: some View {
+        let smart = stats.currentMonthSmartChargingSavings
+        if smart.hasSavings {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "bolt.badge.clock.fill")
+                        .foregroundColor(.green)
+                    Text("Off-Peak Smart Charging")
+                        .font(.headline)
+                    Spacer()
+                    Text(String(format: "-%.0f%% vs Peak", smart.savingsPercentage))
+                        .font(.caption2).bold()
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(Color.green.opacity(0.15))
+                        .foregroundColor(.green)
+                        .clipShape(Capsule())
+                }
+
+                Text(String(format: String(localized: "Charging on %1$@ saved you %2$@ this month compared to peak daytime rates (%3$.1f kWh logged)."), smart.tariffName, appCurrency.format(smart.savingsAmount), smart.homeEnergyKWh))
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(Color.green.opacity(0.08))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.green.opacity(0.2), lineWidth: 1)
+            )
+            .cornerRadius(14)
             .padding(.horizontal)
         }
     }
@@ -573,14 +610,14 @@ struct DashboardView: View {
                                 Image(systemName: "banknote.fill")
                                     .foregroundColor(.green)
                                     .font(.caption)
-                                Text("Per \(unitSystem.distanceUnit)")
+                                Text(String(format: String(localized: "Per %@"), unitSystem.distanceUnit))
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
                             Text(appCurrency.format(savings.costDifferencePerDistance))
                                 .font(.headline)
                                 .foregroundColor(.green)
-                            Text("Saved/\(unitSystem.distanceUnit)")
+                            Text(String(format: String(localized: "Saved/%@"), unitSystem.distanceUnit))
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                         }
@@ -592,7 +629,7 @@ struct DashboardView: View {
                         Image(systemName: "info.circle")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text("Baseline: \(gasPreset.title(for: unitSystem)) @ \(appCurrency.formatRate(GasComparisonSettings.effectiveFuelPrice(currency: appCurrency, unitSystem: unitSystem), unit: GasComparisonSettings.fuelVolumeUnit(unitSystem: unitSystem)))")
+                        Text(String(format: String(localized: "Baseline: %1$@ @ %2$@"), gasPreset.localizedTitle(for: unitSystem), appCurrency.formatRate(GasComparisonSettings.effectiveFuelPrice(currency: appCurrency, unitSystem: unitSystem), unit: GasComparisonSettings.fuelVolumeUnit(unitSystem: unitSystem))))
                             .font(.caption2)
                             .foregroundColor(.secondary)
                             .lineLimit(1)
@@ -1010,7 +1047,7 @@ struct DashboardView: View {
                             Text(location.name)
                                 .font(.headline)
                                 .lineLimit(1)
-                            Text("\(location.sessionCount) sessions • \(String(format: "%.0f kWh", location.totalEnergy))")
+                            Text(String(format: String(localized: "%1$lld sessions • %2$.0f kWh"), Int64(location.sessionCount), location.totalEnergy))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -1045,7 +1082,7 @@ extension Calendar {
 }
 
 struct StatCard: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     let icon: String
     let color: Color
@@ -1074,13 +1111,13 @@ struct StatCard: View {
         .background(Color.secondary.opacity(0.1))
         .cornerRadius(12)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(title)
+        .accessibilityLabel(Text(title))
         .accessibilityValue(value)
     }
 }
 
 struct ChartCard<Content: View>: View {
-    let title: String
+    let title: LocalizedStringKey
     /// When the card sits directly in a scroll view it insets itself; inside a grid the grid provides the insets.
     var insetsHorizontally: Bool = true
     @ViewBuilder let content: Content

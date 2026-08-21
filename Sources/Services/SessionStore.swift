@@ -699,11 +699,24 @@ class SessionStore: ObservableObject {
     func importSessions(_ importedSessions: [ChargingSession], skippedRows: Int = 0) {
         guard !importedSessions.isEmpty else { return }
 
+        let defaultVehId = defaultVehicle.id
+        let activeVehId = selectedVehicleId ?? defaultVehId
+
         // Filter duplicates against existing sessions and within the import batch itself
         var nonDuplicateSessions: [ChargingSession] = []
         var duplicateCount = 0
 
-        for session in importedSessions {
+        for var session in importedSessions {
+            if let rawVid = session.vehicleId, !rawVid.isEmpty {
+                if let matched = self.vehicles.first(where: { $0.id == rawVid || $0.name.localizedCaseInsensitiveCompare(rawVid) == .orderedSame }) {
+                    session.vehicleId = matched.id
+                } else if self.vehicles.count == 1 {
+                    session.vehicleId = defaultVehId
+                }
+            } else {
+                session.vehicleId = activeVehId
+            }
+
             let isDupOfExisting = self.sessions.contains(where: { $0.isDuplicate(of: session) })
             let isDupOfBatch = nonDuplicateSessions.contains(where: { $0.isDuplicate(of: session) })
 

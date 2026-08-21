@@ -72,12 +72,14 @@ final class SnapshotPublisher: ObservableObject {
     }
 
     private func makeSnapshot() -> JouleSnapshot {
-        SnapshotBuilder.build(
+        let currency = UserDefaults.standard.string(forKey: "app_currency").flatMap(AppCurrency.init) ?? VehicleProfile.defaultCurrency
+        let unitSystem = UserDefaults.standard.string(forKey: "app_unit_system").flatMap(UnitSystem.init) ?? VehicleProfile.defaultUnitSystem
+        return SnapshotBuilder.build(
             sessions: store.sessions(for: store.selectedVehicleId),
             vehicle: store.activeVehicle,
             vehicleCount: store.vehicles.count,
-            currency: VehicleProfile.currency,
-            unitSystem: VehicleProfile.unitSystem
+            currency: currency,
+            unitSystem: unitSystem
         )
     }
 }

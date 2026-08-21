@@ -90,7 +90,7 @@ struct VehicleEditorView: View {
                             Label("Car Model Preset", systemImage: "car.side.fill")
                                 .foregroundColor(.blue)
                             Spacer()
-                            Text(selectedPreset?.displayName ?? "Custom Model")
+                            Text(selectedPreset?.displayName ?? String(localized: "Custom Model"))
                                 .foregroundColor(.primary)
                             Image(systemName: "chevron.right")
                                 .font(.caption)
@@ -123,7 +123,7 @@ struct VehicleEditorView: View {
                 Section {
                     Picker("Battery Chemistry", selection: $chemistry) {
                         ForEach(BatteryChemistry.allCases) { chem in
-                            Text(chem.rawValue).tag(chem)
+                            Text(LocalizedStringKey(chem.rawValue)).tag(chem)
                         }
                     }
                     .onChange(of: chemistry) { _, newChem in
@@ -144,7 +144,7 @@ struct VehicleEditorView: View {
                     
                     Picker("Range Standard", selection: $rangeStandard) {
                         ForEach(RangeStandard.allCases) { std in
-                            Text(std.rawValue).tag(std)
+                            Text(LocalizedStringKey(std.rawValue)).tag(std)
                         }
                     }
                     
@@ -218,9 +218,9 @@ struct VehicleEditorView: View {
                 Section {
                     Picker("Home Tariff Plan", selection: $tariffType) {
                         ForEach(TariffRegion.allCases) { region in
-                            Section(region.rawValue) {
+                            Section(LocalizedStringKey(region.rawValue)) {
                                 ForEach(region.tariffs) { t in
-                                    Text(t.rawValue).tag(t)
+                                    Text(LocalizedStringKey(t.rawValue)).tag(t)
                                 }
                             }
                         }
@@ -247,7 +247,7 @@ struct VehicleEditorView: View {
                 Section {
                     Picker("ICE Vehicle Category", selection: $gasPreset) {
                         ForEach(GasBaselinePreset.allCases) { p in
-                            Text(p.title(for: unitSystem)).tag(p)
+                            Text(p.localizedTitle(for: unitSystem)).tag(p)
                         }
                     }
                     .onChange(of: gasPreset) { _, newPreset in
@@ -318,7 +318,7 @@ struct VehicleEditorView: View {
         }
     }
     
-    private var navigationTitle: String {
+    private var navigationTitle: LocalizedStringKey {
         switch mode {
         case .create: return "Add Vehicle"
         case .edit: return "Edit Vehicle"

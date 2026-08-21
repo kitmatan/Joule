@@ -30,7 +30,7 @@ enum WatchTheme {
 struct WatchMetricRow: View {
     let icon: String
     let color: Color
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     var detail: String?
 

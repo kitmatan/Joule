@@ -37,7 +37,7 @@ struct GarageManagementView: View {
                         )
                     }
                 } header: {
-                    Text("Your Vehicles (\(store.vehicles.count))")
+                    Text(String(format: String(localized: "Your Vehicles (%lld)"), Int64(store.vehicles.count)))
                 } footer: {
                     Text("Select a vehicle to set it as active across your dashboard, charging forms, and battery analytics.")
                 }
@@ -73,7 +73,7 @@ struct GarageManagementView: View {
                 ),
                 presenting: vehicleToDelete
             ) { vehicle in
-                Button("Delete \"\(vehicle.name)\"", role: .destructive) {
+                Button(String(format: String(localized: "Delete \"%@\""), vehicle.name), role: .destructive) {
                     store.deleteVehicle(vehicle)
                     vehicleToDelete = nil
                 }
@@ -81,7 +81,7 @@ struct GarageManagementView: View {
                     vehicleToDelete = nil
                 }
             } message: { vehicle in
-                Text("Are you sure you want to delete \(vehicle.name)? Any charging sessions previously linked to this car will remain in your history and reassign to your primary vehicle.")
+                Text(String(format: String(localized: "Are you sure you want to delete %@? Any charging sessions previously linked to this car will remain in your history and reassign to your primary vehicle."), vehicle.name))
             }
         }
     }
@@ -136,7 +136,7 @@ struct VehicleCardRow: View {
                     }
                     
                     if let plate = vehicle.licensePlate, !plate.isEmpty {
-                        Text("Plate: \(plate)")
+                        Text(String(format: String(localized: "Plate: %@"), plate))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -179,7 +179,7 @@ struct VehicleCardRow: View {
                 
                 Spacer()
                 
-                Text("\(sessionCount) \(sessionCount == 1 ? "session" : "sessions") (\(String(format: "%.0f", totalEnergy)) kWh)")
+                Text(String(format: String(localized: "%1$lld sessions (%2$.0f kWh)"), Int64(sessionCount), totalEnergy))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

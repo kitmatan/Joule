@@ -99,7 +99,7 @@ struct BatteryHealthView: View {
         
         var id: String { rawValue }
         
-        func title(unit: UnitSystem) -> String {
+        func title(unit: UnitSystem) -> LocalizedStringKey {
             switch self {
             case .time: return "Over Time"
             case .mileage: return "Vs. Mileage"
@@ -215,6 +215,7 @@ struct BatteryHealthView: View {
     
     @State private var showingSettings = false
     @State private var showingBestPracticesSheet = false
+    @State private var showingCertificateSheet = false
 
     var body: some View {
         ScrollView {
@@ -239,7 +240,17 @@ struct BatteryHealthView: View {
             ToolbarItem(placement: .topBarLeading) {
                 GarageSwitcherMenu(allowAllOption: false)
             }
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItemGroup(placement: .primaryAction) {
+                if let summary = summary, !allPoints.isEmpty {
+                    Button {
+                        showingCertificateSheet = true
+                    } label: {
+                        Image(systemName: "bolt.shield")
+                            .fontWeight(.semibold)
+                    }
+                    .accessibilityLabel("Battery Certificate")
+                }
+
                 Button {
                     showingSettings = true
                 } label: {
@@ -254,6 +265,18 @@ struct BatteryHealthView: View {
         }
         .sheet(isPresented: $showingBestPracticesSheet) {
             ChargingBestPracticesSheet(vehicle: targetVehicle)
+        }
+        .sheet(isPresented: $showingCertificateSheet) {
+            if let summary = summary {
+                BatteryHealthCertificateView(
+                    vehicle: targetVehicle,
+                    summary: summary,
+                    behavior: behaviorAnalysis,
+                    unitSystem: unitSystem,
+                    currency: VehicleProfile.currency,
+                    totalSessions: vehicleSessions.count
+                )
+            }
         }
     }
     
@@ -315,7 +338,7 @@ struct BatteryHealthView: View {
             HStack(spacing: 6) {
                 Image(systemName: summary.assessment.icon)
                     .foregroundColor(assessmentColor(summary.assessment))
-                Text(summary.assessment.title)
+                Text(LocalizedStringKey(summary.assessment.title))
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(assessmentColor(summary.assessment))
@@ -1078,18 +1101,18 @@ struct BatteryHealthView: View {
                                 Image(systemName: analysis.assessment.icon)
                                     .font(.caption)
                                     .foregroundColor(analysis.grade.color)
-                                Text(analysis.assessment.rawValue)
+                                Text(LocalizedStringKey(analysis.assessment.rawValue))
                                     .font(.subheadline)
                                     .fontWeight(.bold)
                                     .foregroundColor(analysis.grade.color)
                             }
-                            Text(analysis.grade.title)
+                            Text(LocalizedStringKey(analysis.grade.title))
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                         }
                     }
 
-                    Text(analysis.summaryText)
+                    Text(LocalizedStringKey(analysis.summaryText))
                         .font(.subheadline)
                         .foregroundColor(.primary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1212,7 +1235,7 @@ struct BatteryHealthView: View {
     }
 
     private func dimensionTile(
-        title: String,
+        title: LocalizedStringKey,
         score: Double,
         icon: String,
         color: Color,
@@ -1268,7 +1291,7 @@ struct BatteryHealthView: View {
                 Label("Actionable Recommendations", systemImage: "sparkles")
                     .font(.headline)
                 Spacer()
-                Text("\(analysis.recommendations.count) tips")
+                Text(String(format: String(localized: "%lld tips"), Int64(analysis.recommendations.count)))
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -1294,12 +1317,12 @@ struct BatteryHealthView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(rec.title)
+                    Text(LocalizedStringKey(rec.title))
                         .font(.subheadline)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
                     Spacer()
-                    Text(rec.observedMetricFormatted)
+                    Text(LocalizedStringKey(rec.observedMetricFormatted))
                         .font(.caption2)
                         .fontWeight(.semibold)
                         .padding(.horizontal, 6)
@@ -1309,7 +1332,7 @@ struct BatteryHealthView: View {
                         .clipShape(Capsule())
                 }
 
-                Text(rec.summary)
+                Text(LocalizedStringKey(rec.summary))
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1319,7 +1342,7 @@ struct BatteryHealthView: View {
                         .font(.caption)
                         .fontWeight(.bold)
                         .foregroundColor(rec.level.color)
-                    Text(rec.actionableAdvice)
+                    Text(LocalizedStringKey(rec.actionableAdvice))
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
@@ -1343,9 +1366,9 @@ struct BatteryHealthView: View {
                 .font(.title3)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(targetVehicle.name) (\(targetVehicle.chemistry.rawValue)) Battery Care")
+                Text(String(format: String(localized: "%1$@ (%2$@) Battery Care"), targetVehicle.name, targetVehicle.chemistry.rawValue))
                     .font(.subheadline).bold()
-                Text(targetVehicle.batteryCareTip)
+                Text(LocalizedStringKey(targetVehicle.batteryCareTip))
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1366,7 +1389,7 @@ struct BatteryHealthView: View {
                 Text("Recent Capacity Calculations")
                     .font(.title2).bold()
                 Spacer()
-                Text("\(allPoints.count) sessions analyzed")
+                Text(String(format: String(localized: "%lld sessions analyzed"), Int64(allPoints.count)))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -1380,7 +1403,7 @@ struct BatteryHealthView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(spacing: 6) {
-                                Text(point.date.formatted(.dateTime.month(.abbreviated).day().year().locale(Locale(identifier: "en_US_POSIX"))))
+                                Text(point.date.formatted(.dateTime.month(.abbreviated).day().year()))
                                     .font(.subheadline).bold()
                                 
                                 Text(point.chargingType.rawValue)
@@ -1417,7 +1440,7 @@ struct BatteryHealthView: View {
                     }
                     .padding()
                     .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(point.date.formatted(.dateTime.month(.abbreviated).day().year().locale(Locale(identifier: "en_US_POSIX")))), \(point.chargingType.rawValue) session")
+                    .accessibilityLabel("\(point.date.formatted(.dateTime.month(.abbreviated).day().year())), \(point.chargingType.rawValue) session")
                     .accessibilityValue("SoC changed from \(Int(point.startSoC))% to \(Int(point.endSoC))%, \(String(format: "%.1f kWh", point.energyAdded)) added. Estimated pack capacity \(String(format: "%.1f kWh", point.estimatedCapacityKWh)), \(String(format: "%.1f%%", point.stateOfHealth)) State of Health, \(point.confidence.description) confidence")
                 }
             }
@@ -1539,7 +1562,7 @@ struct ChargingBestPracticesSheet: View {
                                 Text(vehicle.name)
                                     .font(.subheadline)
                                     .fontWeight(.bold)
-                                Text(vehicle.chemistry.fullName)
+                                Text(LocalizedStringKey(vehicle.chemistry.fullName))
                                     .font(.caption2)
                                     .fontWeight(.semibold)
                                     .padding(.horizontal, 6)
@@ -1549,7 +1572,7 @@ struct ChargingBestPracticesSheet: View {
                                     .clipShape(Capsule())
                             }
 
-                            Text(vehicle.batteryCareTip)
+                            Text(LocalizedStringKey(vehicle.batteryCareTip))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -1567,7 +1590,7 @@ struct ChargingBestPracticesSheet: View {
                     // Filter Picker
                     Picker("Filter Practices", selection: $selectedFilter) {
                         ForEach(PracticeFilter.allCases) { filter in
-                            Text(filter.rawValue).tag(filter)
+                            Text(LocalizedStringKey(filter.rawValue)).tag(filter)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -1606,7 +1629,7 @@ struct ChargingBestPracticesSheet: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack {
-                        Text(practice.category)
+                        Text(LocalizedStringKey(practice.category))
                             .font(.caption2)
                             .fontWeight(.bold)
                             .foregroundColor(practice.color)
@@ -1614,18 +1637,18 @@ struct ChargingBestPracticesSheet: View {
 
                         Spacer()
 
-                        Text(practice.chemistryApplicability.rawValue)
+                        Text(LocalizedStringKey(practice.chemistryApplicability.rawValue))
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
 
-                    Text(practice.title)
+                    Text(LocalizedStringKey(practice.title))
                         .font(.headline)
                         .foregroundColor(.primary)
                 }
             }
 
-            Text(practice.summary)
+            Text(LocalizedStringKey(practice.summary))
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1639,7 +1662,7 @@ struct ChargingBestPracticesSheet: View {
                             .font(.caption)
                             .foregroundColor(practice.color)
                             .padding(.top, 2)
-                        Text(bullet)
+                        Text(LocalizedStringKey(bullet))
                             .font(.caption)
                             .foregroundColor(.primary)
                             .fixedSize(horizontal: false, vertical: true)

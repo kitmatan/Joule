@@ -25,3 +25,7 @@ DerivedData/
 .build/
 .swiftpm/
 Packages/
+
+# Python
+__pycache__/
+*.pyc

@@ -72,7 +72,7 @@ struct SessionDetailContent: View {
                         .foregroundColor(.secondary)
                 }
                 
-                Text(session.date.formatted(.dateTime.month(.abbreviated).day().year().hour().minute().locale(Locale(identifier: "en_US_POSIX"))))
+                Text(session.date.formatted(.dateTime.month(.abbreviated).day().year().hour().minute()))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .padding(.top, 4)
@@ -160,7 +160,7 @@ struct SessionDetailContent: View {
                                 Text(String(format: "%.1f kWh (%.1f%% SoH)", point.estimatedCapacityKWh, point.stateOfHealth))
                                     .foregroundColor(.primary)
                                     .font(.subheadline)
-                                Text(point.confidence.description)
+                                Text(LocalizedStringKey(point.confidence.description))
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                             }
@@ -354,7 +354,7 @@ struct SessionDetailContent: View {
 }
 
 struct DetailHeroCard: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     let color: Color
     
@@ -378,13 +378,13 @@ struct DetailHeroCard: View {
         .background(color.opacity(0.1))
         .cornerRadius(12)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(title)
+        .accessibilityLabel(Text(title))
         .accessibilityValue(value)
     }
 }
 
 struct DetailRow: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     let icon: String
     
@@ -403,7 +403,7 @@ struct DetailRow: View {
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(title)
+        .accessibilityLabel(Text(title))
         .accessibilityValue(value)
     }
 }

@@ -105,7 +105,7 @@ struct PhoneRootView: View {
         }
         .fileExporter(
             isPresented: $navCoordinator.showingExporter,
-            document: CSVDocument(text: CSVExporter.generateCSV(from: store.sessions)),
+            document: CSVDocument(text: CSVExporter.generateCSV(from: store.sessions, vehicles: store.vehicles)),
             contentType: .commaSeparatedText,
             defaultFilename: "Joule_Export"
         ) { _ in }

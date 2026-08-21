@@ -27,20 +27,24 @@ enum GasBaselinePreset: String, CaseIterable, Identifiable, Codable {
     
     /// Display title with localized efficiency hint.
     func title(for unitSystem: UnitSystem) -> String {
+        localizedTitle(for: unitSystem)
+    }
+
+    func localizedTitle(for unitSystem: UnitSystem) -> String {
         switch unitSystem {
         case .metric:
             switch self {
-            case .midSizeSUV: return "Mid-Size SUV / Crossover (13.0 km/L)"
-            case .compact: return "Compact Sedan / Eco Car (16.0 km/L)"
-            case .fullSizeSUV: return "Full-Size SUV / Truck (9.0 km/L)"
-            case .custom: return "Custom Baseline"
+            case .midSizeSUV: return String(format: String(localized: "Mid-Size SUV / Crossover (%.1f km/L)"), 13.0)
+            case .compact: return String(format: String(localized: "Compact Sedan / Eco Car (%.1f km/L)"), 16.0)
+            case .fullSizeSUV: return String(format: String(localized: "Full-Size SUV / Truck (%.1f km/L)"), 9.0)
+            case .custom: return String(localized: "Custom Baseline")
             }
         case .imperial:
             switch self {
-            case .midSizeSUV: return "Mid-Size SUV / Crossover (30.6 MPG)"
-            case .compact: return "Compact Sedan / Eco Car (37.6 MPG)"
-            case .fullSizeSUV: return "Full-Size SUV / Truck (21.2 MPG)"
-            case .custom: return "Custom Baseline"
+            case .midSizeSUV: return String(format: String(localized: "Mid-Size SUV / Crossover (%.1f MPG)"), 30.6)
+            case .compact: return String(format: String(localized: "Compact Sedan / Eco Car (%.1f MPG)"), 37.6)
+            case .fullSizeSUV: return String(format: String(localized: "Full-Size SUV / Truck (%.1f MPG)"), 21.2)
+            case .custom: return String(localized: "Custom Baseline")
             }
         }
     }

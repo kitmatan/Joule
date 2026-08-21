@@ -204,17 +204,23 @@ struct BatteryHealthSummary {
             }
         }
         
-        var detail: String {
+        func detail(for chemistry: BatteryChemistry) -> String {
             switch self {
             case .excellent:
                 return "Battery capacity retention is well above average with minimal wear."
             case .good:
-                return "Deterioration rate matches standard \(VehicleProfile.chemistry.rawValue) chemistry longevity expectations."
+                return "Deterioration rate matches standard \(chemistry.rawValue) chemistry longevity expectations."
             case .normal:
                 return "Battery capacity is in line with expected calendar and cycle aging."
             case .degraded:
-                return "Capacity loss is higher than expected. Consider calibrating at 100% SoC if using LFP, or checking cell balance."
+                return chemistry == .lfp
+                    ? "Capacity loss is higher than expected. Consider calibrating at 100% SoC for cell balancing."
+                    : "Capacity loss is higher than expected. Avoid prolonged 100% SoC holds and high temperature exposure."
             }
+        }
+        
+        var detail: String {
+            detail(for: VehicleProfile.chemistry)
         }
         
         var icon: String {

@@ -177,6 +177,10 @@ struct MacHistoryView: View {
     @State private var selectedSessionID: String?
     @State private var sessionToEdit: ChargingSession?
     @State private var sessionToDelete: ChargingSession?
+    @State private var showingPDFExporter = false
+    @State private var pdfDocument: PDFFileDocument?
+    @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
+    @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
 
     var displayedSessions: [ChargingSession] {
         store.sessions(for: store.selectedVehicleId)
@@ -196,7 +200,7 @@ struct MacHistoryView: View {
 
     var groupedSessions: [(String, [ChargingSession])] {
         let grouped = Dictionary(grouping: filteredSessions) { session in
-            session.date.formatted(.dateTime.year().month(.wide).locale(Locale(identifier: "en_US_POSIX")))
+            session.date.formatted(.dateTime.year().month(.wide))
         }
         return grouped.sorted { a, b in
             guard let aDate = a.value.first?.date, let bDate = b.value.first?.date else { return false }
@@ -243,6 +247,21 @@ struct MacHistoryView: View {
                         Label("Export All to CSV…", systemImage: "square.and.arrow.up")
                     }
                     .keyboardShortcut("e", modifiers: .command)
+
+                    Button(action: {
+                        let pdfData = PDFReportGenerator.generatePDF(
+                            sessions: filteredSessions,
+                            vehicle: store.activeVehicle,
+                            currency: appCurrency,
+                            unitSystem: unitSystem,
+                            title: "EV Charging Expense Statement - \(store.activeVehicle.name)",
+                            dateRangeTitle: filter.sidebarTitle
+                        )
+                        pdfDocument = PDFFileDocument(data: pdfData)
+                        showingPDFExporter = true
+                    }) {
+                        Label("Export Reimbursement PDF…", systemImage: "doc.text.fill")
+                    }
                 } label: {
                     Label("Import/Export", systemImage: "square.and.arrow.up.on.square")
                 }
@@ -256,6 +275,12 @@ struct MacHistoryView: View {
             AddSessionView(sessionToEdit: session)
                 .frame(minWidth: 540, minHeight: 640)
         }
+        .fileExporter(
+            isPresented: $showingPDFExporter,
+            document: pdfDocument,
+            contentType: .pdf,
+            defaultFilename: "Joule_Reimbursement_\(store.activeVehicle.name.replacingOccurrences(of: " ", with: "_"))"
+        ) { _ in }
         .confirmationDialog(
             "Delete Charging Session?",
             isPresented: Binding(
@@ -275,7 +300,7 @@ struct MacHistoryView: View {
                 sessionToDelete = nil
             }
         } message: { session in
-            Text("Are you sure you want to delete the charging session at \(session.locationName ?? "this location") on \(session.date.formatted(.dateTime.month(.abbreviated).day().year().locale(Locale(identifier: "en_US_POSIX"))))?")
+            Text("Are you sure you want to delete the charging session at \(session.locationName ?? "this location") on \(session.date.formatted(.dateTime.month(.abbreviated).day().year()))?")
         }
     }
 
@@ -301,7 +326,7 @@ struct MacHistoryView: View {
                     HStack {
                         Text(month)
                         Spacer()
-                        Text(VehicleProfile.currency.format(sessions.reduce(0) { $0 + $1.totalPrice }))
+                        Text(appCurrency.format(sessions.reduce(0) { $0 + $1.totalPrice }))
                         Text("•")
                         Text(String(format: "%.0f kWh", sessions.reduce(0) { $0 + $1.energyAdded }))
                     }
@@ -401,7 +426,7 @@ struct MacSessionRow: View {
                 }
                 Text(String(format: "%.1f kWh", session.energyAdded))
                 Text("•")
-                Text(session.date.formatted(.dateTime.month(.abbreviated).day().locale(Locale(identifier: "en_US_POSIX"))))
+                Text(session.date.formatted(.dateTime.month(.abbreviated).day()))
                 if session.paymentStatus == .deferred {
                     Image(systemName: "list.bullet.rectangle.portrait")
                         .foregroundColor(.orange)
@@ -412,7 +437,7 @@ struct MacSessionRow: View {
         }
         .padding(.vertical, 3)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(session.locationName ?? "Charging Session"), \(session.date.formatted(.dateTime.month(.abbreviated).day().locale(Locale(identifier: "en_US_POSIX"))))")
+        .accessibilityLabel("\(session.locationName ?? "Charging Session"), \(session.date.formatted(.dateTime.month(.abbreviated).day()))")
         .accessibilityValue("\(session.chargingType?.rawValue ?? "") \(String(format: "%.1f kWh", session.energyAdded)), \(appCurrency.format(session.totalPrice))\(session.paymentStatus == .deferred ? ", Deferred" : "")")
     }
 }

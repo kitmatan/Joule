@@ -108,7 +108,7 @@ struct DashboardHeroCard: View {
 
     private var rateUnitLabel: String {
         guard hasRateData else { return "" }
-        return showsDrivingCost ? "per \(unitSystem.distanceUnit)" : "per kWh"
+        return showsDrivingCost ? String(format: String(localized: "per %@"), unitSystem.distanceUnit) : String(localized: "per kWh")
     }
 
     /// Value and unit combined, for VoiceOver and non-visual contexts.
@@ -169,7 +169,7 @@ struct DashboardHeroCard: View {
             // Vehicle Title & Subtitle
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(isAllVehicles ? "Garage Fleet" : vehicle.name)
+                    Text(isAllVehicles ? String(localized: "Garage Fleet") : vehicle.name)
                         .font(.headline)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
@@ -184,7 +184,7 @@ struct DashboardHeroCard: View {
                 }
 
                 if isAllVehicles {
-                    Text("\(vehicleCount) vehicles combined")
+                    Text(String(format: String(localized: "%lld vehicles combined"), Int64(vehicleCount)))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 } else if let plate = vehicle.licensePlate, !plate.isEmpty {
@@ -192,7 +192,7 @@ struct DashboardHeroCard: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 } else {
-                    Text(String(format: "%.0f kWh nominal • ~%.0f %@", vehicle.nominalCapacityKWh, vehicle.nominalRangeKm, unitSystem.distanceUnit))
+                    Text(String(format: String(localized: "%.0f kWh nominal • ~%.0f %@"), vehicle.nominalCapacityKWh, vehicle.nominalRangeKm, unitSystem.distanceUnit))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -281,7 +281,7 @@ struct DashboardHeroCard: View {
                         .font(.caption2)
                         .foregroundColor(.green)
 
-                    Text(String(format: "Saved %@", currency.format(spendSavings.netSavings)))
+                    Text(String(format: String(localized: "Saved %@"), currency.format(spendSavings.netSavings)))
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundColor(.green)
@@ -340,7 +340,7 @@ struct DashboardHeroCard: View {
                         .foregroundColor(.secondary.opacity(0.7))
                 }
 
-                Text(health.assessment.title)
+                Text(LocalizedStringKey(health.assessment.title))
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(isHealthy ? .green : .orange)
             }
@@ -422,7 +422,7 @@ struct DashboardHeroCard: View {
             // Driving Efficiency (tap to switch between km/kWh and kWh/100km)
             Button(action: toggleEfficiencyUnit) {
                 metricTile(
-                    title: efficiencyTitle,
+                    title: LocalizedStringKey(efficiencyTitle),
                     value: efficiencyValue,
                     unit: efficiencyUnitLabel,
                     icon: showsConsumption ? "gauge.with.needle.fill" : "leaf.fill",
@@ -438,7 +438,7 @@ struct DashboardHeroCard: View {
             // Cost Rate (tap to switch between charging rate and driving cost)
             Button(action: toggleRateScope) {
                 metricTile(
-                    title: rateTitle,
+                    title: LocalizedStringKey(rateTitle),
                     value: rateValue,
                     unit: rateUnitLabel,
                     icon: showsDrivingCost ? "road.lanes" : "tag.fill",
@@ -473,7 +473,7 @@ struct DashboardHeroCard: View {
 
     /// A compact metric tile. The unit is rendered on its own line so long units
     /// (e.g. "kWh/100km") stay legible in the three-across iPhone layout.
-    private func metricTile(title: String, value: String, unit: String, icon: String, color: Color, isToggleable: Bool = false) -> some View {
+    private func metricTile(title: LocalizedStringKey, value: String, unit: String, icon: String, color: Color, isToggleable: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 3) {
                 Image(systemName: icon)

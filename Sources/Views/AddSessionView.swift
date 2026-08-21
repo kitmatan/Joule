@@ -57,6 +57,7 @@ struct AddSessionView: View {
     @State private var paymentStatus: PaymentStatus = .paidUpfront
     @State private var homeTariff: HomeTariffType = VehicleProfile.tariffType
     @State private var notes = ""
+    @State private var showingScanner = false
 
     private var currentVehicle: Vehicle {
         if !selectedVehicleId.isEmpty, let v = store.vehicle(for: selectedVehicleId) {
@@ -261,7 +262,7 @@ struct AddSessionView: View {
                             .foregroundColor(.red)
                         Spacer()
                         ZStack(alignment: .trailing) {
-                            Text(date.formatted(.dateTime.month(.abbreviated).day().year().hour().minute().locale(Locale(identifier: "en_US_POSIX"))))
+                            Text(date.formatted(.dateTime.month(.abbreviated).day().year().hour().minute()))
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 7)
                                 .background(Color.secondary.opacity(0.15))
@@ -271,7 +272,7 @@ struct AddSessionView: View {
                             DatePicker("", selection: $date)
                                 .labelsHidden()
                                 .environment(\.calendar, Calendar(identifier: .gregorian))
-                                .environment(\.locale, Locale(identifier: "en_US"))
+                                .environment(\.locale, .current)
                                 .opacity(0.011)
                         }
                     }
@@ -325,7 +326,7 @@ struct AddSessionView: View {
                     .padding(.vertical, 4)
                     
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Estimated Range (\(unitSystem.distanceUnit))").font(.subheadline).foregroundColor(.secondary)
+                        Text(String(format: String(localized: "Estimated Range (%@)"), unitSystem.distanceUnit)).font(.subheadline).foregroundColor(.secondary)
                         HStack {
                             Label("Start", systemImage: "car")
                                 .foregroundColor(.gray)
@@ -419,7 +420,7 @@ struct AddSessionView: View {
                     Text("Charging Details")
                 } footer: {
                     if isHomeCharging {
-                        Text("Estimated from SoC delta based on \(VehicleProfile.vehicleName) (\(VehicleProfile.nominalCapacityKWh, specifier: "%.1f") kWh @ \(VehicleProfile.acEfficiency * 100, specifier: "%.0f")% efficiency, \(VehicleProfile.wallChargerKW, specifier: "%.1f") kW wall charger).")
+                        Text("Estimated from SoC delta based on \(currentVehicle.name) (\(currentVehicle.nominalCapacityKWh, specifier: "%.1f") kWh @ \(currentVehicle.acEfficiency * 100, specifier: "%.0f")% efficiency, \(currentVehicle.wallChargerKW, specifier: "%.1f") kW wall charger).")
                     }
                 }
                 
@@ -428,9 +429,9 @@ struct AddSessionView: View {
                     Section {
                         Picker("Tariff Rate", selection: $homeTariff) {
                             ForEach(TariffRegion.allCases) { region in
-                                Section(region.rawValue) {
+                                Section(LocalizedStringKey(region.rawValue)) {
                                     ForEach(region.tariffs) { tariff in
-                                        Text(tariff.rawValue).tag(tariff)
+                                        Text(LocalizedStringKey(tariff.rawValue)).tag(tariff)
                                     }
                                 }
                             }
@@ -443,7 +444,7 @@ struct AddSessionView: View {
                     } header: {
                         Text("Electricity Tariff")
                     } footer: {
-                        Text(homeTariff.description)
+                        Text(LocalizedStringKey(homeTariff.description))
                     }
                 }
                 
@@ -488,9 +489,9 @@ struct AddSessionView: View {
                     }
                 } header: {
                     HStack {
-                        Text("Fees (\(appCurrency.code))")
+                        Text(String(format: String(localized: "Fees (%@)"), appCurrency.code))
                         Spacer()
-                        Text("Total: \(appCurrency.format(computedTotalPrice))")
+                        Text(String(format: String(localized: "Total: %@"), appCurrency.format(computedTotalPrice)))
                             .font(.headline)
                             .foregroundColor(computedTotalPrice > 0 ? .green : .secondary)
                     }
@@ -521,10 +522,22 @@ struct AddSessionView: View {
                             .fontWeight(.semibold)
                     }
                 }
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItemGroup(placement: .confirmationAction) {
+                    Button {
+                        showingScanner = true
+                    } label: {
+                        Image(systemName: "camera.viewfinder")
+                    }
+                    .accessibilityLabel("Scan Receipt or Meter")
+
                     Button("Save", action: save)
                         .bold()
                         .disabled(!canSave)
+                }
+            }
+            .sheet(isPresented: $showingScanner) {
+                ReceiptScannerView { scanned in
+                    applyScannedData(scanned)
                 }
             }
             .onAppear {
@@ -534,6 +547,38 @@ struct AddSessionView: View {
                 if let v = store.vehicle(for: selectedVehicleId) {
                     homeTariff = v.tariffType
                 }
+            }
+        }
+    }
+    
+    private func applyScannedData(_ data: ScannedChargingData) {
+        if let energy = data.energyAdded {
+            self.energyAdded = energy
+        }
+        if let cost = data.totalPrice {
+            self.chargingFee = cost
+        }
+        if let duration = data.durationMinutes {
+            self.durationMinutes = duration
+        }
+        if let start = data.startPercentage {
+            self.startPercentage = start
+        }
+        if let end = data.endPercentage {
+            self.endPercentage = end
+        }
+        if let spd = data.speedKW {
+            self.speed = spd
+            self.isSpeedManual = true
+        } else {
+            calculateSpeed()
+        }
+        if let vendor = data.locationOrVendor {
+            if self.vendorName.isEmpty {
+                self.vendorName = vendor
+            }
+            if self.locationName.isEmpty {
+                self.locationName = vendor
             }
         }
     }
@@ -553,7 +598,7 @@ struct AddSessionView: View {
               end > start else { return nil }
 
         let energy = (currentVehicle.wallEnergyKWh(socDelta: end - start) * 10).rounded() / 10
-        let endsFull = end >= VehicleProfile.fullChargeSoC
+        let endsFull = end >= 98.0
         let minutes = currentVehicle.durationMinutes(wallEnergyKWh: energy, endsFull: endsFull).rounded()
 
         return (energy, minutes)

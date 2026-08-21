@@ -3,6 +3,16 @@ options:
   bundleIdPrefix: com.kmatan
   deploymentTarget:
     iOS: "17.0"
+  developmentLanguage: en
+  localizations:
+    - en
+    - th
+    - de
+    - fr
+    - es
+    - zh-Hans
+    - ja
+    - nb
 packages:
   Firebase:
     url: https://github.com/firebase/firebase-ios-sdk.git

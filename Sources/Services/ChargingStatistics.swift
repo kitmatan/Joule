@@ -150,4 +150,52 @@ struct ChargingStatistics {
             unitSystem: unitSystem
         )
     }
+
+    // MARK: - Smart Charging & TOU Off-Peak Savings
+
+    struct SmartChargingSavings {
+        let homeEnergyKWh: Double
+        let actualHomeCost: Double
+        let peakEquivalentCost: Double
+        let savingsAmount: Double
+        let savingsPercentage: Double
+        let tariffName: String
+        let hasSavings: Bool
+    }
+
+    var currentMonthSmartChargingSavings: SmartChargingSavings {
+        let homeSessions = currentMonthSessions.filter {
+            $0.locationType == .home || ($0.locationName?.localizedCaseInsensitiveContains("home") == true)
+        }
+        let homeEnergy = homeSessions.reduce(0) { $0 + $1.energyAdded }
+        let homeCost = homeSessions.reduce(0) { $0 + $1.totalPrice }
+
+        let peakRate: Double
+        switch vehicle.tariffType.region {
+        case .thailand:
+            peakRate = HomeTariffType.peaTouPeak.defaultRate
+        case .unitedStates:
+            peakRate = HomeTariffType.usTouPeak.defaultRate
+        case .europeUK:
+            peakRate = vehicle.tariffType == .ukAgileOffPeak || vehicle.tariffType == .ukStandardFlat
+                ? HomeTariffType.ukStandardFlat.defaultRate
+                : HomeTariffType.euStandardFlat.defaultRate
+        case .custom:
+            peakRate = vehicle.effectiveHomeTariff * 1.5
+        }
+
+        let peakEquivalent = homeEnergy * peakRate
+        let savings = max(0, peakEquivalent - homeCost)
+        let savingsPct = peakEquivalent > 0 ? (savings / peakEquivalent) * 100.0 : 0.0
+
+        return SmartChargingSavings(
+            homeEnergyKWh: homeEnergy,
+            actualHomeCost: homeCost,
+            peakEquivalentCost: peakEquivalent,
+            savingsAmount: savings,
+            savingsPercentage: savingsPct,
+            tariffName: vehicle.tariffType.rawValue,
+            hasSavings: savings > 1.0 && homeEnergy > 0
+        )
+    }
 }

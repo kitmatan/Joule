@@ -26,7 +26,7 @@ enum SessionFilter: String, CaseIterable, Identifiable, Hashable {
 
     /// Display name used in the macOS sidebar.
     var sidebarTitle: String {
-        self == .all ? "All Sessions" : rawValue
+        self == .all ? String(localized: "All Sessions") : rawValue
     }
 
     func matches(_ session: ChargingSession) -> Bool {
@@ -51,10 +51,14 @@ struct SessionListView: View {
     @State private var showingSettings = false
     @State private var showingExporter = false
     @State private var showingImporter = false
+    @State private var showingPDFExporter = false
     @State private var sessionToDelete: ChargingSession?
     @State private var csvDocument: CSVDocument?
+    @State private var pdfDocument: PDFFileDocument?
     @State private var searchText = ""
     @State private var filter: SessionFilter = .all
+    @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
+    @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
 
     var displayedSessions: [ChargingSession] {
         store.sessions(for: store.selectedVehicleId)
@@ -75,7 +79,7 @@ struct SessionListView: View {
     // Group sessions by Month and Year (e.g., "July 2026")
     var groupedSessions: [(String, [ChargingSession])] {
         let grouped = Dictionary(grouping: filteredSessions) { session in
-            session.date.formatted(.dateTime.year().month(.wide).locale(Locale(identifier: "en_US_POSIX")))
+            session.date.formatted(.dateTime.year().month(.wide))
         }
 
         // Sort groups by the date of the first item (newest first)
@@ -107,7 +111,7 @@ struct SessionListView: View {
                                 .font(.title3)
                                 .foregroundColor(.orange)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("\(store.duplicateSessionsCount) Duplicate \(store.duplicateSessionsCount == 1 ? "Session" : "Sessions") Found")
+                                Text(String(format: String(localized: "%lld Duplicate Sessions Found"), Int64(store.duplicateSessionsCount)))
                                     .font(.subheadline)
                                     .fontWeight(.medium)
                                 Text("Merge data into canonical records and remove duplicates.")
@@ -147,8 +151,7 @@ struct SessionListView: View {
                         HStack {
                             Text(month)
                             Spacer()
-                            Text(sessions.reduce(0) { $0 + $1.totalPrice }
-                                .formatted(.currency(code: "THB").presentation(.narrow)))
+                            Text(appCurrency.format(sessions.reduce(0) { $0 + $1.totalPrice }))
                             Text("•")
                             Text(String(format: "%.0f kWh", sessions.reduce(0) { $0 + $1.energyAdded }))
                         }
@@ -188,13 +191,13 @@ struct SessionListView: View {
                         Menu {
                             Picker("Filter", selection: $filter) {
                                 ForEach(SessionFilter.allCases) { option in
-                                    Text(option.rawValue).tag(option)
+                                    Text(LocalizedStringKey(option.rawValue)).tag(option)
                                 }
                             }
                             Divider()
                             if store.duplicateSessionsCount > 0 {
                                 Button(action: { store.cleanDuplicates() }) {
-                                    Label("Clean Up Duplicates (\(store.duplicateSessionsCount))", systemImage: "sparkles.rectangle.stack")
+                                    Label(String(format: String(localized: "Clean Up Duplicates (%lld)"), Int64(store.duplicateSessionsCount)), systemImage: "sparkles.rectangle.stack")
                                 }
                                 Divider()
                             }
@@ -209,6 +212,21 @@ struct SessionListView: View {
                                 Label("Export All to CSV…", systemImage: "square.and.arrow.up")
                             }
                             .keyboardShortcut("e", modifiers: .command)
+
+                            Button(action: {
+                                let pdfData = PDFReportGenerator.generatePDF(
+                                    sessions: filteredSessions,
+                                    vehicle: store.activeVehicle,
+                                    currency: appCurrency,
+                                    unitSystem: unitSystem,
+                                    title: "EV Charging Expense Statement - \(store.activeVehicle.name)",
+                                    dateRangeTitle: filter == .all ? "All Sessions" : filter.rawValue
+                                )
+                                pdfDocument = PDFFileDocument(data: pdfData)
+                                showingPDFExporter = true
+                            }) {
+                                Label("Export Reimbursement PDF…", systemImage: "doc.text.fill")
+                            }
 
                             Divider()
                             Button(action: { navCoordinator.presentSettings() }) {
@@ -258,13 +276,19 @@ struct SessionListView: View {
                     sessionToDelete = nil
                 }
             } message: { session in
-                Text("Are you sure you want to delete the charging session at \(session.locationName ?? "this location") on \(session.date.formatted(.dateTime.month(.abbreviated).day().year().locale(Locale(identifier: "en_US_POSIX"))))?")
+                Text("Are you sure you want to delete the charging session at \(session.locationName ?? "this location") on \(session.date.formatted(.dateTime.month(.abbreviated).day().year()))?")
             }
             .fileExporter(
                 isPresented: $showingExporter,
                 document: csvDocument,
                 contentType: .commaSeparatedText,
                 defaultFilename: "Joule_Export"
+            ) { _ in }
+            .fileExporter(
+                isPresented: $showingPDFExporter,
+                document: pdfDocument,
+                contentType: .pdf,
+                defaultFilename: "Joule_Reimbursement_\(store.activeVehicle.name.replacingOccurrences(of: " ", with: "_"))"
             ) { _ in }
             .fileImporter(
                 isPresented: $showingImporter,
@@ -321,7 +345,7 @@ struct SessionRow: View {
                         Text(vendor)
                         Text("•")
                     }
-                    Text(session.date.formatted(.dateTime.month(.abbreviated).day().year().hour().minute().locale(Locale(identifier: "en_US_POSIX"))))
+                    Text(session.date.formatted(.dateTime.month(.abbreviated).day().year().hour().minute()))
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -390,7 +414,7 @@ struct SessionRow: View {
         }
         .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(session.locationName ?? "Charging Session")\(session.vendorName != nil ? ", \(session.vendorName!)" : ""), \(session.date.formatted(.dateTime.month(.abbreviated).day().year().locale(Locale(identifier: "en_US_POSIX"))))")
+        .accessibilityLabel("\(session.locationName ?? "Charging Session")\(session.vendorName != nil ? ", \(session.vendorName!)" : ""), \(session.date.formatted(.dateTime.month(.abbreviated).day().year()))")
         .accessibilityValue("\(session.chargingType?.rawValue ?? "") charging, \(String(format: "%.1f kWh", session.energyAdded)) added in \(String(format: "%.0f minutes", session.duration / 60)), \(appCurrency.format(session.totalPrice))\(session.paymentStatus == .deferred ? ", Deferred" : "")")
     }
     

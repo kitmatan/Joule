@@ -13,7 +13,7 @@ struct GarageSwitcherMenu: View {
             return vehicle.name
         }
         if store.selectedVehicleId == nil && allowAllOption && store.vehicles.count > 1 {
-            return "All Vehicles"
+            return String(localized: "All Vehicles")
         }
         return store.activeVehicle.name
     }
@@ -28,7 +28,7 @@ struct GarageSwitcherMenu: View {
                         HStack {
                             Text(vehicle.name)
                             if vehicle.isDefault {
-                                Text(" (Default)")
+                                Text(LocalizedStringKey(" (Default)"))
                             }
                             if store.selectedVehicleId == vehicle.id {
                                 Image(systemName: "checkmark")
@@ -44,7 +44,7 @@ struct GarageSwitcherMenu: View {
                         store.selectVehicle(id: nil)
                     } label: {
                         HStack {
-                            Text("All Garage Vehicles")
+                            Text(LocalizedStringKey("All Garage Vehicles"))
                             if store.selectedVehicleId == nil {
                                 Image(systemName: "checkmark")
                             }
@@ -63,7 +63,7 @@ struct GarageSwitcherMenu: View {
                 Button {
                     showingGarageManagement = true
                 } label: {
-                    Label("Manage Garage (\(store.vehicles.count))…", systemImage: "car.2.fill")
+                    Label(String(format: String(localized: "Manage Garage (%lld)…"), Int64(store.vehicles.count)), systemImage: "car.2.fill")
                 }
             }
         } label: {
@@ -72,7 +72,7 @@ struct GarageSwitcherMenu: View {
                     .font(.caption)
                     .foregroundStyle(.blue)
                 
-                Text(labelTitle)
+                Text(LocalizedStringKey(labelTitle))
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .lineLimit(1)

@@ -26,10 +26,24 @@ struct ChartTooltipCard<Content: View>: View {
 
 /// A compact key-value row for chart tooltip breakdowns.
 struct ChartTooltipRow: View {
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     var dotColor: Color? = nil
     var isBold: Bool = false
+
+    init(title: LocalizedStringKey, value: String, dotColor: Color? = nil, isBold: Bool = false) {
+        self.title = title
+        self.value = value
+        self.dotColor = dotColor
+        self.isBold = isBold
+    }
+
+    init(title: String, value: String, dotColor: Color? = nil, isBold: Bool = false) {
+        self.title = LocalizedStringKey(title)
+        self.value = value
+        self.dotColor = dotColor
+        self.isBold = isBold
+    }
 
     var body: some View {
         HStack(spacing: 5) {
@@ -49,3 +63,4 @@ struct ChartTooltipRow: View {
         }
     }
 }
+
