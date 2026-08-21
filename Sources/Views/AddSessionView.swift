@@ -67,6 +67,29 @@ struct AddSessionView: View {
 
     private var isHomeCharging: Bool { locationType == .home }
 
+    private var isFree: Bool { paymentStatus == .free }
+
+    /// Marking a session free zeroes every fee; clearing it restores the payment status
+    /// implied by the location and re-derives the home tariff estimate.
+    private var freeChargingBinding: Binding<Bool> {
+        Binding(
+            get: { isFree },
+            set: { newValue in
+                if newValue {
+                    paymentStatus = .free
+                    chargingFee = 0
+                    bookingFee = 0
+                    overtimeFee = 0
+                } else {
+                    paymentStatus = isHomeCharging ? .deferred : .paidUpfront
+                    if isHomeCharging, energyAdded > 0 {
+                        chargingFee = homeFee(forEnergy: energyAdded)
+                    }
+                }
+            }
+        )
+    }
+
     private var mileageBinding: Binding<Double?> {
         Binding(
             get: {
@@ -143,7 +166,9 @@ struct AddSessionView: View {
         }
 
         var fee = chargingFee
-        if isHomeCharging, fee == 0, energy > 0 {
+        if isFree {
+            fee = 0
+        } else if isHomeCharging, fee == 0, energy > 0 {
             fee = homeFee(forEnergy: energy)
         }
 
@@ -155,7 +180,7 @@ struct AddSessionView: View {
             minutes: minutes,
             fee: fee,
             speed: finalSpeed,
-            total: fee + bookingFee + overtimeFee
+            total: isFree ? 0 : fee + bookingFee + overtimeFee
         )
     }
 
@@ -192,13 +217,13 @@ struct AddSessionView: View {
                     .onChange(of: locationType) { oldValue, newValue in
                         switch newValue {
                         case .home:
-                            paymentStatus = .deferred
+                            if !isFree { paymentStatus = .deferred }
                             chargingType = .ac
                             if locationName.isEmpty { locationName = "Home" }
                             applyHomeEstimate()
                         case .publicStation, .work:
                             guard oldValue == .home else { break }
-                            paymentStatus = .paidUpfront
+                            if !isFree { paymentStatus = .paidUpfront }
                             if locationName == "Home" { locationName = "" }
                             chargingType = .dc
                             chargingFee = 0
@@ -424,35 +449,42 @@ struct AddSessionView: View {
                 
                 // Section: Fees
                 Section {
-                    HStack {
-                        Label("Charging Fee", systemImage: "bolt.car")
-                            .foregroundColor(.blue)
-                        Spacer()
-                        TextField("0.00", value: $chargingFee, format: .number)
-                            .multilineTextAlignment(.trailing)
-                            #if os(iOS)
-                            .keyboardType(.decimalPad)
-                            #endif
+                    Toggle(isOn: freeChargingBinding) {
+                        Label("Free Charging", systemImage: "gift.fill")
+                            .foregroundColor(.green)
                     }
-                    HStack {
-                        Label("Booking Fee", systemImage: "calendar.badge.clock")
-                            .foregroundColor(.orange)
-                        Spacer()
-                        TextField("0.00", value: $bookingFee, format: .number)
-                            .multilineTextAlignment(.trailing)
-                            #if os(iOS)
-                            .keyboardType(.decimalPad)
-                            #endif
-                    }
-                    HStack {
-                        Label("Overtime Fee", systemImage: "clock.badge.exclamationmark")
-                            .foregroundColor(.red)
-                        Spacer()
-                        TextField("0.00", value: $overtimeFee, format: .number)
-                            .multilineTextAlignment(.trailing)
-                            #if os(iOS)
-                            .keyboardType(.decimalPad)
-                            #endif
+
+                    if !isFree {
+                        HStack {
+                            Label("Charging Fee", systemImage: "bolt.car")
+                                .foregroundColor(.blue)
+                            Spacer()
+                            TextField("0.00", value: $chargingFee, format: .number)
+                                .multilineTextAlignment(.trailing)
+                                #if os(iOS)
+                                .keyboardType(.decimalPad)
+                                #endif
+                        }
+                        HStack {
+                            Label("Booking Fee", systemImage: "calendar.badge.clock")
+                                .foregroundColor(.orange)
+                            Spacer()
+                            TextField("0.00", value: $bookingFee, format: .number)
+                                .multilineTextAlignment(.trailing)
+                                #if os(iOS)
+                                .keyboardType(.decimalPad)
+                                #endif
+                        }
+                        HStack {
+                            Label("Overtime Fee", systemImage: "clock.badge.exclamationmark")
+                                .foregroundColor(.red)
+                            Spacer()
+                            TextField("0.00", value: $overtimeFee, format: .number)
+                                .multilineTextAlignment(.trailing)
+                                #if os(iOS)
+                                .keyboardType(.decimalPad)
+                                #endif
+                        }
                     }
                 } header: {
                     HStack {
@@ -464,7 +496,9 @@ struct AddSessionView: View {
                     }
                     .padding(.bottom, 4)
                 } footer: {
-                    if isHomeCharging {
+                    if isFree {
+                        Text("Logged at no cost. The energy still counts toward your stats and gas savings.")
+                    } else if isHomeCharging {
                         Text("Deferred to your electric bill.")
                     }
                 }
@@ -538,7 +572,7 @@ struct AddSessionView: View {
             durationMinutes = estimate.minutes
         }
 
-        if energyAdded > 0, overwriting || chargingFee == 0 {
+        if !isFree, energyAdded > 0, overwriting || chargingFee == 0 {
             chargingFee = homeFee(forEnergy: energyAdded)
         }
 
@@ -559,8 +593,8 @@ struct AddSessionView: View {
         newSession.energyAdded = values.energy
         newSession.speed = values.speed
         newSession.chargingFee = values.fee
-        newSession.bookingFee = bookingFee
-        newSession.overtimeFee = overtimeFee
+        newSession.bookingFee = isFree ? 0 : bookingFee
+        newSession.overtimeFee = isFree ? 0 : overtimeFee
         newSession.pricePerUnit = values.energy > 0 ? values.total / values.energy : 0.0
         newSession.totalPrice = values.total
         newSession.mileage = mileage

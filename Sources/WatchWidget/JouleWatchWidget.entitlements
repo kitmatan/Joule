@@ -6,9 +6,5 @@
 	<array>
 		<string>group.com.kmatan.ChargeLog</string>
 	</array>
-	<key>keychain-access-groups</key>
-	<array>
-		<string>$(AppIdentifierPrefix)com.kmatan.ChargeLog</string>
-	</array>
 </dict>
 </plist>

@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Standard card container for chart hover/selection tooltips across all app graphs.
 struct ChartTooltipCard<Content: View>: View {
+    @Environment(\.colorScheme) private var colorScheme
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -11,7 +12,9 @@ struct ChartTooltipCard<Content: View>: View {
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                    .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 2)
+                    // The tooltip floats over plotted marks, so it needs a heavier shadow in dark
+                    // mode where the card and the chart backdrop are close in luminance.
+                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.5 : 0.15), radius: 6, x: 0, y: 2)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)

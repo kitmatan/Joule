@@ -17,7 +17,15 @@ targets:
     deploymentTarget:
       iOS: "17.0"
     sources:
+      # The extension and watch sources live under Sources/ for locality, but each has its own
+      # target and its own `@main`. Compiling them into the app too would collide on the entry
+      # point, so the app takes everything except those trees.
       - path: Sources
+        excludes:
+          - "Widget/**"
+          - "WidgetShared/**"
+          - "Watch/**"
+          - "WatchWidget/**"
     info:
       path: Info.plist
       properties:
@@ -25,6 +33,10 @@ targets:
     entitlements:
       path: Joule.entitlements
       properties:
+        # The widgets and the watch app cannot read the app's sandbox. Everything they display is
+        # published into this shared container instead — see SharedStorage.
+        com.apple.security.application-groups:
+          - group.com.kmatan.ChargeLog
         # Firebase Auth persists the signed-in session in the keychain. iOS grants apps a default
         # access group implicitly; macOS and Mac Catalyst do not, and Auth fails with
         # "keychain error" without this. Keychain Sharing is unrestricted, so a personal team
@@ -42,30 +54,51 @@ targets:
         product: GoogleSignIn
       - package: GoogleSignIn
         product: GoogleSignInSwift
+      - target: JouleWidget
+        embed: true
+      # A watchOS app cannot be embedded in a Mac Catalyst binary, so this dependency is scoped to
+      # the iOS variant. Without the filter the Catalyst build fails outright on the embed step.
+      - target: JouleWatch
+        embed: true
+        platformFilter: iOS
     postBuildScripts:
       # Google's OAuth callback returns through a custom URL scheme that must match the
       # REVERSED_CLIENT_ID in GoogleService-Info.plist. Copying it into the built Info.plist at
       # build time keeps the two from drifting — the failure mode of a stale hand-copied scheme is
       # a sign-in that hangs on the callback with no useful error.
-      - name: Configure Google Sign-In URL scheme
+      #
+      # This script owns the whole CFBundleURLTypes array: it wipes and rewrites it so repeated
+      # incremental builds cannot accumulate duplicate entries. That means the widget deep-link
+      # scheme has to be written here too — declaring `joule` in Info.plist instead would look
+      # correct in source and then be deleted on the way into the bundle.
+      - name: Configure URL schemes (Google Sign-In + widget deep links)
         basedOnDependencyAnalysis: false
         script: |
           set -euo pipefail
           SOURCE_PLIST="${SRCROOT}/Sources/GoogleService-Info.plist"
           TARGET_PLIST="${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
 
+          /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "${TARGET_PLIST}" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "${TARGET_PLIST}"
+
+          # Entry 0: widget and complication deep links (joule://dashboard, joule://battery, joule://add)
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string com.kmatan.ChargeLog.deeplink" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string joule" "${TARGET_PLIST}"
+
+          # Entry 1: Google Sign-In callback
           SCHEME=$(/usr/libexec/PlistBuddy -c "Print :REVERSED_CLIENT_ID" "${SOURCE_PLIST}" 2>/dev/null || true)
           if [ -z "${SCHEME}" ]; then
             echo "warning: GoogleService-Info.plist has no REVERSED_CLIENT_ID. Enable the Google provider in the Firebase console and re-download the file — Google Sign-In cannot complete until you do (see FIREBASE_SETUP.md)."
             exit 0
           fi
 
-          /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "${TARGET_PLIST}" 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "${TARGET_PLIST}"
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "${TARGET_PLIST}"
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor" "${TARGET_PLIST}"
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "${TARGET_PLIST}"
-          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string ${SCHEME}" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1 dict" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleTypeRole string Editor" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLSchemes array" "${TARGET_PLIST}"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLSchemes:0 string ${SCHEME}" "${TARGET_PLIST}"
     settings:
       base:
         OTHER_LDFLAGS: ["-ObjC"]
@@ -75,8 +108,10 @@ targets:
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: YES
         TARGETED_DEVICE_FAMILY: "1,2,6"
         CODE_SIGN_STYLE: Automatic
-        # Personal team. Google Sign-In needs no entitlement, so nothing here requires a paid
-        # Developer Program membership.
+        # Google Sign-In and Keychain Sharing both sign fine under a personal team. App Groups do
+        # not: that entitlement needs a paid Developer Program membership, so the widgets and the
+        # watch app require one. Without it the container is unavailable and they fall back to
+        # their "open the app" empty state rather than failing to launch.
         DEVELOPMENT_TEAM: M38ACZ9N67
         ENABLE_PREVIEWS: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -97,6 +132,108 @@ targets:
         DEVELOPMENT_TEAM: M38ACZ9N67
         CODE_SIGN_STYLE: Automatic
 
+  # MARK: - iOS Widgets (Home Screen, Lock Screen, StandBy)
+  #
+  # Links no packages at all. The app publishes a plain Codable snapshot into the App Group, so
+  # nothing here needs Firebase — which matters: a widget extension has a hard memory ceiling and
+  # is jettisoned without warning when it exceeds it.
+  JouleWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget:
+      iOS: "17.0"
+    sources:
+      - path: Sources/Shared
+      - path: Sources/WidgetShared
+      - path: Sources/Widget
+      - path: Sources/Assets.xcassets
+    info:
+      path: Sources/Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Joule
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Sources/Widget/JouleWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.kmatan.ChargeLog
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: "com.kmatan.ChargeLog.Widget"
+        # Matches the host app so the Mac Catalyst build has an extension it can embed.
+        SUPPORTS_MACCATALYST: YES
+        TARGETED_DEVICE_FAMILY: "1,2,6"
+        DEVELOPMENT_TEAM: M38ACZ9N67
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
+        ENABLE_PREVIEWS: YES
+
+  # MARK: - Apple Watch app
+  #
+  # watchOS has no Firestore slice, so the watch never talks to the cloud. It receives the same
+  # snapshot over WatchConnectivity and renders it.
+  JouleWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget:
+      watchOS: "10.0"
+    sources:
+      - path: Sources/Shared
+      - path: Sources/Watch
+    info:
+      path: Sources/Watch/Info.plist
+      properties:
+        CFBundleDisplayName: Joule
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: com.kmatan.ChargeLog
+    entitlements:
+      path: Sources/Watch/JouleWatch.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.kmatan.ChargeLog
+    dependencies:
+      - target: JouleWatchWidget
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: "com.kmatan.ChargeLog.watchkitapp"
+        TARGETED_DEVICE_FAMILY: "4"
+        DEVELOPMENT_TEAM: M38ACZ9N67
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_PREVIEWS: YES
+
+  # MARK: - Apple Watch complications
+  JouleWatchWidget:
+    type: app-extension
+    platform: watchOS
+    deploymentTarget:
+      watchOS: "10.0"
+    sources:
+      - path: Sources/Shared
+      - path: Sources/WidgetShared
+      - path: Sources/WatchWidget
+    info:
+      path: Sources/WatchWidget/Info.plist
+      properties:
+        CFBundleDisplayName: Joule
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Sources/WatchWidget/JouleWatchWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.kmatan.ChargeLog
+    settings:
+      base:
+        # Must be prefixed by the watch app's identifier for the extension to be accepted.
+        PRODUCT_BUNDLE_IDENTIFIER: "com.kmatan.ChargeLog.watchkitapp.Widget"
+        TARGETED_DEVICE_FAMILY: "4"
+        DEVELOPMENT_TEAM: M38ACZ9N67
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
+        ENABLE_PREVIEWS: YES
+
 schemes:
   Joule:
     build:
@@ -108,4 +245,11 @@ schemes:
       config: Debug
       targets:
         - JouleTests
+
+  JouleWatch:
+    build:
+      targets:
+        JouleWatch: all
+    run:
+      config: Debug
 

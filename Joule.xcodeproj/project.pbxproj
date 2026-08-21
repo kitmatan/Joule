@@ -8,55 +8,119 @@
 
 /* Begin PBXBuildFile section */
 		0A8A07D17F2B50131ED9D051 /* MacRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA13888C65E01472BAC32C37 /* MacRootView.swift */; };
+		0B0F50C45FA8CB8FC2D543AF /* WidgetTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2F3D63A511DC660D307C954 /* WidgetTheme.swift */; };
+		0C59E73A0109B878BC6B7801 /* AccessoryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF0193E327873FB555A48A16 /* AccessoryViews.swift */; };
+		0F5E581F871C28AD121587C2 /* JouleWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E18E39C6A32CE228BE3CF3 /* JouleWatchApp.swift */; };
 		0F609A530A6BB251D1EB70CC /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AA5D42D1286A20DF3E021B /* SessionStore.swift */; };
-		14FC08BC319AB1C515EF6C25 /* AppCurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C8D1A86F747BE705328609A /* AppCurrency.swift */; };
+		15FC59C8E1BF343EB31D5651 /* MonthlyCostSparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08ED05F468B7148684505E29 /* MonthlyCostSparkline.swift */; };
+		162747C9D2C009443394A153 /* WidgetTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2F3D63A511DC660D307C954 /* WidgetTheme.swift */; };
 		1903819B3FA809624D422DB3 /* DashboardHeroCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 378172A6705C8D928CF5B97A /* DashboardHeroCard.swift */; };
+		1B46A458FB4830A6E3151064 /* SnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF9A027428D30E11FDAC313D /* SnapshotBuilder.swift */; };
 		1C6E1EB082639F9E547EF4D1 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B7C2C49CB053382DB54985 /* AuthService.swift */; };
+		1CDC6EB216697D200A074244 /* UnitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 697243EBA19B578A25B8D3DF /* UnitSettings.swift */; };
 		1FABC844365B8B9314EEA1A3 /* GarageSwitcherMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9189C3BEE85F332D24FC0B3 /* GarageSwitcherMenu.swift */; };
 		21FCB40EF5D43710B07A6672 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = D6D06FA4439E8178AF95BFCE /* GoogleService-Info.plist */; };
+		22A5F0FE81F3CD67C93072A7 /* JouleSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81503CA41C6998D8112B1040 /* JouleSnapshot.swift */; };
+		238CABF0C7B803E6B67E3327 /* JouleSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81503CA41C6998D8112B1040 /* JouleSnapshot.swift */; };
+		23E1DF85DCD0290EB97EF04B /* JouleSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81503CA41C6998D8112B1040 /* JouleSnapshot.swift */; };
+		3094847A89ADD7F57E0C1D0E /* PhoneWatchRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D169CD53BC6CE9A080755EDC /* PhoneWatchRelay.swift */; };
+		3AE76B844A3AD2BFEA567A45 /* SharedStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF83A7AB31B4BB6F0B0ABCD /* SharedStorage.swift */; };
+		3C68F1639DD027F983E631D3 /* SnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 756304EB5A7D6CB01F640A79 /* SnapshotTests.swift */; };
 		3CFDD52C1174A0A7DE65B030 /* AddSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744E63FB0506F80359897B86 /* AddSessionView.swift */; };
 		3D0C8720D65474C7F4027FD2 /* EVPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5E6A7A7C0F1994BE34BFA20 /* EVPreset.swift */; };
+		3DB6ABB5B1E5E8F15EA1F257 /* AppCurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FE38B6B57963E7643D20C6F /* AppCurrency.swift */; };
 		3DE2EAD34CBFEF26CDB34950 /* TariffAndEnergyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CB2503927C3C9C365FC0FCE /* TariffAndEnergyTests.swift */; };
 		3FEF0096042456F6940D7ABF /* CSVProcessingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B7CBE58FA53041CCC033C90 /* CSVProcessingTests.swift */; };
+		40A31C8688F17C2E4D3E346F /* AppCurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FE38B6B57963E7643D20C6F /* AppCurrency.swift */; };
 		43F065F08F0435C240526498 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 903D9ED9FDC661F10F9DAEBA /* GoogleSignInSwift */; };
+		4AE2D944AA32B72285F3B1BC /* JouleWatchWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 97D2A8982908D933A0643114 /* JouleWatchWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4CDE924DBB7125A6B2BFA4C3 /* BatteryHealth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 775A58C1A0C3FB78E89781ED /* BatteryHealth.swift */; };
 		4F2CAE017EE703763AA1E419 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FE00782551AF4470C380C289 /* Localizable.xcstrings */; };
 		4FB233597C6BB142B1559949 /* GarageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1CB48A1E2DBD5AA96DC085 /* GarageTests.swift */; };
 		5062C029AC63E9884AA19D5A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA211D9DD3C06F19CECE272A /* ContentView.swift */; };
+		5067E879E0EAA758B0DED1A4 /* AccessoryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF0193E327873FB555A48A16 /* AccessoryViews.swift */; };
+		507C7EB089A4A76C19BFE858 /* MonthlyCostSparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08ED05F468B7148684505E29 /* MonthlyCostSparkline.swift */; };
+		580A1914975E8C6C0DC734F3 /* SnapshotFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5341F6286C4D2AE2BA6D83D1 /* SnapshotFormatting.swift */; };
 		59D0C9512A1F7EB5EF5953E6 /* CSVParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 894AA0713BDFFB69A7B83BBC /* CSVParser.swift */; };
 		5C129359BA615253D1A8B1BF /* Vehicle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E34BD13022BCA00898C6816 /* Vehicle.swift */; };
 		5D4E596A3423C96D716ADFDF /* GarageManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC183E77F84EAF49757973BB /* GarageManagementView.swift */; };
+		5DE36FBC19F5214EC445AB1B /* AppCurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FE38B6B57963E7643D20C6F /* AppCurrency.swift */; };
 		6A7089873F18663BC356F414 /* BatteryHealthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66FF878F9A0A9B7E0F5B7314 /* BatteryHealthView.swift */; };
+		6B11A26DA8F6B97FA32BC927 /* ChargingBehavior.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE5AC9A433E13095B090006F /* ChargingBehavior.swift */; };
+		6CE084444A49A515D7EABFE8 /* ChargingStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5682B988E3F948669068165 /* ChargingStatistics.swift */; };
+		6DA176186112691F655E7405 /* SnapshotTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29F39D7D8850BA19DE46A87 /* SnapshotTimelineProvider.swift */; };
+		6EFD111CE9FA07781E39C62D /* SnapshotFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5341F6286C4D2AE2BA6D83D1 /* SnapshotFormatting.swift */; };
+		7021307C1E4E67DA5419A9C7 /* JouleOverviewWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43EC54496122942C72CF64B5 /* JouleOverviewWidget.swift */; };
+		73930BAEA69C22AB8AB7F42B /* SnapshotFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5341F6286C4D2AE2BA6D83D1 /* SnapshotFormatting.swift */; };
 		773058C2AD45A5D25E26A20D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = FEAE31B02908470FF07C8C59 /* FirebaseAuth */; };
+		837862C2509A352E0C082103 /* AppThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 157270945514729770C2AA35 /* AppThemeTests.swift */; };
 		865AFCEEEE9CD0466F879570 /* JouleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E36357BF3445423DC800813B /* JouleApp.swift */; };
 		870CCA967969D1A885A19E2A /* ChartTooltipCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FE3A05C123DAB9536D0FF56 /* ChartTooltipCard.swift */; };
+		87570E4DE116C6DEAE26EE5B /* JouleBatteryWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423829B1FDA06DACF1BBA59C /* JouleBatteryWidget.swift */; };
 		884C655B1A1406971B59C773 /* VehicleProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6668F00164A974F1B5D3DE /* VehicleProfileTests.swift */; };
 		89F6509DC79A32297968FDC1 /* AppNavigationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE28281D97BAC3DF2678EB7 /* AppNavigationCoordinator.swift */; };
+		8CCCCABC1374F2184DE9B075 /* AppCurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FE38B6B57963E7643D20C6F /* AppCurrency.swift */; };
 		92661FADDAC3E794B6E935DC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FAFC87FA5A246312103F29F /* SettingsView.swift */; };
 		95F6DDE25A7C95F343A6F833 /* BatteryHealthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDB5446BA4A3D01E6346EFA /* BatteryHealthService.swift */; };
+		96C05B55E48280818413F220 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3A71AA0D6513085A5409BBF6 /* Assets.xcassets */; };
 		98CF0B5413C15549F7F4066F /* VehicleProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA939798ABA57BDCCC365796 /* VehicleProfile.swift */; };
 		9A13FFBAA6D2FF5AD103EC22 /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE9ECDC6FFAAE089977C8A0A /* Platform.swift */; };
 		9A78802EDB3D17D568A1F178 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B95188F17C85BA80916D030 /* DashboardView.swift */; };
-		A5CC4AAFA4C3CE28F79AF661 /* UnitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2416E44AAB7867777DF24684 /* UnitSettings.swift */; };
+		9E068205294C1E1637345EF9 /* WatchSessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60DE15731F6C1EDD5F0554FB /* WatchSessionsView.swift */; };
+		9F2139EB6E5E77FF6BCA9043 /* JouleSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81503CA41C6998D8112B1040 /* JouleSnapshot.swift */; };
+		A5DF5DD613F3C31B09A77705 /* UnitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 697243EBA19B578A25B8D3DF /* UnitSettings.swift */; };
 		A677B45D916235F8178183C5 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 400DC804E052054BC7E7A312 /* GoogleSignIn */; };
 		A6AB82D834D34FE287E83002 /* SessionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F136979A823455B50AA53A75 /* SessionListView.swift */; };
 		AB8AE6E1EC2F25EC9EC643B2 /* DeduplicationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6876B524A40C91D08C4F1E1 /* DeduplicationTests.swift */; };
+		AC5EB97393C22EA3310031B9 /* SharedStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF83A7AB31B4BB6F0B0ABCD /* SharedStorage.swift */; };
 		AD7BF908F115951C3C405E4A /* CSVExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB1BB48603020432A57E231 /* CSVExport.swift */; };
+		AFF2FAC7BFEAEEFFAEAD2563 /* JouleWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8807414EA08806118B48DCD7 /* JouleWidgetBundle.swift */; };
+		B1B73E889D301CE4A525D1CC /* UnitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 697243EBA19B578A25B8D3DF /* UnitSettings.swift */; };
+		B896787A2043149F9A83F77E /* UnitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 697243EBA19B578A25B8D3DF /* UnitSettings.swift */; };
+		B911922493F4165F963A639D /* WatchSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16DFDD618233633CC4397059 /* WatchSnapshotStore.swift */; };
+		C59C9246169820E03BB192B5 /* ChargingBehaviorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3BEF89909BB0760ADD2C855 /* ChargingBehaviorService.swift */; };
+		C9C34D08D8943DB31D729E1B /* JouleWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 70AFC7F56E52E950A821414C /* JouleWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CA48D0E725606D8187120609 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532F731B399A9C1B8CBD665B /* AppTheme.swift */; };
 		CF69D3C8AC6ABDCBA1A1F432 /* GasSavingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46DCA48CFF3CBBA0EB0D0E7E /* GasSavingsTests.swift */; };
 		D2997D6BFEEC926411C26670 /* JouleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35D6486889072F0C97BE9CA8 /* JouleTests.swift */; };
+		D7385C95B8BCB6CB295EA87C /* ChargingBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 661C690B26F7F526D363350B /* ChargingBehaviorTests.swift */; };
 		D76A5A2FB35F59195191CD49 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3A71AA0D6513085A5409BBF6 /* Assets.xcassets */; };
+		D7B0D849B1C2B0474D4E6820 /* JouleWatchWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B4C2D97A80447B6DE97BE71 /* JouleWatchWidgetBundle.swift */; };
 		D8080E5C585289BF9203A9D6 /* BatteryHealthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C4DD95292BDA7907AD829D /* BatteryHealthTests.swift */; };
 		D88D0340D74B64B21FD424DC /* GasComparisonSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B57E077A01F9B72C5063F84 /* GasComparisonSettings.swift */; };
 		D96041A96FAC4AD011BF35BA /* VehicleEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D90F1E59CC42AD9A497174F /* VehicleEditorView.swift */; };
 		E04EF86E94E173B3E4AB8526 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 26672DE919B595DD3D3844AE /* FirebaseCore */; };
 		E2D224DA0CA98F1F575821A9 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 497D49C7B806DA75AAAA44AE /* FirebaseFirestore */; };
+		E45F7B25B019A02EF0BA3F49 /* WatchBatteryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40620FB0B499AADC1BF80EA4 /* WatchBatteryView.swift */; };
+		E4652D8D94CE79F8282EABEA /* WatchTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A26A81DC5F770B6FC64578F0 /* WatchTheme.swift */; };
+		E72C9E69E489BB4F19D9CE07 /* SnapshotTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29F39D7D8850BA19DE46A87 /* SnapshotTimelineProvider.swift */; };
+		EA234364855712FFA77FDC6E /* SharedStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF83A7AB31B4BB6F0B0ABCD /* SharedStorage.swift */; };
 		EAB5C7EEF51A5A88C8A06742 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C128488C31FAC2F33D48BCA1 /* SessionDetailView.swift */; };
+		EB24EEA4C9EC779191943BB0 /* SnapshotPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5658903526A12216B8DB775 /* SnapshotPublisher.swift */; };
+		F143A21CF91EE11D686AD0E9 /* SharedStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF83A7AB31B4BB6F0B0ABCD /* SharedStorage.swift */; };
 		F379D6DA4C7904312953CCE2 /* AlertCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99B56310846C4E0CAEAC33E7 /* AlertCenter.swift */; };
+		F71F886BDFD042262A805646 /* WatchOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B32E7E998F210E4D936DCABA /* WatchOverviewView.swift */; };
+		F8419213C1E8F1168DCFE8C7 /* JouleWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 111704C07E6A540DF2B7F4C7 /* JouleWatch.app */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F9CDF8ABAD95060CC967A808 /* SnapshotFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5341F6286C4D2AE2BA6D83D1 /* SnapshotFormatting.swift */; };
 		FDC179AD094BFA4E69B4B0F9 /* ChargingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 767B4E7655EC6237724E840D /* ChargingSession.swift */; };
 		FE28A7E2BF7B6DDBE9A6E198 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E88CBBB0F4DC2ADD8B5C1A19 /* SignInView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		4124F53F2948E36350D4E276 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6770CC72E12DEF5E1030AEFD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E04F933E693DAFD28CA2E685;
+			remoteInfo = JouleWatch;
+		};
+		60BC6884DA7D22B3D4E91A9F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6770CC72E12DEF5E1030AEFD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AC3384733B6BDA789BE823FB;
+			remoteInfo = JouleWatchWidget;
+		};
 		843DCE4F97638FD85EDB5114 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6770CC72E12DEF5E1030AEFD /* Project object */;
@@ -64,17 +128,64 @@
 			remoteGlobalIDString = 7275385C635D3F47C48B7CD7;
 			remoteInfo = Joule;
 		};
+		DB5EE5EF2ACF47DE364F21E3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6770CC72E12DEF5E1030AEFD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7C99B743AC1533F1CC11626E;
+			remoteInfo = JouleWidget;
+		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		11142C6280665D61D7245DFD /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C9C34D08D8943DB31D729E1B /* JouleWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3CA1B4858B04601C5E07746E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				4AE2D944AA32B72285F3B1BC /* JouleWatchWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC472BFB6800E8961A6ABD32 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				F8419213C1E8F1168DCFE8C7 /* JouleWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		08ED05F468B7148684505E29 /* MonthlyCostSparkline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthlyCostSparkline.swift; sourceTree = "<group>"; };
 		0A1CB48A1E2DBD5AA96DC085 /* GarageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GarageTests.swift; sourceTree = "<group>"; };
 		0CDB5446BA4A3D01E6346EFA /* BatteryHealthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealthService.swift; sourceTree = "<group>"; };
 		0E34BD13022BCA00898C6816 /* Vehicle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vehicle.swift; sourceTree = "<group>"; };
+		111704C07E6A540DF2B7F4C7 /* JouleWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JouleWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		157270945514729770C2AA35 /* AppThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppThemeTests.swift; sourceTree = "<group>"; };
+		16DFDD618233633CC4397059 /* WatchSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSnapshotStore.swift; sourceTree = "<group>"; };
 		1B7CBE58FA53041CCC033C90 /* CSVProcessingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVProcessingTests.swift; sourceTree = "<group>"; };
-		2416E44AAB7867777DF24684 /* UnitSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitSettings.swift; sourceTree = "<group>"; };
 		24AA5D42D1286A20DF3E021B /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		2B57E077A01F9B72C5063F84 /* GasComparisonSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GasComparisonSettings.swift; sourceTree = "<group>"; };
 		2FAFC87FA5A246312103F29F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		34DDDB47C195F29CCE9E664A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		35D6486889072F0C97BE9CA8 /* JouleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleTests.swift; sourceTree = "<group>"; };
 		378172A6705C8D928CF5B97A /* DashboardHeroCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardHeroCard.swift; sourceTree = "<group>"; };
 		3A71AA0D6513085A5409BBF6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -82,35 +193,67 @@
 		3D90F1E59CC42AD9A497174F /* VehicleEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleEditorView.swift; sourceTree = "<group>"; };
 		3DE28281D97BAC3DF2678EB7 /* AppNavigationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppNavigationCoordinator.swift; sourceTree = "<group>"; };
 		3FE3A05C123DAB9536D0FF56 /* ChartTooltipCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartTooltipCard.swift; sourceTree = "<group>"; };
+		40620FB0B499AADC1BF80EA4 /* WatchBatteryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBatteryView.swift; sourceTree = "<group>"; };
+		41B64C23EDAC0B265705196A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		423829B1FDA06DACF1BBA59C /* JouleBatteryWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleBatteryWidget.swift; sourceTree = "<group>"; };
 		42C4DD95292BDA7907AD829D /* BatteryHealthTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealthTests.swift; sourceTree = "<group>"; };
 		4348C99C98519F8CCB2DD663 /* Joule.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Joule.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		43EC54496122942C72CF64B5 /* JouleOverviewWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleOverviewWidget.swift; sourceTree = "<group>"; };
 		46DCA48CFF3CBBA0EB0D0E7E /* GasSavingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GasSavingsTests.swift; sourceTree = "<group>"; };
+		532F731B399A9C1B8CBD665B /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		5341F6286C4D2AE2BA6D83D1 /* SnapshotFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotFormatting.swift; sourceTree = "<group>"; };
 		5CB2503927C3C9C365FC0FCE /* TariffAndEnergyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TariffAndEnergyTests.swift; sourceTree = "<group>"; };
+		5F9727456D76EC1A2712F1FE /* JouleWatchWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = JouleWatchWidget.entitlements; sourceTree = "<group>"; };
 		5FB1BB48603020432A57E231 /* CSVExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVExport.swift; sourceTree = "<group>"; };
+		60DE15731F6C1EDD5F0554FB /* WatchSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionsView.swift; sourceTree = "<group>"; };
+		661C690B26F7F526D363350B /* ChargingBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingBehaviorTests.swift; sourceTree = "<group>"; };
 		66FF878F9A0A9B7E0F5B7314 /* BatteryHealthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealthView.swift; sourceTree = "<group>"; };
-		6C8D1A86F747BE705328609A /* AppCurrency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCurrency.swift; sourceTree = "<group>"; };
+		697243EBA19B578A25B8D3DF /* UnitSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitSettings.swift; sourceTree = "<group>"; };
+		6AF83A7AB31B4BB6F0B0ABCD /* SharedStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStorage.swift; sourceTree = "<group>"; };
+		70AFC7F56E52E950A821414C /* JouleWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = JouleWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		71057CA07E9C4BD6495FBF89 /* JouleWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = JouleWatch.entitlements; sourceTree = "<group>"; };
 		744E63FB0506F80359897B86 /* AddSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddSessionView.swift; sourceTree = "<group>"; };
+		756304EB5A7D6CB01F640A79 /* SnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotTests.swift; sourceTree = "<group>"; };
 		767B4E7655EC6237724E840D /* ChargingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingSession.swift; sourceTree = "<group>"; };
 		775A58C1A0C3FB78E89781ED /* BatteryHealth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealth.swift; sourceTree = "<group>"; };
+		81503CA41C6998D8112B1040 /* JouleSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleSnapshot.swift; sourceTree = "<group>"; };
 		8430D3D8A477A2631B55EE69 /* JouleTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = JouleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		84E18E39C6A32CE228BE3CF3 /* JouleWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleWatchApp.swift; sourceTree = "<group>"; };
+		861C57E3DBF478A1D772C23E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8807414EA08806118B48DCD7 /* JouleWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleWidgetBundle.swift; sourceTree = "<group>"; };
 		894AA0713BDFFB69A7B83BBC /* CSVParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVParser.swift; sourceTree = "<group>"; };
+		8B4C2D97A80447B6DE97BE71 /* JouleWatchWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleWatchWidgetBundle.swift; sourceTree = "<group>"; };
+		97D2A8982908D933A0643114 /* JouleWatchWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = JouleWatchWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		99B56310846C4E0CAEAC33E7 /* AlertCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCenter.swift; sourceTree = "<group>"; };
+		9FE38B6B57963E7643D20C6F /* AppCurrency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCurrency.swift; sourceTree = "<group>"; };
+		A26A81DC5F770B6FC64578F0 /* WatchTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTheme.swift; sourceTree = "<group>"; };
+		B29F39D7D8850BA19DE46A87 /* SnapshotTimelineProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotTimelineProvider.swift; sourceTree = "<group>"; };
+		B32E7E998F210E4D936DCABA /* WatchOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchOverviewView.swift; sourceTree = "<group>"; };
+		B5682B988E3F948669068165 /* ChargingStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingStatistics.swift; sourceTree = "<group>"; };
 		B5B7C2C49CB053382DB54985 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		B6876B524A40C91D08C4F1E1 /* DeduplicationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeduplicationTests.swift; sourceTree = "<group>"; };
 		BA13888C65E01472BAC32C37 /* MacRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
 		C128488C31FAC2F33D48BCA1 /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
+		C3BEF89909BB0760ADD2C855 /* ChargingBehaviorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingBehaviorService.swift; sourceTree = "<group>"; };
 		C9189C3BEE85F332D24FC0B3 /* GarageSwitcherMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GarageSwitcherMenu.swift; sourceTree = "<group>"; };
 		CC183E77F84EAF49757973BB /* GarageManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GarageManagementView.swift; sourceTree = "<group>"; };
 		CC6668F00164A974F1B5D3DE /* VehicleProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleProfileTests.swift; sourceTree = "<group>"; };
+		D169CD53BC6CE9A080755EDC /* PhoneWatchRelay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneWatchRelay.swift; sourceTree = "<group>"; };
 		D6D06FA4439E8178AF95BFCE /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		DA939798ABA57BDCCC365796 /* VehicleProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleProfile.swift; sourceTree = "<group>"; };
+		DE5AC9A433E13095B090006F /* ChargingBehavior.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingBehavior.swift; sourceTree = "<group>"; };
 		E36357BF3445423DC800813B /* JouleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleApp.swift; sourceTree = "<group>"; };
+		E5658903526A12216B8DB775 /* SnapshotPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotPublisher.swift; sourceTree = "<group>"; };
 		E5E6A7A7C0F1994BE34BFA20 /* EVPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVPreset.swift; sourceTree = "<group>"; };
 		E88CBBB0F4DC2ADD8B5C1A19 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		EF0193E327873FB555A48A16 /* AccessoryViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessoryViews.swift; sourceTree = "<group>"; };
 		F136979A823455B50AA53A75 /* SessionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListView.swift; sourceTree = "<group>"; };
+		F2F3D63A511DC660D307C954 /* WidgetTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTheme.swift; sourceTree = "<group>"; };
+		F5D2A5B706184D1F7914E199 /* JouleWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = JouleWidget.entitlements; sourceTree = "<group>"; };
 		FA211D9DD3C06F19CECE272A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FE00782551AF4470C380C289 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		FE9ECDC6FFAAE089977C8A0A /* Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
+		FF9A027428D30E11FDAC313D /* SnapshotBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotBuilder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -129,6 +272,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		156BC49CC62F17ECC8E27E64 /* WatchWidget */ = {
+			isa = PBXGroup;
+			children = (
+				41B64C23EDAC0B265705196A /* Info.plist */,
+				5F9727456D76EC1A2712F1FE /* JouleWatchWidget.entitlements */,
+				8B4C2D97A80447B6DE97BE71 /* JouleWatchWidgetBundle.swift */,
+			);
+			name = WatchWidget;
+			path = Sources/WatchWidget;
+			sourceTree = "<group>";
+		};
 		25B080F5F13B47ACE7C6CADD /* App */ = {
 			isa = PBXGroup;
 			children = (
@@ -139,19 +293,47 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		31501A1FA38CF25388C0EFE4 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				9FE38B6B57963E7643D20C6F /* AppCurrency.swift */,
+				81503CA41C6998D8112B1040 /* JouleSnapshot.swift */,
+				6AF83A7AB31B4BB6F0B0ABCD /* SharedStorage.swift */,
+				5341F6286C4D2AE2BA6D83D1 /* SnapshotFormatting.swift */,
+				697243EBA19B578A25B8D3DF /* UnitSettings.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		3BE45B50E7EF10CCC17D464D /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				6C8D1A86F747BE705328609A /* AppCurrency.swift */,
+				532F731B399A9C1B8CBD665B /* AppTheme.swift */,
 				775A58C1A0C3FB78E89781ED /* BatteryHealth.swift */,
+				DE5AC9A433E13095B090006F /* ChargingBehavior.swift */,
 				767B4E7655EC6237724E840D /* ChargingSession.swift */,
 				E5E6A7A7C0F1994BE34BFA20 /* EVPreset.swift */,
 				2B57E077A01F9B72C5063F84 /* GasComparisonSettings.swift */,
-				2416E44AAB7867777DF24684 /* UnitSettings.swift */,
 				0E34BD13022BCA00898C6816 /* Vehicle.swift */,
 				DA939798ABA57BDCCC365796 /* VehicleProfile.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		42EEFAADB961F3E2B3B3272A /* Watch */ = {
+			isa = PBXGroup;
+			children = (
+				34DDDB47C195F29CCE9E664A /* Info.plist */,
+				71057CA07E9C4BD6495FBF89 /* JouleWatch.entitlements */,
+				84E18E39C6A32CE228BE3CF3 /* JouleWatchApp.swift */,
+				40620FB0B499AADC1BF80EA4 /* WatchBatteryView.swift */,
+				B32E7E998F210E4D936DCABA /* WatchOverviewView.swift */,
+				60DE15731F6C1EDD5F0554FB /* WatchSessionsView.swift */,
+				16DFDD618233633CC4397059 /* WatchSnapshotStore.swift */,
+				A26A81DC5F770B6FC64578F0 /* WatchTheme.swift */,
+			);
+			name = Watch;
+			path = Sources/Watch;
 			sourceTree = "<group>";
 		};
 		53499DAEFDF6803DD56D3E36 = {
@@ -159,6 +341,10 @@
 			children = (
 				5697616420B55E19B5104826 /* JouleTests */,
 				EDF65C4B69FBD5A30A46CAAB /* Sources */,
+				42EEFAADB961F3E2B3B3272A /* Watch */,
+				156BC49CC62F17ECC8E27E64 /* WatchWidget */,
+				96021AAD336A278AB8955939 /* Widget */,
+				E040C0A599F818AC5BBA40DE /* WidgetShared */,
 				88F9079D48ED2F426BDDC5E7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -166,12 +352,15 @@
 		5697616420B55E19B5104826 /* JouleTests */ = {
 			isa = PBXGroup;
 			children = (
+				157270945514729770C2AA35 /* AppThemeTests.swift */,
 				42C4DD95292BDA7907AD829D /* BatteryHealthTests.swift */,
+				661C690B26F7F526D363350B /* ChargingBehaviorTests.swift */,
 				1B7CBE58FA53041CCC033C90 /* CSVProcessingTests.swift */,
 				B6876B524A40C91D08C4F1E1 /* DeduplicationTests.swift */,
 				0A1CB48A1E2DBD5AA96DC085 /* GarageTests.swift */,
 				46DCA48CFF3CBBA0EB0D0E7E /* GasSavingsTests.swift */,
 				35D6486889072F0C97BE9CA8 /* JouleTests.swift */,
+				756304EB5A7D6CB01F640A79 /* SnapshotTests.swift */,
 				5CB2503927C3C9C365FC0FCE /* TariffAndEnergyTests.swift */,
 				CC6668F00164A974F1B5D3DE /* VehicleProfileTests.swift */,
 			);
@@ -184,8 +373,24 @@
 			children = (
 				4348C99C98519F8CCB2DD663 /* Joule.app */,
 				8430D3D8A477A2631B55EE69 /* JouleTests.xctest */,
+				111704C07E6A540DF2B7F4C7 /* JouleWatch.app */,
+				97D2A8982908D933A0643114 /* JouleWatchWidget.appex */,
+				70AFC7F56E52E950A821414C /* JouleWidget.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		96021AAD336A278AB8955939 /* Widget */ = {
+			isa = PBXGroup;
+			children = (
+				861C57E3DBF478A1D772C23E /* Info.plist */,
+				423829B1FDA06DACF1BBA59C /* JouleBatteryWidget.swift */,
+				43EC54496122942C72CF64B5 /* JouleOverviewWidget.swift */,
+				F5D2A5B706184D1F7914E199 /* JouleWidget.entitlements */,
+				8807414EA08806118B48DCD7 /* JouleWidgetBundle.swift */,
+			);
+			name = Widget;
+			path = Sources/Widget;
 			sourceTree = "<group>";
 		};
 		D39CA9F3E68931FA94E03AF9 /* Views */ = {
@@ -209,6 +414,18 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		E040C0A599F818AC5BBA40DE /* WidgetShared */ = {
+			isa = PBXGroup;
+			children = (
+				EF0193E327873FB555A48A16 /* AccessoryViews.swift */,
+				08ED05F468B7148684505E29 /* MonthlyCostSparkline.swift */,
+				B29F39D7D8850BA19DE46A87 /* SnapshotTimelineProvider.swift */,
+				F2F3D63A511DC660D307C954 /* WidgetTheme.swift */,
+			);
+			name = WidgetShared;
+			path = Sources/WidgetShared;
+			sourceTree = "<group>";
+		};
 		EDF65C4B69FBD5A30A46CAAB /* Sources */ = {
 			isa = PBXGroup;
 			children = (
@@ -218,6 +435,7 @@
 				25B080F5F13B47ACE7C6CADD /* App */,
 				3BE45B50E7EF10CCC17D464D /* Models */,
 				FCFD9A99A785FDC86250876C /* Services */,
+				31501A1FA38CF25388C0EFE4 /* Shared */,
 				D39CA9F3E68931FA94E03AF9 /* Views */,
 			);
 			path = Sources;
@@ -229,9 +447,14 @@
 				99B56310846C4E0CAEAC33E7 /* AlertCenter.swift */,
 				B5B7C2C49CB053382DB54985 /* AuthService.swift */,
 				0CDB5446BA4A3D01E6346EFA /* BatteryHealthService.swift */,
+				C3BEF89909BB0760ADD2C855 /* ChargingBehaviorService.swift */,
+				B5682B988E3F948669068165 /* ChargingStatistics.swift */,
 				5FB1BB48603020432A57E231 /* CSVExport.swift */,
 				894AA0713BDFFB69A7B83BBC /* CSVParser.swift */,
+				D169CD53BC6CE9A080755EDC /* PhoneWatchRelay.swift */,
 				24AA5D42D1286A20DF3E021B /* SessionStore.swift */,
+				FF9A027428D30E11FDAC313D /* SnapshotBuilder.swift */,
+				E5658903526A12216B8DB775 /* SnapshotPublisher.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -264,11 +487,15 @@
 				4A5967EDE7C9489AF1B4EAD0 /* Sources */,
 				40F33C8615E6A8313E69FA78 /* Resources */,
 				067DF846263A286CBEB4AE2A /* Frameworks */,
-				56D8CB7261E19D4A836C8001 /* Configure Google Sign-In URL scheme */,
+				11142C6280665D61D7245DFD /* Embed Foundation Extensions */,
+				AC472BFB6800E8961A6ABD32 /* Embed Watch Content */,
+				21AEBC6B91535750AE5E4B02 /* Configure URL schemes (Google Sign-In + widget deep links) */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				EC62F349B1478883A28EAE5A /* PBXTargetDependency */,
+				3B7A648633136383FCFE9FA7 /* PBXTargetDependency */,
 			);
 			name = Joule;
 			packageProductDependencies = (
@@ -280,6 +507,60 @@
 			);
 			productName = Joule;
 			productReference = 4348C99C98519F8CCB2DD663 /* Joule.app */;
+			productType = "com.apple.product-type.application";
+		};
+		7C99B743AC1533F1CC11626E /* JouleWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3DCD9CBE1A08819AD333F1A0 /* Build configuration list for PBXNativeTarget "JouleWidget" */;
+			buildPhases = (
+				5064E2D3DB382D2501EAB642 /* Sources */,
+				8BD64E5319EE85727D3B8149 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = JouleWidget;
+			packageProductDependencies = (
+			);
+			productName = JouleWidget;
+			productReference = 70AFC7F56E52E950A821414C /* JouleWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		AC3384733B6BDA789BE823FB /* JouleWatchWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 717D912AFECF96070D42CEFA /* Build configuration list for PBXNativeTarget "JouleWatchWidget" */;
+			buildPhases = (
+				71F170B10FF2CA683E26FED3 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = JouleWatchWidget;
+			packageProductDependencies = (
+			);
+			productName = JouleWatchWidget;
+			productReference = 97D2A8982908D933A0643114 /* JouleWatchWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		E04F933E693DAFD28CA2E685 /* JouleWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9F6A598999C1140041E1A2AD /* Build configuration list for PBXNativeTarget "JouleWatch" */;
+			buildPhases = (
+				CC0E704735BD698571854E6C /* Sources */,
+				3CA1B4858B04601C5E07746E /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2DFBB8C4F5774C57E6B4668E /* PBXTargetDependency */,
+			);
+			name = JouleWatch;
+			packageProductDependencies = (
+			);
+			productName = JouleWatch;
+			productReference = 111704C07E6A540DF2B7F4C7 /* JouleWatch.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -296,6 +577,18 @@
 						ProvisioningStyle = Automatic;
 					};
 					7275385C635D3F47C48B7CD7 = {
+						DevelopmentTeam = M38ACZ9N67;
+						ProvisioningStyle = Automatic;
+					};
+					7C99B743AC1533F1CC11626E = {
+						DevelopmentTeam = M38ACZ9N67;
+						ProvisioningStyle = Automatic;
+					};
+					AC3384733B6BDA789BE823FB = {
+						DevelopmentTeam = M38ACZ9N67;
+						ProvisioningStyle = Automatic;
+					};
+					E04F933E693DAFD28CA2E685 = {
 						DevelopmentTeam = M38ACZ9N67;
 						ProvisioningStyle = Automatic;
 					};
@@ -322,6 +615,9 @@
 			targets = (
 				7275385C635D3F47C48B7CD7 /* Joule */,
 				40F901109BA153C61802715F /* JouleTests */,
+				E04F933E693DAFD28CA2E685 /* JouleWatch */,
+				AC3384733B6BDA789BE823FB /* JouleWatchWidget */,
+				7C99B743AC1533F1CC11626E /* JouleWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -337,10 +633,18 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8BD64E5319EE85727D3B8149 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				96C05B55E48280818413F220 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		56D8CB7261E19D4A836C8001 /* Configure Google Sign-In URL scheme */ = {
+		21AEBC6B91535750AE5E4B02 /* Configure URL schemes (Google Sign-In + widget deep links) */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -350,14 +654,14 @@
 			);
 			inputPaths = (
 			);
-			name = "Configure Google Sign-In URL scheme";
+			name = "Configure URL schemes (Google Sign-In + widget deep links)";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -euo pipefail\nSOURCE_PLIST=\"${SRCROOT}/Sources/GoogleService-Info.plist\"\nTARGET_PLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\n\nSCHEME=$(/usr/libexec/PlistBuddy -c \"Print :REVERSED_CLIENT_ID\" \"${SOURCE_PLIST}\" 2>/dev/null || true)\nif [ -z \"${SCHEME}\" ]; then\n  echo \"warning: GoogleService-Info.plist has no REVERSED_CLIENT_ID. Enable the Google provider in the Firebase console and re-download the file — Google Sign-In cannot complete until you do (see FIREBASE_SETUP.md).\"\n  exit 0\nfi\n\n/usr/libexec/PlistBuddy -c \"Delete :CFBundleURLTypes\" \"${TARGET_PLIST}\" 2>/dev/null || true\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes array\" \"${TARGET_PLIST}\"\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0 dict\" \"${TARGET_PLIST}\"\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor\" \"${TARGET_PLIST}\"\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes array\" \"${TARGET_PLIST}\"\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string ${SCHEME}\" \"${TARGET_PLIST}\"\n";
+			shellScript = "set -euo pipefail\nSOURCE_PLIST=\"${SRCROOT}/Sources/GoogleService-Info.plist\"\nTARGET_PLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\n\n/usr/libexec/PlistBuddy -c \"Delete :CFBundleURLTypes\" \"${TARGET_PLIST}\" 2>/dev/null || true\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes array\" \"${TARGET_PLIST}\"\n\n# Entry 0: widget and complication deep links (joule://dashboard, joule://battery, joule://add)\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0 dict\" \"${TARGET_PLIST}\"\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleTypeRole string Editor\" \"${TARGET_PLIST}\"\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLName string com.kmatan.ChargeLog.deeplink\" \"${TARGET_PLIST}\"\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes array\" \"${TARGET_PLIST}\"\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string joule\" \"${TARGET_PLIST}\"\n\n# Entry 1: Google Sign-In callback\nSCHEME=$(/usr/libexec/PlistBuddy -c \"Print :REVERSED_CLIENT_ID\" \"${SOURCE_PLIST}\" 2>/dev/null || true)\nif [ -z \"${SCHEME}\" ]; then\n  echo \"warning: GoogleService-Info.plist has no REVERSED_CLIENT_ID. Enable the Google provider in the Firebase console and re-download the file — Google Sign-In cannot complete until you do (see FIREBASE_SETUP.md).\"\n  exit 0\nfi\n\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:1 dict\" \"${TARGET_PLIST}\"\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:1:CFBundleTypeRole string Editor\" \"${TARGET_PLIST}\"\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:1:CFBundleURLSchemes array\" \"${TARGET_PLIST}\"\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:1:CFBundleURLSchemes:0 string ${SCHEME}\" \"${TARGET_PLIST}\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -366,12 +670,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				837862C2509A352E0C082103 /* AppThemeTests.swift in Sources */,
 				D8080E5C585289BF9203A9D6 /* BatteryHealthTests.swift in Sources */,
 				3FEF0096042456F6940D7ABF /* CSVProcessingTests.swift in Sources */,
+				D7385C95B8BCB6CB295EA87C /* ChargingBehaviorTests.swift in Sources */,
 				AB8AE6E1EC2F25EC9EC643B2 /* DeduplicationTests.swift in Sources */,
 				4FB233597C6BB142B1559949 /* GarageTests.swift in Sources */,
 				CF69D3C8AC6ABDCBA1A1F432 /* GasSavingsTests.swift in Sources */,
 				D2997D6BFEEC926411C26670 /* JouleTests.swift in Sources */,
+				3C68F1639DD027F983E631D3 /* SnapshotTests.swift in Sources */,
 				3DE2EAD34CBFEF26CDB34950 /* TariffAndEnergyTests.swift in Sources */,
 				884C655B1A1406971B59C773 /* VehicleProfileTests.swift in Sources */,
 			);
@@ -383,15 +690,19 @@
 			files = (
 				3CFDD52C1174A0A7DE65B030 /* AddSessionView.swift in Sources */,
 				F379D6DA4C7904312953CCE2 /* AlertCenter.swift in Sources */,
-				14FC08BC319AB1C515EF6C25 /* AppCurrency.swift in Sources */,
+				8CCCCABC1374F2184DE9B075 /* AppCurrency.swift in Sources */,
 				89F6509DC79A32297968FDC1 /* AppNavigationCoordinator.swift in Sources */,
+				CA48D0E725606D8187120609 /* AppTheme.swift in Sources */,
 				1C6E1EB082639F9E547EF4D1 /* AuthService.swift in Sources */,
 				4CDE924DBB7125A6B2BFA4C3 /* BatteryHealth.swift in Sources */,
 				95F6DDE25A7C95F343A6F833 /* BatteryHealthService.swift in Sources */,
 				6A7089873F18663BC356F414 /* BatteryHealthView.swift in Sources */,
 				AD7BF908F115951C3C405E4A /* CSVExport.swift in Sources */,
 				59D0C9512A1F7EB5EF5953E6 /* CSVParser.swift in Sources */,
+				6B11A26DA8F6B97FA32BC927 /* ChargingBehavior.swift in Sources */,
+				C59C9246169820E03BB192B5 /* ChargingBehaviorService.swift in Sources */,
 				FDC179AD094BFA4E69B4B0F9 /* ChargingSession.swift in Sources */,
+				6CE084444A49A515D7EABFE8 /* ChargingStatistics.swift in Sources */,
 				870CCA967969D1A885A19E2A /* ChartTooltipCard.swift in Sources */,
 				5062C029AC63E9884AA19D5A /* ContentView.swift in Sources */,
 				1903819B3FA809624D422DB3 /* DashboardHeroCard.swift in Sources */,
@@ -401,27 +712,103 @@
 				1FABC844365B8B9314EEA1A3 /* GarageSwitcherMenu.swift in Sources */,
 				D88D0340D74B64B21FD424DC /* GasComparisonSettings.swift in Sources */,
 				865AFCEEEE9CD0466F879570 /* JouleApp.swift in Sources */,
+				23E1DF85DCD0290EB97EF04B /* JouleSnapshot.swift in Sources */,
 				0A8A07D17F2B50131ED9D051 /* MacRootView.swift in Sources */,
+				3094847A89ADD7F57E0C1D0E /* PhoneWatchRelay.swift in Sources */,
 				9A13FFBAA6D2FF5AD103EC22 /* Platform.swift in Sources */,
 				EAB5C7EEF51A5A88C8A06742 /* SessionDetailView.swift in Sources */,
 				A6AB82D834D34FE287E83002 /* SessionListView.swift in Sources */,
 				0F609A530A6BB251D1EB70CC /* SessionStore.swift in Sources */,
 				92661FADDAC3E794B6E935DC /* SettingsView.swift in Sources */,
+				3AE76B844A3AD2BFEA567A45 /* SharedStorage.swift in Sources */,
 				FE28A7E2BF7B6DDBE9A6E198 /* SignInView.swift in Sources */,
-				A5CC4AAFA4C3CE28F79AF661 /* UnitSettings.swift in Sources */,
+				1B46A458FB4830A6E3151064 /* SnapshotBuilder.swift in Sources */,
+				6EFD111CE9FA07781E39C62D /* SnapshotFormatting.swift in Sources */,
+				EB24EEA4C9EC779191943BB0 /* SnapshotPublisher.swift in Sources */,
+				B1B73E889D301CE4A525D1CC /* UnitSettings.swift in Sources */,
 				5C129359BA615253D1A8B1BF /* Vehicle.swift in Sources */,
 				D96041A96FAC4AD011BF35BA /* VehicleEditorView.swift in Sources */,
 				98CF0B5413C15549F7F4066F /* VehicleProfile.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5064E2D3DB382D2501EAB642 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5067E879E0EAA758B0DED1A4 /* AccessoryViews.swift in Sources */,
+				40A31C8688F17C2E4D3E346F /* AppCurrency.swift in Sources */,
+				87570E4DE116C6DEAE26EE5B /* JouleBatteryWidget.swift in Sources */,
+				7021307C1E4E67DA5419A9C7 /* JouleOverviewWidget.swift in Sources */,
+				22A5F0FE81F3CD67C93072A7 /* JouleSnapshot.swift in Sources */,
+				AFF2FAC7BFEAEEFFAEAD2563 /* JouleWidgetBundle.swift in Sources */,
+				507C7EB089A4A76C19BFE858 /* MonthlyCostSparkline.swift in Sources */,
+				F143A21CF91EE11D686AD0E9 /* SharedStorage.swift in Sources */,
+				F9CDF8ABAD95060CC967A808 /* SnapshotFormatting.swift in Sources */,
+				6DA176186112691F655E7405 /* SnapshotTimelineProvider.swift in Sources */,
+				1CDC6EB216697D200A074244 /* UnitSettings.swift in Sources */,
+				0B0F50C45FA8CB8FC2D543AF /* WidgetTheme.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		71F170B10FF2CA683E26FED3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0C59E73A0109B878BC6B7801 /* AccessoryViews.swift in Sources */,
+				3DB6ABB5B1E5E8F15EA1F257 /* AppCurrency.swift in Sources */,
+				9F2139EB6E5E77FF6BCA9043 /* JouleSnapshot.swift in Sources */,
+				D7B0D849B1C2B0474D4E6820 /* JouleWatchWidgetBundle.swift in Sources */,
+				15FC59C8E1BF343EB31D5651 /* MonthlyCostSparkline.swift in Sources */,
+				EA234364855712FFA77FDC6E /* SharedStorage.swift in Sources */,
+				73930BAEA69C22AB8AB7F42B /* SnapshotFormatting.swift in Sources */,
+				E72C9E69E489BB4F19D9CE07 /* SnapshotTimelineProvider.swift in Sources */,
+				B896787A2043149F9A83F77E /* UnitSettings.swift in Sources */,
+				162747C9D2C009443394A153 /* WidgetTheme.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC0E704735BD698571854E6C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5DE36FBC19F5214EC445AB1B /* AppCurrency.swift in Sources */,
+				238CABF0C7B803E6B67E3327 /* JouleSnapshot.swift in Sources */,
+				0F5E581F871C28AD121587C2 /* JouleWatchApp.swift in Sources */,
+				AC5EB97393C22EA3310031B9 /* SharedStorage.swift in Sources */,
+				580A1914975E8C6C0DC734F3 /* SnapshotFormatting.swift in Sources */,
+				A5DF5DD613F3C31B09A77705 /* UnitSettings.swift in Sources */,
+				E45F7B25B019A02EF0BA3F49 /* WatchBatteryView.swift in Sources */,
+				F71F886BDFD042262A805646 /* WatchOverviewView.swift in Sources */,
+				9E068205294C1E1637345EF9 /* WatchSessionsView.swift in Sources */,
+				B911922493F4165F963A639D /* WatchSnapshotStore.swift in Sources */,
+				E4652D8D94CE79F8282EABEA /* WatchTheme.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		2DFBB8C4F5774C57E6B4668E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AC3384733B6BDA789BE823FB /* JouleWatchWidget */;
+			targetProxy = 60BC6884DA7D22B3D4E91A9F /* PBXContainerItemProxy */;
+		};
+		3B7A648633136383FCFE9FA7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = E04F933E693DAFD28CA2E685 /* JouleWatch */;
+			targetProxy = 4124F53F2948E36350D4E276 /* PBXContainerItemProxy */;
+		};
 		A1D4B05B36807A6D88F7F24D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 7275385C635D3F47C48B7CD7 /* Joule */;
 			targetProxy = 843DCE4F97638FD85EDB5114 /* PBXContainerItemProxy */;
+		};
+		EC62F349B1478883A28EAE5A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7C99B743AC1533F1CC11626E /* JouleWidget */;
+			targetProxy = DB5EE5EF2ACF47DE364F21E3 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -444,6 +831,59 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Joule.app/Joule";
 			};
 			name = Release;
+		};
+		1902FAA7343F3F79B7EACBD5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Watch/JouleWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M38ACZ9N67;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Sources/Watch/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kmatan.ChargeLog.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
+		3F96EB8D7F830AF1D5C2C781 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Sources/Widget/JouleWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M38ACZ9N67;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Sources/Widget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kmatan.ChargeLog.Widget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+			};
+			name = Debug;
+		};
+		4B8DFB9AAFF26A9C190FEDFC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Watch/JouleWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M38ACZ9N67;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Sources/Watch/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kmatan.ChargeLog.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
 		};
 		5C4C164B9C536B8766AEF503 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -468,6 +908,26 @@
 				SUPPORTS_MACCATALYST = YES;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
+			};
+			name = Debug;
+		};
+		62C30745354508825245869B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Sources/WatchWidget/JouleWatchWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M38ACZ9N67;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Sources/WatchWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kmatan.ChargeLog.watchkitapp.Widget;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
 			};
 			name = Debug;
 		};
@@ -553,12 +1013,52 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
+		};
+		AA8CBE05A6CBD7EB130822F8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Sources/Widget/JouleWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M38ACZ9N67;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Sources/Widget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kmatan.ChargeLog.Widget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+			};
+			name = Release;
+		};
+		D11F12E0B24306E30035E792 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Sources/WatchWidget/JouleWatchWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M38ACZ9N67;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Sources/WatchWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kmatan.ChargeLog.watchkitapp.Widget;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
 		};
 		F11E76C8172D909AA1C815F3 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -609,7 +1109,6 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -647,11 +1146,38 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		3DCD9CBE1A08819AD333F1A0 /* Build configuration list for PBXNativeTarget "JouleWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3F96EB8D7F830AF1D5C2C781 /* Debug */,
+				AA8CBE05A6CBD7EB130822F8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		717D912AFECF96070D42CEFA /* Build configuration list for PBXNativeTarget "JouleWatchWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				62C30745354508825245869B /* Debug */,
+				D11F12E0B24306E30035E792 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		907B12A6740D221AE6D683FE /* Build configuration list for PBXNativeTarget "Joule" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5C4C164B9C536B8766AEF503 /* Debug */,
 				872143DE5EC60BC4332E4C46 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9F6A598999C1140041E1A2AD /* Build configuration list for PBXNativeTarget "JouleWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4B8DFB9AAFF26A9C190FEDFC /* Debug */,
+				1902FAA7343F3F79B7EACBD5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

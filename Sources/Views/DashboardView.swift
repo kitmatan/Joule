@@ -97,116 +97,52 @@ struct DashboardView: View {
         store.sessions(for: store.selectedVehicleId)
     }
 
-    var totalSessions: Int { displayedSessions.count }
-
-    var totalCost: Double {
-        displayedSessions.reduce(0) { $0 + $1.totalPrice }
-    }
-
-    var totalEnergy: Double {
-        displayedSessions.reduce(0) { $0 + $1.energyAdded }
-    }
-
-    /// Odometer span, together with the energy and cost that actually powered it.
-    var drivingWindow: (distance: Double, energy: Double, cost: Double)? {
-        let logged = displayedSessions
-            .filter { $0.mileage != nil }
-            .sorted { $0.date < $1.date }
-
-        guard let firstLogged = logged.first, let lastLogged = logged.last else { return nil }
-
-        let odometers = logged.compactMap(\.mileage)
-        guard let startOdo = odometers.min(), let endOdo = odometers.max(), endOdo > startOdo else { return nil }
-
-        let powering = displayedSessions.filter { $0.date >= firstLogged.date && $0.date < lastLogged.date }
-        return (
-            distance: endOdo - startOdo,
-            energy: powering.reduce(0) { $0 + $1.energyAdded },
-            cost: powering.reduce(0) { $0 + $1.totalPrice }
-        )
-    }
-
-    var hasDrivingData: Bool { drivingWindow != nil }
-
-    var totalDistance: Double { drivingWindow?.distance ?? 0 }
-
-    // MARK: - Computed Properties (Monthly)
-    var uniqueMonthsCount: Int {
-        let uniqueMonths = Set(displayedSessions.map {
-            Calendar.current.dateComponents([.year, .month], from: $0.date)
-        })
-        return max(1, uniqueMonths.count)
-    }
-
-    var currentMonthSessions: [ChargingSession] {
-        displayedSessions.filter {
-            Calendar.current.isDate($0.date, equalTo: Date(), toGranularity: .month)
-        }
-    }
-
-    var currentMonthCost: Double {
-        currentMonthSessions.reduce(0) { $0 + $1.totalPrice }
-    }
-
-    var currentMonthEnergy: Double {
-        currentMonthSessions.reduce(0) { $0 + $1.energyAdded }
-    }
-
-    var currentMonthDeferredCost: Double {
-        currentMonthSessions
-            .filter { $0.paymentStatus == .deferred }
-            .reduce(0) { $0 + $1.totalPrice }
-    }
-
-    // MARK: - Computed Properties (Averages)
-    var averagePricePerKWh: Double {
-        totalEnergy > 0 ? totalCost / totalEnergy : 0
-    }
-
-    var energyEfficiency: Double {
-        guard let window = drivingWindow, window.energy > 0 else { return 0 }
-        return window.distance / window.energy
-    }
-
-    var costPerDistance: Double {
-        guard let window = drivingWindow, window.distance > 0 else { return 0 }
-        let convertedDist = unitSystem.convertFromKm(window.distance)
-        guard convertedDist > 0 else { return 0 }
-        return window.cost / convertedDist
-    }
-
-    // MARK: - Gas Comparison & Cost Savings
-    var lifetimeGasSavings: GasSavingsSummary {
-        let vehicle = store.activeVehicle
-        if hasDrivingData {
-            return GasComparisonSettings.calculateSavings(
-                distanceKm: totalDistance,
-                evCost: drivingWindow?.cost ?? totalCost,
-                currency: appCurrency,
-                unitSystem: unitSystem
-            )
-        } else {
-            return GasComparisonSettings.calculateSavings(
-                energyKWh: totalEnergy,
-                evCost: totalCost,
-                ratedEfficiencyKmPerKWh: vehicle.ratedEfficiencyKmPerKWh,
-                currency: appCurrency,
-                unitSystem: unitSystem
-            )
-        }
-    }
-
-    var currentMonthGasSavings: GasSavingsSummary {
-        let vehicle = store.activeVehicle
-        let eff = energyEfficiency > 0 ? energyEfficiency : vehicle.ratedEfficiencyKmPerKWh
-        return GasComparisonSettings.calculateSavings(
-            energyKWh: currentMonthEnergy,
-            evCost: currentMonthCost,
-            ratedEfficiencyKmPerKWh: eff,
+    /// The aggregates below all come from `ChargingStatistics`, which the widgets and the watch
+    /// app read through as well. Keeping one implementation means the Home Screen can never
+    /// disagree with the dashboard about what a month cost.
+    private var stats: ChargingStatistics {
+        ChargingStatistics(
+            sessions: displayedSessions,
+            vehicle: store.activeVehicle,
             currency: appCurrency,
             unitSystem: unitSystem
         )
     }
+
+    var totalSessions: Int { stats.totalSessions }
+
+    var totalCost: Double { stats.totalCost }
+
+    var totalEnergy: Double { stats.totalEnergy }
+
+    var drivingWindow: (distance: Double, energy: Double, cost: Double)? { stats.drivingWindow }
+
+    var hasDrivingData: Bool { stats.hasDrivingData }
+
+    var totalDistance: Double { stats.totalDistance }
+
+    // MARK: - Computed Properties (Monthly)
+    var uniqueMonthsCount: Int { stats.uniqueMonthsCount }
+
+    var currentMonthSessions: [ChargingSession] { stats.currentMonthSessions }
+
+    var currentMonthCost: Double { stats.currentMonthCost }
+
+    var currentMonthEnergy: Double { stats.currentMonthEnergy }
+
+    var currentMonthDeferredCost: Double { stats.currentMonthDeferredCost }
+
+    // MARK: - Computed Properties (Averages)
+    var averagePricePerKWh: Double { stats.averagePricePerKWh }
+
+    var energyEfficiency: Double { stats.energyEfficiency }
+
+    var costPerDistance: Double { stats.costPerDistance }
+
+    // MARK: - Gas Comparison & Cost Savings
+    var lifetimeGasSavings: GasSavingsSummary { stats.lifetimeGasSavings }
+
+    var currentMonthGasSavings: GasSavingsSummary { stats.currentMonthGasSavings }
 
     // MARK: - Driving Efficiency Data
     var drivingEfficiencyPoints: [DrivingEfficiencyPoint] {

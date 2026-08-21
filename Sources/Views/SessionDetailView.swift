@@ -205,6 +205,9 @@ struct SessionDetailContent: View {
                 .cornerRadius(12)
                 .padding(.horizontal)
             }
+
+            // Battery Longevity Impact
+            batteryLongevityImpactSection
             
             // Fees Breakdown
             if session.chargingFee > 0 || session.bookingFee > 0 || session.overtimeFee > 0 || session.paymentStatus != nil {
@@ -228,7 +231,7 @@ struct SessionDetailContent: View {
                         
                         if let payStat = session.paymentStatus {
                             Divider().padding(.leading, 44)
-                            DetailRow(title: "Payment Status", value: payStat.rawValue, icon: payStat == .deferred ? "list.bullet.rectangle.portrait" : "checkmark.circle.fill")
+                            DetailRow(title: "Payment Status", value: payStat.rawValue, icon: paymentStatusIcon(payStat))
                         }
                     }
                     .background(Color.secondary.opacity(0.1))
@@ -254,6 +257,98 @@ struct SessionDetailContent: View {
             }
             
             Spacer(minLength: 40)
+        }
+    }
+
+    // MARK: - Battery Longevity Impact
+    private var batteryLongevityImpactSection: some View {
+        let vehicle = sessionVehicle ?? store.activeVehicle
+        let isAC = session.chargingType == .ac || (session.chargingType == nil && (session.locationType == .home || (session.speed > 0 && session.speed <= 11.5)))
+        let start = session.startPercentage
+        let end = session.endPercentage
+
+        return VStack(alignment: .leading, spacing: 12) {
+            Text("Battery Longevity Impact")
+                .font(.headline)
+                .padding(.horizontal)
+
+            VStack(spacing: 8) {
+                // Speed Impact
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: isAC ? "checkmark.circle.fill" : "bolt.fill")
+                        .foregroundColor(isAC ? .green : .orange)
+                        .font(.body)
+                        .padding(.top, 2)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(isAC ? "Gentle AC Charging" : "High C-Rate DC Fast Charge")
+                            .font(.subheadline).bold()
+                        Text(isAC ? "Minimal cell heat generation and low mechanical stress on the Solid Electrolyte Interphase (SEI) layer." : "High charging current generates elevated internal cell temperatures. Reserve for long-distance travel.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background((isAC ? Color.green : Color.orange).opacity(0.08))
+                .cornerRadius(10)
+
+                // SoC Range Impact
+                if let start, let end {
+                    let chemistry = vehicle.chemistry
+                    let isLFP = chemistry == .lfp
+                    let endsFull = end >= 98.0
+                    let startsLow = start < 15.0
+
+                    if endsFull {
+                        HStack(alignment: .top, spacing: 10) {
+                            Image(systemName: isLFP ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                                .foregroundColor(isLFP ? .green : .orange)
+                                .font(.body)
+                                .padding(.top, 2)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(isLFP ? "100% LFP Calibration Charge" : "100% Top-Off on \(chemistry.rawValue)")
+                                    .font(.subheadline).bold()
+                                Text(isLFP ? "Excellent for LFP BMS cell balancing and capacity calibration." : "Regular daily 100% charges on \(chemistry.rawValue) increase cathode voltage stress. Limit daily charges to 80%–90%.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background((isLFP ? Color.green : Color.orange).opacity(0.08))
+                        .cornerRadius(10)
+                    }
+
+                    if startsLow {
+                        HStack(alignment: .top, spacing: 10) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                                .font(.body)
+                                .padding(.top, 2)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Deep Discharge Zone (Start < 15%)")
+                                    .font(.subheadline).bold()
+                                Text("Starting below 15% increases anode internal resistance. Aim to plug in around 15%–20% buffer.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.orange.opacity(0.08))
+                        .cornerRadius(10)
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    private func paymentStatusIcon(_ status: PaymentStatus) -> String {
+        switch status {
+        case .deferred: return "list.bullet.rectangle.portrait"
+        case .free: return "gift.fill"
+        case .paidUpfront: return "checkmark.circle.fill"
         }
     }
 }

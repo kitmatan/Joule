@@ -5,6 +5,8 @@ struct ContentView: View {
     @EnvironmentObject private var auth: AuthService
     @EnvironmentObject private var store: SessionStore
 
+    @AppStorage(AppTheme.storageKey) private var theme: AppTheme = AppTheme.defaultTheme
+
     var body: some View {
         Group {
             if Platform.isMac {
@@ -13,6 +15,13 @@ struct ContentView: View {
                 PhoneRootView()
             }
         }
+        // Theming goes through the window's `overrideUserInterfaceStyle` and nothing else.
+        // `preferredColorScheme` drives that same property from SwiftUI's side, and running both
+        // leaves them fighting: one of the two hierarchies (root or presented sheet) keeps the
+        // stale style until relaunch. One mechanism, applied to the window, restyles everything —
+        // sheets included, since they inherit the window's traits.
+        .onAppear { theme.applyToOpenWindows() }
+        .onChange(of: theme) { _, newTheme in newTheme.applyToOpenWindows() }
         // Covers the case where auth resolved before this view appeared; `onChange` catches the
         // rest. `connect` is idempotent, so the overlap is harmless.
         .task { bindStore(to: auth.state) }

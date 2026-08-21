@@ -5,6 +5,7 @@ struct BatteryHealthView: View {
     @EnvironmentObject private var store: SessionStore
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.colorScheme) private var colorScheme
     
     @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
     
@@ -207,8 +208,13 @@ struct BatteryHealthView: View {
     private var summary: BatteryHealthSummary? {
         service.calculateSummary(from: vehicleSessions)
     }
+
+    private var behaviorAnalysis: ChargingBehaviorAnalysis {
+        ChargingBehaviorService.analyze(sessions: vehicleSessions, vehicle: targetVehicle)
+    }
     
     @State private var showingSettings = false
+    @State private var showingBestPracticesSheet = false
 
     var body: some View {
         ScrollView {
@@ -245,6 +251,9 @@ struct BatteryHealthView: View {
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
+        }
+        .sheet(isPresented: $showingBestPracticesSheet) {
+            ChargingBestPracticesSheet(vehicle: targetVehicle)
         }
     }
     
@@ -292,7 +301,9 @@ struct BatteryHealthView: View {
         .padding(20)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+        // A hairline shadow disappears against a dark background, so lean on a deeper one there to
+        // keep the card lifted off the grouped backdrop.
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.04), radius: 6, x: 0, y: 3)
         .padding(.horizontal)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Battery State of Health: \(String(format: "%.1f%%", summary.currentSoH)), \(summary.assessment.title)")
@@ -1001,76 +1012,351 @@ struct BatteryHealthView: View {
         .accessibilityHint("Compares actual vehicle degradation against standard \(chemistryName) laboratory cycle wear curve")
     }
     
-    // MARK: - Charging Habits Section
+    // MARK: - Charging Habits & Longevity Analysis Section
     private func chargingHabitsSection(summary: BatteryHealthSummary) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Charging Habits & Cell Longevity")
-                .font(.title2).bold()
-                .padding(.horizontal)
+        let analysis = behaviorAnalysis
+
+        return VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Charging Behavior & Battery Care")
+                        .font(.title2).bold()
+                    Text("Habit review and longevity impact for \(targetVehicle.name)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Button {
+                    showingBestPracticesSheet = true
+                } label: {
+                    Label("Best Practices", systemImage: "book.closed.fill")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .tint(.blue)
+                .accessibilityLabel("Open EV Battery Charging Best Practices Guide")
+            }
+            .padding(.horizontal)
             
             VStack(spacing: 16) {
-                // AC / DC Bar
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("AC Charging (Home/Slow)", systemImage: "powerplug.fill")
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                        Spacer()
-                        Text(String(format: "%.0f%%", summary.acEnergyRatio * 100))
-                            .font(.caption).bold()
-                            .foregroundColor(.blue)
-                    }
-                    
-                    GeometryReader { geo in
-                        HStack(spacing: 3) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.blue)
-                                .frame(width: geo.size.width * CGFloat(summary.acEnergyRatio))
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.orange)
-                                .frame(width: geo.size.width * CGFloat(summary.dcEnergyRatio))
-                        }
-                    }
-                    .frame(height: 10)
-                    
-                    HStack {
-                        Label("DC Fast Charging", systemImage: "bolt.fill")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                        Spacer()
-                        Text(String(format: "%.0f%%", summary.dcEnergyRatio * 100))
-                            .font(.caption).bold()
-                            .foregroundColor(.orange)
-                    }
+                // Behavior Hero Card with Grade & Longevity Score
+                behaviorHeroCard(analysis: analysis)
+
+                // 4-Dimension Sub-Score Grid
+                behaviorDimensionsGrid(analysis: analysis)
+
+                // Actionable Personalized Recommendations
+                if !analysis.recommendations.isEmpty {
+                    recommendationsCard(analysis: analysis)
                 }
-                .padding()
-                .background(Color.secondary.opacity(0.08))
-                .cornerRadius(12)
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("Charging Habits")
-                .accessibilityValue("\(Int(summary.acEnergyRatio * 100)) percent AC slow charging, \(Int(summary.dcEnergyRatio * 100)) percent DC fast charging")
-                
+
                 // Dynamic Battery Chemistry Tip
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: "lightbulb.fill")
-                        .foregroundColor(.yellow)
-                        .font(.title3)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("\(targetVehicle.name) (\(targetVehicle.chemistry.rawValue)) Battery Care")
-                            .font(.subheadline).bold()
-                        Text(targetVehicle.batteryCareTip)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .padding()
-                .background(Color.yellow.opacity(0.1))
-                .cornerRadius(12)
+                chemistryTipCard
             }
             .padding(.horizontal)
         }
+    }
+
+    // MARK: - Behavior Hero Card
+    private func behaviorHeroCard(analysis: ChargingBehaviorAnalysis) -> some View {
+        VStack(spacing: 16) {
+            HStack(alignment: .top, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Text(analysis.grade.rawValue)
+                            .font(.system(size: 24, weight: .black, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
+                            .background(analysis.grade.color)
+                            .clipShape(Capsule())
+
+                        VStack(alignment: .leading, spacing: 1) {
+                            HStack(spacing: 4) {
+                                Image(systemName: analysis.assessment.icon)
+                                    .font(.caption)
+                                    .foregroundColor(analysis.grade.color)
+                                Text(analysis.assessment.rawValue)
+                                    .font(.subheadline)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(analysis.grade.color)
+                            }
+                            Text(analysis.grade.title)
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    Text(analysis.summaryText)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+
+                // Circular Behavior Score Gauge
+                ZStack {
+                    Circle()
+                        .stroke(Color.secondary.opacity(0.18), lineWidth: 8)
+                    Circle()
+                        .trim(from: 0, to: CGFloat(min(1.0, analysis.overallScore / 100.0)))
+                        .stroke(
+                            LinearGradient(
+                                colors: [analysis.grade.color, .blue],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
+
+                    VStack(spacing: 1) {
+                        Text("\(Int(analysis.overallScore.rounded()))")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                        Text("/ 100")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .frame(width: 76, height: 76)
+            }
+        }
+        .padding(18)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.04), radius: 6, x: 0, y: 3)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Charging Behavior Score: \(Int(analysis.overallScore)) out of 100, Grade \(analysis.grade.rawValue), \(analysis.assessment.rawValue). \(analysis.summaryText)")
+    }
+
+    // MARK: - Behavior Dimensions Grid
+    private func behaviorDimensionsGrid(analysis: ChargingBehaviorAnalysis) -> some View {
+        let columns: [GridItem] = {
+            if dynamicTypeSize.isAccessibilitySize {
+                return [GridItem(.flexible())]
+            }
+            if isWide {
+                return [GridItem(.adaptive(minimum: 180, maximum: 260), spacing: 14)]
+            }
+            return [GridItem(.flexible()), GridItem(.flexible())]
+        }()
+
+        let m = analysis.metrics
+
+        return LazyVGrid(columns: columns, spacing: 14) {
+            // Dimension 1: Speed Balance
+            dimensionTile(
+                title: "Speed Balance",
+                score: analysis.speedBalanceScore,
+                icon: "bolt.fill",
+                color: .blue,
+                detail: String(format: "%.0f%% AC / %.0f%% DC", m.acEnergyRatio * 100, m.dcEnergyRatio * 100),
+                progress: m.acEnergyRatio,
+                progressColor: .blue
+            )
+
+            // Dimension 2: Target SoC Control
+            let targetDetail: String = {
+                if targetVehicle.chemistry == .lfp {
+                    if let days = m.daysSinceLastFullCharge {
+                        return "\(days)d since 100%"
+                    } else {
+                        return m.sessionsEndingAt100Count > 0 ? "100% Calibrated" : "Needs 100%"
+                    }
+                } else {
+                    return String(format: "%.0f%% <= 90%% limit", (1.0 - m.sessionsEndingAbove85Percentage) * 100)
+                }
+            }()
+            dimensionTile(
+                title: targetVehicle.chemistry == .lfp ? "100% Calibration" : "Daily SoC Ceiling",
+                score: analysis.targetSoCScore,
+                icon: "battery.100.bolt",
+                color: targetVehicle.chemistry == .lfp ? .green : .purple,
+                detail: targetDetail,
+                progress: analysis.targetSoCScore / 100.0,
+                progressColor: targetVehicle.chemistry == .lfp ? .green : .purple
+            )
+
+            // Dimension 3: Low-SoC Buffer
+            let bufferDetail = m.averageStartSoC != nil
+                ? String(format: "Avg start: %.0f%%", m.averageStartSoC!)
+                : (m.sessionsStartingBelow15Count == 0 ? "Protected (>15%)" : "\(m.sessionsStartingBelow15Count) low starts")
+            dimensionTile(
+                title: "Discharge Floor",
+                score: analysis.dischargeBufferScore,
+                icon: "battery.25",
+                color: .orange,
+                detail: bufferDetail,
+                progress: analysis.dischargeBufferScore / 100.0,
+                progressColor: .orange
+            )
+
+            // Dimension 4: Cycle Consistency
+            let cycleDetail = m.averageDeltaSoC != nil
+                ? String(format: "Avg DoD: Δ%.0f%%", m.averageDeltaSoC!)
+                : "Consistent cycles"
+            dimensionTile(
+                title: "Cycle Regularity",
+                score: analysis.cycleConsistencyScore,
+                icon: "arrow.triangle.2.circlepath.circle.fill",
+                color: .mint,
+                detail: cycleDetail,
+                progress: analysis.cycleConsistencyScore / 100.0,
+                progressColor: .mint
+            )
+        }
+    }
+
+    private func dimensionTile(
+        title: String,
+        score: Double,
+        icon: String,
+        color: Color,
+        detail: String,
+        progress: Double,
+        progressColor: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundColor(color)
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                Spacer()
+                Text("\(Int(score.rounded()))%")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundColor(score >= 80 ? .primary : .orange)
+            }
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.secondary.opacity(0.15))
+                        .frame(height: 6)
+                    Capsule()
+                        .fill(progressColor)
+                        .frame(width: max(4, geo.size.width * CGFloat(min(1.0, max(0.0, progress)))), height: 6)
+                }
+            }
+            .frame(height: 6)
+
+            Text(detail)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+        }
+        .padding(12)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(12)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title): \(Int(score)) percent, \(detail)")
+    }
+
+    // MARK: - Recommendations Card
+    private func recommendationsCard(analysis: ChargingBehaviorAnalysis) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Actionable Recommendations", systemImage: "sparkles")
+                    .font(.headline)
+                Spacer()
+                Text("\(analysis.recommendations.count) tips")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+
+            VStack(spacing: 10) {
+                ForEach(analysis.recommendations) { rec in
+                    recommendationRow(rec: rec)
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.04), radius: 6, x: 0, y: 3)
+    }
+
+    private func recommendationRow(rec: ChargingRecommendation) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: rec.level.icon)
+                .font(.body)
+                .foregroundColor(rec.level.color)
+                .padding(.top, 2)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(rec.title)
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Text(rec.observedMetricFormatted)
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(rec.level.color.opacity(0.12))
+                        .foregroundColor(rec.level.color)
+                        .clipShape(Capsule())
+                }
+
+                Text(rec.summary)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(alignment: .top, spacing: 4) {
+                    Text("•")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(rec.level.color)
+                    Text(rec.actionableAdvice)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.top, 2)
+            }
+        }
+        .padding(12)
+        .background(rec.level.color.opacity(0.06))
+        .cornerRadius(10)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(rec.title), \(rec.level.rawValue): \(rec.summary). Action: \(rec.actionableAdvice)")
+    }
+
+    // MARK: - Chemistry Tip Card
+    private var chemistryTipCard: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "lightbulb.fill")
+                .foregroundColor(.yellow)
+                .font(.title3)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(targetVehicle.name) (\(targetVehicle.chemistry.rawValue)) Battery Care")
+                    .font(.subheadline).bold()
+                Text(targetVehicle.batteryCareTip)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.yellow.opacity(0.1))
+        .cornerRadius(12)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(targetVehicle.name) \(targetVehicle.chemistry.rawValue) battery care tip: \(targetVehicle.batteryCareTip)")
     }
     
     // MARK: - Recent Estimates Section
@@ -1176,5 +1462,196 @@ struct BatteryHealthView: View {
         case .normal: return .blue
         case .degraded: return .orange
         }
+    }
+}
+
+// MARK: - Charging Best Practices Guide Sheet
+struct ChargingBestPracticesSheet: View {
+    let vehicle: Vehicle
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var selectedFilter: PracticeFilter = .forVehicle
+
+    enum PracticeFilter: String, CaseIterable, Identifiable {
+        case forVehicle = "My Vehicle"
+        case all = "All Guides"
+        case lfp = "LFP"
+        case nmc = "NMC / NCA"
+
+        var id: String { rawValue }
+    }
+
+    private var filteredPractices: [ChargingBestPracticeItem] {
+        ChargingBestPracticeItem.universalBestPractices.filter { item in
+            switch selectedFilter {
+            case .forVehicle:
+                if vehicle.chemistry == .lfp {
+                    return item.chemistryApplicability != .nmcNcaOnly
+                } else if vehicle.chemistry == .nmc || vehicle.chemistry == .nca {
+                    return item.chemistryApplicability != .lfpOnly
+                } else {
+                    return true
+                }
+            case .all:
+                return true
+            case .lfp:
+                return item.chemistryApplicability == .lfpOnly || item.chemistryApplicability == .all
+            case .nmc:
+                return item.chemistryApplicability == .nmcNcaOnly || item.chemistryApplicability == .all
+            }
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header Banner
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "sparkles")
+                                .font(.title3)
+                                .foregroundColor(.yellow)
+                            Text("Battery Longevity Principles")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                        }
+
+                        Text("EV battery degradation is driven by four primary stressors: high cell temperature, extreme State of Charge (>90% or <10%), high charging current (DC fast charge C-rate), and time spent at high voltage. Follow these proven practices to maximize pack life and resale value.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.blue.opacity(0.08))
+                    .cornerRadius(14)
+
+                    // Active Vehicle Chemistry Callout
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "car.side.fill")
+                            .font(.title3)
+                            .foregroundColor(.blue)
+                            .padding(.top, 2)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(vehicle.name)
+                                    .font(.subheadline)
+                                    .fontWeight(.bold)
+                                Text(vehicle.chemistry.fullName)
+                                    .font(.caption2)
+                                    .fontWeight(.semibold)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.blue.opacity(0.15))
+                                    .foregroundColor(.blue)
+                                    .clipShape(Capsule())
+                            }
+
+                            Text(vehicle.batteryCareTip)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(uiColor: .secondarySystemGroupedBackground))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.blue.opacity(0.2), lineWidth: 1)
+                    )
+
+                    // Filter Picker
+                    Picker("Filter Practices", selection: $selectedFilter) {
+                        ForEach(PracticeFilter.allCases) { filter in
+                            Text(filter.rawValue).tag(filter)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    // Practices List
+                    VStack(spacing: 16) {
+                        ForEach(filteredPractices) { practice in
+                            practiceCard(practice)
+                        }
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Charging Best Practices")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+    }
+
+    private func practiceCard(_ practice: ChargingBestPracticeItem) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: practice.icon)
+                    .font(.title2)
+                    .foregroundColor(practice.color)
+                    .frame(width: 32, height: 32)
+                    .background(practice.color.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack {
+                        Text(practice.category)
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .foregroundColor(practice.color)
+                            .textCase(.uppercase)
+
+                        Spacer()
+
+                        Text(practice.chemistryApplicability.rawValue)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Text(practice.title)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                }
+            }
+
+            Text(practice.summary)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(practice.bullets, id: \.self) { bullet in
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption)
+                            .foregroundColor(practice.color)
+                            .padding(.top, 2)
+                        Text(bullet)
+                            .font(.caption)
+                            .foregroundColor(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .cornerRadius(14)
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.04), radius: 4, x: 0, y: 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(practice.title): \(practice.summary)")
     }
 }

@@ -4,10 +4,20 @@ import SwiftUI
 struct GarageSwitcherMenu: View {
     @EnvironmentObject private var store: SessionStore
     var allowAllOption: Bool = true
-    
+
     @State private var showingGarageManagement = false
     @State private var showingAddVehicle = false
     
+    private var labelTitle: String {
+        if let selectedId = store.selectedVehicleId, let vehicle = store.vehicle(for: selectedId) {
+            return vehicle.name
+        }
+        if store.selectedVehicleId == nil && allowAllOption && store.vehicles.count > 1 {
+            return "All Vehicles"
+        }
+        return store.activeVehicle.name
+    }
+
     var body: some View {
         Menu {
             Section("Garage") {
@@ -62,22 +72,12 @@ struct GarageSwitcherMenu: View {
                     .font(.caption)
                     .foregroundStyle(.blue)
                 
-                if let selectedId = store.selectedVehicleId, let vehicle = store.vehicle(for: selectedId) {
-                    Text(vehicle.name)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .lineLimit(1)
-                } else if store.selectedVehicleId == nil && allowAllOption && store.vehicles.count > 1 {
-                    Text("All Vehicles")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                } else {
-                    Text(store.activeVehicle.name)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .lineLimit(1)
-                }
-                
+                Text(labelTitle)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.caption2)
                     .foregroundStyle(.secondary)

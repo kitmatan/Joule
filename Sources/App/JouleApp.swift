@@ -7,17 +7,21 @@ struct JouleApp: App {
     @StateObject private var auth: AuthService
     @StateObject private var store: SessionStore
     @StateObject private var navCoordinator = AppNavigationCoordinator()
+    @StateObject private var snapshotPublisher: SnapshotPublisher
 
     init() {
         FirebaseApp.configure()
 
-        // One AlertCenter shared by both services. `StateObject(wrappedValue:)` takes an
-        // autoclosure, so nothing here is constructed until the scene first renders — safely after
-        // `configure()` has run.
+        // One AlertCenter shared by both services, and one SessionStore shared with the snapshot
+        // publisher. Both are built here rather than inside `StateObject`'s autoclosure because
+        // the publisher needs the same store instance the views get — and `configure()` above has
+        // already run, which was the reason for deferring construction in the first place.
         let alerts = AlertCenter()
+        let store = SessionStore(alerts: alerts)
         _alerts = StateObject(wrappedValue: alerts)
         _auth = StateObject(wrappedValue: AuthService(alerts: alerts))
-        _store = StateObject(wrappedValue: SessionStore(alerts: alerts))
+        _store = StateObject(wrappedValue: store)
+        _snapshotPublisher = StateObject(wrappedValue: SnapshotPublisher(store: store))
     }
 
     var body: some Scene {
@@ -27,7 +31,8 @@ struct JouleApp: App {
                 .environmentObject(auth)
                 .environmentObject(store)
                 .environmentObject(navCoordinator)
-                .onOpenURL { auth.handle($0) }
+                .onOpenURL { handle($0) }
+                .task { snapshotPublisher.start() }
         }
         .commands {
             SidebarCommands()
@@ -64,6 +69,27 @@ struct JouleApp: App {
                 }
                 .keyboardShortcut("3", modifiers: .command)
             }
+        }
+    }
+
+    /// Routes incoming URLs. Widget and complication taps arrive on the `joule` scheme; everything
+    /// else is Google's OAuth callback, which must still reach `AuthService` untouched — swallowing
+    /// it here would hang sign-in on the redirect with no visible error.
+    private func handle(_ url: URL) {
+        guard url.scheme == SharedStorage.urlScheme else {
+            auth.handle(url)
+            return
+        }
+
+        switch url.host {
+        case "add":
+            navCoordinator.presentNewSession()
+        case "battery":
+            navCoordinator.selectTab(.batteryHealth)
+        case "history":
+            navCoordinator.selectTab(.history)
+        default:
+            navCoordinator.selectTab(.dashboard)
         }
     }
 }

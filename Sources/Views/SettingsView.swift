@@ -7,6 +7,7 @@ struct SettingsView: View {
     
     @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
     @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
+    @AppStorage(AppTheme.storageKey) private var theme: AppTheme = AppTheme.defaultTheme
     @AppStorage("vehicle_preset_id") private var presetId: String = EVPresetCatalog.defaultPresetId
     @AppStorage("vehicle_name") private var vehicleName: String = VehicleProfile.defaultVehicleName
     @AppStorage("battery_chemistry") private var chemistry: BatteryChemistry = VehicleProfile.defaultChemistry
@@ -143,7 +144,26 @@ struct SettingsView: View {
                 } footer: {
                     Text("Select your preferred distance/efficiency units and local currency formatting.")
                 }
-                
+
+                // Section 1b: Appearance
+                Section {
+                    Picker("Theme", selection: $theme) {
+                        ForEach(AppTheme.allCases) { option in
+                            Label(option.displayName, systemImage: option.iconName)
+                                .tag(option)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .padding(.vertical, 2)
+                } header: {
+                    // The segmented style strips label icons, so the current theme's glyph rides
+                    // in the header instead.
+                    Label("Appearance", systemImage: theme.iconName)
+                } footer: {
+                    Text(theme.footerDescription)
+                }
+
                 // Section 2: Vehicle Model & Presets
                 Section {
                     Button {

@@ -7,6 +7,7 @@ enum SessionFilter: String, CaseIterable, Identifiable, Hashable {
     case dc = "DC Only"
     case home = "Home"
     case publicStation = "Public"
+    case work = "Work"
     case deferred = "Deferred Payment"
 
     var id: String { rawValue }
@@ -18,6 +19,7 @@ enum SessionFilter: String, CaseIterable, Identifiable, Hashable {
         case .dc: return "bolt.fill"
         case .home: return "house"
         case .publicStation: return "mappin.and.ellipse"
+        case .work: return "briefcase"
         case .deferred: return "list.bullet.rectangle.portrait"
         }
     }
@@ -34,6 +36,7 @@ enum SessionFilter: String, CaseIterable, Identifiable, Hashable {
         case .dc: return session.chargingType == .dc
         case .home: return session.locationType == .home
         case .publicStation: return session.locationType == .publicStation
+        case .work: return session.locationType == .work
         case .deferred: return session.paymentStatus == .deferred
         }
     }
@@ -85,6 +88,18 @@ struct SessionListView: View {
     var body: some View {
         NavigationStack {
             List {
+                // The title lives in the content, not the bar: a `navigationTitle` collapses into
+                // the bar on scroll, where the garage switcher and actions leave it no room and it
+                // truncates. Here it simply scrolls away. Matches DashboardView, which also runs
+                // with an empty navigation title.
+                Text("History")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .accessibilityAddTraits(.isHeader)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20))
+
                 if store.duplicateSessionsCount > 0 {
                     Section {
                         HStack(spacing: 12) {
@@ -163,7 +178,7 @@ struct SessionListView: View {
                     }
                 }
             }
-            .navigationTitle("History")
+            .navigationTitle("")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     GarageSwitcherMenu(allowAllOption: true)
@@ -260,7 +275,7 @@ struct SessionListView: View {
             }
         }
     }
-    
+
 }
 
 struct SessionRow: View {
