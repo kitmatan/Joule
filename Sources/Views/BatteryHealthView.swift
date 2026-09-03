@@ -315,9 +315,9 @@ struct BatteryHealthView: View {
                     Text("Total Capacity Loss")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    Text(String(format: "-%.1f kWh (-%.1f%%)", summary.capacityLostKWh, summary.totalDegradationPercentage))
+                    Text(String(format: "%.1f kWh (%.1f%%)", summary.capacityLostKWh, summary.totalDegradationPercentage))
                         .font(.subheadline).bold()
-                        .foregroundColor(summary.capacityLostKWh > 0.5 ? .orange : .secondary)
+                        .foregroundColor(.red)
                 }
             }
         }
@@ -413,18 +413,20 @@ struct BatteryHealthView: View {
                     title: "Degradation Rate",
                     value: summary.formattedDegradationRate(unit: unitSystem),
                     icon: "gauge.with.needle.fill",
-                    color: .mint
+                    color: .mint,
+                    valueColor: isDegradationCalibrating ? nil : .red
                 )
                 
                 StatCard(
                     title: "Annual Rate",
                     value: summary.degradationPerYear != nil
                         ? (summary.degradationPerYear! > 0.05
-                            ? String(format: "-%.2f%% / yr", summary.degradationPerYear!)
+                            ? String(format: "%.2f%% / yr", summary.degradationPerYear!)
                             : "< 0.1% / yr")
                         : "Calibrating",
                     icon: "calendar.badge.clock",
-                    color: .cyan
+                    color: .cyan,
+                    valueColor: isAnnualCalibrating ? nil : .red
                 )
                 
                 StatCard(

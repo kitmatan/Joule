@@ -177,13 +177,13 @@ struct BatteryHealthSummary {
         }
     }
     
-    /// Formatted degradation rate string e.g. "-0.85% / 10k km" or "-1.37% / 10k mi".
+    /// Formatted degradation rate string e.g. "0.85% / 10k km" or "1.37% / 10k mi".
     func formattedDegradationRate(unit: UnitSystem) -> String {
         guard let rate = degradationPer10kDistance(unit: unit) else {
             return "Calibrating"
         }
         if rate > 0.05 {
-            return String(format: "-%.2f%% / %@", rate, unit.degradationDistanceUnit)
+            return String(format: "%.2f%% / %@", rate, unit.degradationDistanceUnit)
         } else {
             return "< 0.1% / \(unit.degradationDistanceUnit)"
         }

@@ -1086,6 +1086,8 @@ struct StatCard: View {
     let value: String
     let icon: String
     let color: Color
+    /// Optional tint for the value text; defaults to the standard label color.
+    var valueColor: Color? = nil
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
@@ -1103,6 +1105,7 @@ struct StatCard: View {
             Text(value)
                 .font(.title3)
                 .bold()
+                .foregroundColor(valueColor)
                 .minimumScaleFactor(0.75)
                 .lineLimit(1)
         }

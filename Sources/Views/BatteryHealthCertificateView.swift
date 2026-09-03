@@ -144,7 +144,7 @@ struct BatteryHealthCertificateView: View {
                     CertStatBox(
                         title: "Degradation Rate",
                         value: summary.formattedDegradationRate(unit: unitSystem),
-                        subtext: summary.degradationPerYear.map { String(format: "-%.2f%% / year", $0) } ?? "Regression model",
+                        subtext: summary.degradationPerYear.map { String(format: "%.2f%% / year", $0) } ?? "Regression model",
                         icon: "chart.line.downtrend.xyaxis",
                         color: .orange
                     )
