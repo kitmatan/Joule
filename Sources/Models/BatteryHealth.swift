@@ -56,6 +56,24 @@ enum BatteryHealthConfidence: String, Codable, CaseIterable, Comparable {
         lhs.sortOrder < rhs.sortOrder
     }
     
+    /// Rates a sample by the uncertainty of the SoH figure it produced, in percentage points.
+    ///
+    /// A shallow charge divides a small energy figure by a small ΔSoC, so the SoC reading error is
+    /// amplified. Real packs lose on the order of 2–3% a year, so a sample uncertain to more than
+    /// ~12 points spans a decade of plausible degradation and carries no information about the
+    /// trend at all.
+    static func evaluate(sohUncertainty: Double) -> BatteryHealthConfidence {
+        if sohUncertainty <= 5.0 {
+            return .high
+        } else if sohUncertainty <= 8.0 {
+            return .medium
+        } else if sohUncertainty <= 12.0 {
+            return .low
+        } else {
+            return .unreliable
+        }
+    }
+    
     static func evaluate(socDelta: Double) -> BatteryHealthConfidence {
         if socDelta >= 50.0 {
             return .high
@@ -82,6 +100,9 @@ struct BatteryHealthDataPoint: Identifiable, Hashable {
     let chargingType: ChargingType
     let estimatedCapacityKWh: Double
     let stateOfHealth: Double // percentage e.g. 98.5
+    /// One-sigma uncertainty of `stateOfHealth` in percentage points, propagated from the
+    /// uncertainty of the two SoC readings this sample was derived from.
+    let sohUncertainty: Double
     let confidence: BatteryHealthConfidence
     let projectedFullRangeKm: Double?
     
@@ -97,6 +118,7 @@ struct BatteryHealthDataPoint: Identifiable, Hashable {
         chargingType: ChargingType,
         estimatedCapacityKWh: Double,
         stateOfHealth: Double,
+        sohUncertainty: Double = 0,
         confidence: BatteryHealthConfidence,
         projectedFullRangeKm: Double?
     ) {
@@ -111,6 +133,7 @@ struct BatteryHealthDataPoint: Identifiable, Hashable {
         self.chargingType = chargingType
         self.estimatedCapacityKWh = estimatedCapacityKWh
         self.stateOfHealth = stateOfHealth
+        self.sohUncertainty = sohUncertainty
         self.confidence = confidence
         self.projectedFullRangeKm = projectedFullRangeKm
     }
@@ -165,6 +188,10 @@ struct BatteryHealthSummary {
     let dcEnergyRatio: Double
     
     let assessment: BatteryAssessment
+    
+    /// The most recent externally measured SoH reading paired with the app's own estimate for the
+    /// same date. Never folded into `currentSoH` — see `BatteryHealthReference`.
+    var referenceComparison: BatteryReferenceComparison? = nil
     
     /// Degradation rate adjusted for active unit system (per 10k km or per 10k miles).
     func degradationPer10kDistance(unit: UnitSystem) -> Double? {

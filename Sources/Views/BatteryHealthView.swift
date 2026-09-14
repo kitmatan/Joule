@@ -125,6 +125,29 @@ struct BatteryHealthView: View {
         service.calculateDataPoints(from: vehicleSessions)
     }
     
+    private var referenceReadings: [BatteryHealthReference] {
+        targetVehicle.referenceReadings
+    }
+    
+    /// Service readings inside the selected chart window, so the chart and the session samples
+    /// always cover the same span.
+    private var filteredReferences: [BatteryHealthReference] {
+        let calendar = Calendar.current
+        let now = Date()
+        return referenceReadings.filter { reading in
+            switch selectedTimeRange {
+            case .all:
+                return true
+            case .pastYear:
+                guard let cutoff = calendar.date(byAdding: .year, value: -1, to: now) else { return true }
+                return reading.date >= cutoff
+            case .pastSixMonths:
+                guard let cutoff = calendar.date(byAdding: .month, value: -6, to: now) else { return true }
+                return reading.date >= cutoff
+            }
+        }
+    }
+    
     private var filteredPoints: [BatteryHealthDataPoint] {
         let calendar = Calendar.current
         let now = Date()
@@ -153,7 +176,7 @@ struct BatteryHealthView: View {
     }
 
     private var dateDomain: ClosedRange<Date>? {
-        let dates = filteredPoints.map(\.date)
+        let dates = filteredPoints.map(\.date) + filteredReferences.map(\.date)
         guard let minD = dates.min(), let maxD = dates.max() else { return nil }
         let span = maxD.timeIntervalSince(minD)
         if span < 86400 {
@@ -206,7 +229,7 @@ struct BatteryHealthView: View {
     }
 
     private var summary: BatteryHealthSummary? {
-        service.calculateSummary(from: vehicleSessions)
+        service.calculateSummary(from: vehicleSessions, references: referenceReadings)
     }
 
     private var behaviorAnalysis: ChargingBehaviorAnalysis {
@@ -216,6 +239,7 @@ struct BatteryHealthView: View {
     @State private var showingSettings = false
     @State private var showingBestPracticesSheet = false
     @State private var showingCertificateSheet = false
+    @State private var showingReferenceEditor = false
 
     var body: some View {
         ScrollView {
@@ -227,6 +251,19 @@ struct BatteryHealthView: View {
                     chargingHabitsSection(summary: summary)
                     recentEstimatesSection
                 } else {
+                    // A service reading is worth showing even with no charging history behind it —
+                    // it is often the only battery figure a new owner has.
+                    if let reading = referenceReadings.last {
+                        referenceBand(
+                            BatteryReferenceComparison(reference: reading, estimatedSoHAtReadingDate: nil)
+                        )
+                        .padding(.horizontal)
+                    } else {
+                        // With no sessions there is no hero card to host it, and the toolbar no
+                        // longer carries the button, so this is the only way in.
+                        addReferenceButton
+                            .padding(.horizontal)
+                    }
                     emptyState
                 }
             }
@@ -240,24 +277,25 @@ struct BatteryHealthView: View {
             ToolbarItem(placement: .topBarLeading) {
                 GarageSwitcherMenu(allowAllOption: false)
             }
+            // Two items, so the group stays inline. Labels rather than bare Images: if the system
+            // ever does collapse this into an overflow menu, an image-only button has no title to
+            // show and the menu renders blank.
             ToolbarItemGroup(placement: .primaryAction) {
-                if let summary = summary, !allPoints.isEmpty {
+                if summary != nil, !allPoints.isEmpty {
                     Button {
                         showingCertificateSheet = true
                     } label: {
-                        Image(systemName: "bolt.shield")
+                        Label("Battery Certificate", systemImage: "bolt.shield")
                             .fontWeight(.semibold)
                     }
-                    .accessibilityLabel("Battery Certificate")
                 }
 
                 Button {
                     showingSettings = true
                 } label: {
-                    Image(systemName: "gearshape")
+                    Label("Settings", systemImage: "gearshape")
                         .fontWeight(.semibold)
                 }
-                .accessibilityLabel("Settings")
             }
         }
         .sheet(isPresented: $showingSettings) {
@@ -265,6 +303,10 @@ struct BatteryHealthView: View {
         }
         .sheet(isPresented: $showingBestPracticesSheet) {
             ChargingBestPracticesSheet(vehicle: targetVehicle)
+        }
+        .sheet(isPresented: $showingReferenceEditor) {
+            BatteryReferenceEditorView(vehicle: targetVehicle)
+                .environmentObject(store)
         }
         .sheet(isPresented: $showingCertificateSheet) {
             if let summary = summary {
@@ -319,6 +361,14 @@ struct BatteryHealthView: View {
                         .font(.subheadline).bold()
                         .foregroundColor(.red)
                 }
+            }
+            
+            Divider()
+            
+            if let comparison = summary.referenceComparison {
+                referenceBand(comparison)
+            } else {
+                addReferenceButton
             }
         }
         .padding(20)
@@ -389,6 +439,177 @@ struct BatteryHealthView: View {
         .frame(width: 100, height: 100)
     }
     
+    // MARK: - Service Reading Band
+    
+    /// The externally measured figure, shown as its own dated and attributed record rather than
+    /// blended into the headline number above it. The two are different measurements; presenting
+    /// them as one would misrepresent both.
+    private func referenceBand(_ comparison: BatteryReferenceComparison) -> some View {
+        Button {
+            showingReferenceEditor = true
+        } label: {
+            referenceBandContent(comparison)
+        }
+        .buttonStyle(.plain)
+    }
+    
+    /// Shown in place of the band when nothing has been measured yet, so the feature is reachable
+    /// from the screen it affects rather than only from the toolbar.
+    private var addReferenceButton: some View {
+        Button {
+            showingReferenceEditor = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "stethoscope")
+                    .font(.caption)
+                    .foregroundColor(.indigo)
+                Text("Add a service reading")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.indigo)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.indigo.opacity(0.08))
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.indigo.opacity(0.2), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private func referenceBandContent(_ comparison: BatteryReferenceComparison) -> some View {
+        let reading = comparison.reference
+        
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: reading.source.icon)
+                    .font(.caption)
+                    .foregroundColor(.indigo)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Service Reading")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.secondary)
+                    
+                    HStack(spacing: 6) {
+                        Text(reading.source.displayName)
+                        Text("•")
+                        Text(reading.date.formatted(.dateTime.year().month(.abbreviated).day()))
+                    }
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Text(String(format: "%.1f%%", reading.sohPercent))
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.indigo)
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            
+            if let delta = comparison.delta, let estimate = comparison.estimatedSoHAtReadingDate {
+                Text(String(
+                    format: String(localized: "%@ vs Joule's %.1f%% estimate for that date"),
+                    signedDelta(delta),
+                    estimate
+                ))
+                .font(.caption2)
+                .foregroundColor(.secondary)
+            } else {
+                Text("No charging history near this date to compare against.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.indigo.opacity(0.08))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.indigo.opacity(0.2), lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Service reading: \(String(format: "%.1f%%", reading.sohPercent)) measured \(reading.date.formatted(.dateTime.year().month(.wide).day()))")
+    }
+    
+    private func signedDelta(_ delta: Double) -> String {
+        String(format: delta >= 0 ? "+%.1f pts" : "%.1f pts", delta)
+    }
+    
+    // MARK: - Why The Two Numbers Differ
+    
+    /// Pre-empts the obvious question a second SoH number raises. Without this the app looks like
+    /// it is contradicting itself; with it, the gap reads as two honest methods disagreeing by
+    /// about as much as they should.
+    private func referenceExplanationView(_ comparison: BatteryReferenceComparison) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "questionmark.circle.fill")
+                .font(.body)
+                .foregroundColor(.indigo)
+                .padding(.top, 2)
+            
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Why don't these two numbers match?")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .top, spacing: 4) {
+                        Text("•").bold()
+                        Text("**Joule** measures from the charger: energy delivered at the plug, divided by the SoC it moved. It depends on the charging efficiency you have configured.")
+                    }
+                    HStack(alignment: .top, spacing: 4) {
+                        Text("•").bold()
+                        Text("**A service tool** reads the pack's own capacity model, often against gross rather than usable capacity, and usually rounds to a whole percent.")
+                    }
+                    
+                    switch comparison.agreement {
+                    case .withinExpectedOffset:
+                        HStack(alignment: .top, spacing: 4) {
+                            Text("•").bold()
+                            Text("The two agree to within the offset these methods normally differ by. Joule keeps showing its own estimate because it tracks the **trend** between service visits.")
+                        }
+                    case .exceedsExpectedOffset:
+                        HStack(alignment: .top, spacing: 4) {
+                            Text("•").bold()
+                            Text("The gap is wider than the methods usually differ by. Check that the nominal pack capacity and charging efficiency in your vehicle settings match the figures your service tool assumes.")
+                        }
+                    case .notComparable:
+                        HStack(alignment: .top, spacing: 4) {
+                            Text("•").bold()
+                            Text("There is no charging history near the measurement date, so the two cannot be compared directly.")
+                        }
+                    }
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+            }
+            Spacer()
+        }
+        .padding(12)
+        .background(Color.indigo.opacity(0.08))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.indigo.opacity(0.2), lineWidth: 1)
+        )
+    }
+    
     // MARK: - Metrics Grid
     private func metricsGrid(summary: BatteryHealthSummary) -> some View {
         let columns: [GridItem] = {
@@ -446,6 +667,10 @@ struct BatteryHealthView: View {
 
             if isDegradationCalibrating || isAnnualCalibrating {
                 calibrationExplanationView(summary: summary)
+            }
+
+            if let comparison = summary.referenceComparison {
+                referenceExplanationView(comparison)
             }
         }
         .padding(.horizontal)
@@ -544,6 +769,26 @@ struct BatteryHealthView: View {
             .background(Color(uiColor: .secondarySystemGroupedBackground))
             .cornerRadius(16)
             .padding(.horizontal)
+
+            // The diamonds mean nothing without saying what they are.
+            if selectedChartMode == .time && !filteredReferences.isEmpty {
+                HStack(spacing: 14) {
+                    HStack(spacing: 5) {
+                        Circle().fill(Color.blue).frame(width: 7, height: 7)
+                        Text("Joule estimate")
+                    }
+                    HStack(spacing: 5) {
+                        Image(systemName: "diamond.fill")
+                            .font(.system(size: 7))
+                            .foregroundColor(.indigo)
+                        Text("Service reading")
+                    }
+                    Spacer()
+                }
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
+            }
         }
     }
     
@@ -560,8 +805,18 @@ struct BatteryHealthView: View {
                         .foregroundColor(.secondary)
                 }
             
-            // Raw Session Samples
+            // Raw Session Samples, each with the range its SoC readings actually support.
             ForEach(filteredPoints) { point in
+                if point.sohUncertainty >= 1.0 {
+                    RuleMark(
+                        x: .value("Date", point.date),
+                        yStart: .value("SoH low", point.stateOfHealth - point.sohUncertainty),
+                        yEnd: .value("SoH high", point.stateOfHealth + point.sohUncertainty)
+                    )
+                    .foregroundStyle(pointColor(for: point.confidence).opacity(0.35))
+                    .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round))
+                }
+                
                 PointMark(
                     x: .value("Date", point.date),
                     y: .value("SoH", point.stateOfHealth)
@@ -595,6 +850,29 @@ struct BatteryHealthView: View {
                 .interpolationMethod(.monotone)
             }
 
+            // Externally measured readings, plotted as a distinct series against the trend.
+            // Two visibly different sources that nearly agree read as corroboration; the same two
+            // numbers shown on separate screens read as a bug.
+            ForEach(filteredReferences) { reading in
+                RuleMark(x: .value("Measured", reading.date))
+                    .foregroundStyle(Color.indigo.opacity(0.35))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+
+                PointMark(
+                    x: .value("Measured", reading.date),
+                    y: .value("SoH", reading.sohPercent)
+                )
+                .foregroundStyle(Color.indigo)
+                .symbol(.diamond)
+                .symbolSize(110)
+                .annotation(position: .topTrailing, spacing: 2, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
+                    Text(String(format: "%.0f%%", reading.sohPercent))
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.indigo)
+                }
+            }
+
             if let selPoint = selectedHealthPoint {
                 RuleMark(x: .value("Selected Date", selPoint.date))
                     .foregroundStyle(Color.secondary.opacity(0.35))
@@ -617,6 +895,11 @@ struct BatteryHealthView: View {
                                 Text(String(format: "%.1f kWh • %@", selPoint.estimatedCapacityKWh, selPoint.confidence.rawValue))
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
+                                if selPoint.sohUncertainty >= 1.0 {
+                                    Text(String(format: "± %.1f pts from SoC accuracy", selPoint.sohUncertainty))
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
                                 if let trend = selectedHealthTrend {
                                     Text(String(format: "Trend: %.1f%%", trend.smoothedSoH))
                                         .font(.caption2)
@@ -1437,6 +1720,14 @@ struct BatteryHealthView: View {
                                     .font(.caption)
                                     .bold()
                                     .foregroundColor(pointColor(for: point.confidence))
+                            }
+                            
+                            // A shallow charge can only pin SoH to within several points. Printing
+                            // one decimal and nothing else invites the reader to believe it.
+                            if point.sohUncertainty >= 1.0 {
+                                Text(String(format: "± %.1f pts", point.sohUncertainty))
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
                             }
                         }
                     }

@@ -22,6 +22,10 @@ struct Vehicle: Identifiable, Codable, Hashable, Equatable {
     var gasCustomFuelPrice: Double
     var isDefault: Bool
     var createdAt: Date
+    /// Externally measured SoH readings. Optional purely for Codable backward compatibility: the
+    /// synthesized decoder has no access to default values, so a non-optional array would fail to
+    /// decode every vehicle record written before this field existed. Read via `referenceReadings`.
+    var batteryReferenceReadings: [BatteryHealthReference]?
     
     init(
         id: String = UUID().uuidString,
@@ -42,7 +46,8 @@ struct Vehicle: Identifiable, Codable, Hashable, Equatable {
         gasEfficiencyKmPerL: Double = GasComparisonSettings.defaultEfficiencyKmPerL,
         gasCustomFuelPrice: Double = GasComparisonSettings.defaultFuelPriceTHB,
         isDefault: Bool = false,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        batteryReferenceReadings: [BatteryHealthReference]? = nil
     ) {
         self.id = id
         self.name = name
@@ -63,6 +68,7 @@ struct Vehicle: Identifiable, Codable, Hashable, Equatable {
         self.gasCustomFuelPrice = gasCustomFuelPrice
         self.isDefault = isDefault
         self.createdAt = createdAt
+        self.batteryReferenceReadings = batteryReferenceReadings
     }
     
     /// Create a vehicle instance initialized from a catalog preset.
@@ -198,6 +204,31 @@ struct Vehicle: Identifiable, Codable, Hashable, Equatable {
     func homeCost(wallEnergyKWh kWh: Double, rateOverride: Double? = nil) -> Double {
         let rate = rateOverride ?? effectiveHomeTariff
         return kWh * rate
+    }
+    
+    /// Externally measured SoH readings, oldest first.
+    var referenceReadings: [BatteryHealthReference] {
+        (batteryReferenceReadings ?? []).sorted { $0.date < $1.date }
+    }
+    
+    /// The most recent externally measured SoH reading, if any.
+    var latestReferenceReading: BatteryHealthReference? {
+        referenceReadings.last
+    }
+    
+    /// Inserts a reading, or replaces the existing one carrying the same id.
+    mutating func upsertReferenceReading(_ reading: BatteryHealthReference) {
+        var list = batteryReferenceReadings ?? []
+        if let index = list.firstIndex(where: { $0.id == reading.id }) {
+            list[index] = reading
+        } else {
+            list.append(reading)
+        }
+        batteryReferenceReadings = list.sorted { $0.date < $1.date }
+    }
+    
+    mutating func removeReferenceReading(id: String) {
+        batteryReferenceReadings = (batteryReferenceReadings ?? []).filter { $0.id != id }
     }
     
     /// Applies an official EV Preset to this vehicle.

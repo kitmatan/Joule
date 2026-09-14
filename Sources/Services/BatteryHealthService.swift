@@ -7,17 +7,21 @@ struct BatteryHealthService {
     var nominalRangeKm: Double
     var acEfficiency: Double
     var dcEfficiency: Double
+    /// Drives how much a mid-curve SoC reading is trusted — see `midCurveSoCUncertainty`.
+    var chemistry: BatteryChemistry
     
     init(
         nominalCapacityKWh: Double = BatteryConstants.defaultNominalCapacityKWh,
         nominalRangeKm: Double = BatteryConstants.defaultNominalRangeKm,
         acEfficiency: Double = BatteryConstants.defaultACEfficiency,
-        dcEfficiency: Double = BatteryConstants.defaultDCEfficiency
+        dcEfficiency: Double = BatteryConstants.defaultDCEfficiency,
+        chemistry: BatteryChemistry = VehicleProfile.chemistry
     ) {
         self.nominalCapacityKWh = nominalCapacityKWh
         self.nominalRangeKm = nominalRangeKm
         self.acEfficiency = acEfficiency
         self.dcEfficiency = dcEfficiency
+        self.chemistry = chemistry
     }
     
     init(vehicle: Vehicle) {
@@ -25,6 +29,32 @@ struct BatteryHealthService {
         self.nominalRangeKm = vehicle.nominalRangeKm
         self.acEfficiency = vehicle.acEfficiency
         self.dcEfficiency = vehicle.dcEfficiency
+        self.chemistry = vehicle.chemistry
+    }
+    
+    /// Uncertainty, in percentage points, of one SoC reading taken at `soc`.
+    ///
+    /// A full charge makes the BMS balance cells and reset its coulomb counter, so a reading at the
+    /// top is close to ground truth. The bottom of the curve has a steep voltage knee that pins SoC
+    /// nearly as well. Everything in between is an estimate, and how good an estimate depends on
+    /// how much voltage slope the chemistry gives the BMS to work with.
+    func socReadingUncertainty(at soc: Double) -> Double {
+        if soc >= 97.0 { return 0.5 }
+        if soc <= 3.0 { return 0.8 }
+        return chemistry.midCurveSoCUncertainty
+    }
+    
+    /// Propagates the two SoC reading uncertainties into the resulting SoH figure.
+    ///
+    /// `capacity = energy / ΔSoC`, so the relative error in ΔSoC passes straight through to the
+    /// capacity and hence to SoH. Dividing by a small ΔSoC is what amplifies it: the same
+    /// one-point reading error is worth ~1 SoH point across an 80% charge and ~5 across a 20% one.
+    func sohUncertainty(stateOfHealth: Double, startSoC: Double, endSoC: Double, socDelta: Double) -> Double {
+        guard socDelta > 0 else { return .infinity }
+        let startSigma = socReadingUncertainty(at: startSoC)
+        let endSigma = socReadingUncertainty(at: endSoC)
+        let deltaSigma = (startSigma * startSigma + endSigma * endSigma).squareRoot()
+        return stateOfHealth * deltaSigma / socDelta
     }
     
     /// Resolves charging efficiency for a session based on type, location, and speed.
@@ -60,7 +90,21 @@ struct BatteryHealthService {
         }
         
         let soh = (estimatedCapacity / nominalCapacityKWh) * 100.0
-        let confidence = BatteryHealthConfidence.evaluate(socDelta: delta)
+        
+        let uncertainty = sohUncertainty(
+            stateOfHealth: soh,
+            startSoC: start,
+            endSoC: end,
+            socDelta: delta
+        )
+        
+        // Both rules have to be satisfied: a deep charge is not trustworthy if it ran entirely
+        // through a flat part of the curve, and a well-anchored one is still noisy if it was
+        // shallow. Take whichever rates the sample lower.
+        let confidence = min(
+            BatteryHealthConfidence.evaluate(socDelta: delta),
+            BatteryHealthConfidence.evaluate(sohUncertainty: uncertainty)
+        )
         
         var projectedRange: Double? = nil
         if let endR = session.endRange, end > 0 {
@@ -81,6 +125,7 @@ struct BatteryHealthService {
             chargingType: session.chargingType ?? (eff == acEfficiency ? .ac : .dc),
             estimatedCapacityKWh: estimatedCapacity,
             stateOfHealth: soh,
+            sohUncertainty: uncertainty,
             confidence: confidence,
             projectedFullRangeKm: projectedRange
         )
@@ -159,8 +204,66 @@ struct BatteryHealthService {
         return trendPoints
     }
     
+    /// How far outside the charging history a service reading may fall and still be compared
+    /// against the trend's nearest endpoint.
+    ///
+    /// Degradation is bounded to 5%/year elsewhere in this file, so clamping across at most 45 days
+    /// can skew the comparison by ~0.6 points — an order of magnitude below the methodology offset
+    /// the comparison exists to surface. Beyond that the estimate is too stale to be fair and the
+    /// app reports no comparison rather than a misleading one.
+    static let referenceClampToleranceDays: Double = 45.0
+    
+    /// Interpolates the smoothed trend to an arbitrary date.
+    ///
+    /// Returns `nil` when the date sits further than `referenceClampToleranceDays` outside the
+    /// history, so that a reading with no comparable charging data is reported as such instead of
+    /// being compared against an extrapolation.
+    func smoothedSoH(at date: Date, trend: [BatteryHealthTrendPoint]) -> Double? {
+        guard let first = trend.first, let last = trend.last else { return nil }
+        
+        let toleranceSeconds = Self.referenceClampToleranceDays * 86400.0
+        
+        if date <= first.date {
+            return first.date.timeIntervalSince(date) <= toleranceSeconds ? first.smoothedSoH : nil
+        }
+        if date >= last.date {
+            return date.timeIntervalSince(last.date) <= toleranceSeconds ? last.smoothedSoH : nil
+        }
+        
+        // Inside the history: linear interpolation between the bracketing trend points.
+        for i in 1..<trend.count {
+            let previous = trend[i - 1]
+            let next = trend[i]
+            guard date >= previous.date && date <= next.date else { continue }
+            
+            let span = next.date.timeIntervalSince(previous.date)
+            guard span > 0 else { return previous.smoothedSoH }
+            
+            let fraction = date.timeIntervalSince(previous.date) / span
+            return previous.smoothedSoH + (next.smoothedSoH - previous.smoothedSoH) * fraction
+        }
+        
+        return nil
+    }
+    
+    /// Pairs the most recent externally measured reading with this app's own estimate for the same
+    /// date, so the two are never compared across a gap of elapsed degradation.
+    func compareLatestReference(
+        _ references: [BatteryHealthReference],
+        trend: [BatteryHealthTrendPoint]
+    ) -> BatteryReferenceComparison? {
+        guard let latest = references.max(by: { $0.date < $1.date }) else { return nil }
+        return BatteryReferenceComparison(
+            reference: latest,
+            estimatedSoHAtReadingDate: smoothedSoH(at: latest.date, trend: trend)
+        )
+    }
+    
     /// Computes full summary diagnostics and degradation rates.
-    func calculateSummary(from sessions: [ChargingSession]) -> BatteryHealthSummary? {
+    func calculateSummary(
+        from sessions: [ChargingSession],
+        references: [BatteryHealthReference] = []
+    ) -> BatteryHealthSummary? {
         let points = calculateDataPoints(from: sessions)
         guard !points.isEmpty else { return nil }
         
@@ -322,7 +425,8 @@ struct BatteryHealthService {
             reliableSamplesCount: points.filter { $0.confidence >= .medium }.count,
             acEnergyRatio: acRatio,
             dcEnergyRatio: dcRatio,
-            assessment: assessment
+            assessment: assessment,
+            referenceComparison: compareLatestReference(references, trend: trend)
         )
     }
 }

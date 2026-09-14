@@ -5762,7 +5762,416 @@ TRANSLATIONS = {
         "ja": "100% 定格",
         "nb": "100 % nominell",
         "th": "100% พิกัดโรงงาน"
-    }
+    },
+    "Add a service reading": {
+        "comment": "Button that opens the editor for recording an externally measured State of Health figure.",
+        "en": "Add a service reading",
+        "de": "Servicemessung hinzufügen",
+        "fr": "Ajouter un relevé d'atelier",
+        "es": "Añadir una lectura de taller",
+        "zh-Hans": "添加检测读数",
+        "ja": "整備測定値を追加",
+        "nb": "Legg til en servicemåling",
+        "th": "เพิ่มค่าที่วัดจากศูนย์บริการ"
+    },
+    "Add Service Reading": {
+        "comment": "Title of the sheet for recording an externally measured State of Health figure.",
+        "en": "Add Service Reading",
+        "de": "Servicemessung hinzufügen",
+        "fr": "Ajouter un relevé d'atelier",
+        "es": "Añadir lectura de taller",
+        "zh-Hans": "添加检测读数",
+        "ja": "整備測定値を追加",
+        "nb": "Legg til servicemåling",
+        "th": "เพิ่มค่าที่วัดจากศูนย์บริการ"
+    },
+    "Edit Service Reading": {
+        "en": "Edit Service Reading",
+        "de": "Servicemessung bearbeiten",
+        "fr": "Modifier le relevé d'atelier",
+        "es": "Editar lectura de taller",
+        "zh-Hans": "编辑检测读数",
+        "ja": "整備測定値を編集",
+        "nb": "Rediger servicemåling",
+        "th": "แก้ไขค่าที่วัดจากศูนย์บริการ"
+    },
+    "Log Service Reading": {
+        "comment": "Accessibility label for the toolbar button that opens the service reading editor.",
+        "en": "Log Service Reading",
+        "de": "Servicemessung erfassen",
+        "fr": "Enregistrer un relevé d'atelier",
+        "es": "Registrar lectura de taller",
+        "zh-Hans": "记录检测读数",
+        "ja": "整備測定値を記録",
+        "nb": "Registrer servicemåling",
+        "th": "บันทึกค่าที่วัดจากศูนย์บริการ"
+    },
+    "Date Measured": {
+        "en": "Date Measured",
+        "de": "Messdatum",
+        "fr": "Date de mesure",
+        "es": "Fecha de medición",
+        "zh-Hans": "测量日期",
+        "ja": "測定日",
+        "nb": "Måledato",
+        "th": "วันที่วัด"
+    },
+    "Measured SoH": {
+        "comment": "Field label for the State of Health percentage reported by a service tool.",
+        "en": "Measured SoH",
+        "de": "Gemessener SoH",
+        "fr": "SoH mesuré",
+        "es": "SoH medido",
+        "zh-Hans": "实测健康度",
+        "ja": "測定SoH",
+        "nb": "Målt SoH",
+        "th": "SoH ที่วัดได้"
+    },
+    "Percent": {
+        "comment": "Placeholder for a percentage text field.",
+        "en": "Percent",
+        "de": "Prozent",
+        "fr": "Pourcentage",
+        "es": "Porcentaje",
+        "zh-Hans": "百分比",
+        "ja": "パーセント",
+        "nb": "Prosent",
+        "th": "เปอร์เซ็นต์"
+    },
+    "Odometer": {
+        "en": "Odometer",
+        "de": "Kilometerstand",
+        "fr": "Kilométrage",
+        "es": "Odómetro",
+        "zh-Hans": "里程表",
+        "ja": "走行距離",
+        "nb": "Kilometerstand",
+        "th": "เลขไมล์"
+    },
+    "Optional": {
+        "comment": "Placeholder indicating a field may be left blank.",
+        "en": "Optional",
+        "de": "Optional",
+        "fr": "Facultatif",
+        "es": "Opcional",
+        "zh-Hans": "可选",
+        "ja": "任意",
+        "nb": "Valgfritt",
+        "th": "ไม่บังคับ"
+    },
+    "Reading": {
+        "comment": "Section header grouping the measured values of a service reading.",
+        "en": "Reading",
+        "de": "Messwert",
+        "fr": "Relevé",
+        "es": "Lectura",
+        "zh-Hans": "读数",
+        "ja": "測定値",
+        "nb": "Måling",
+        "th": "ค่าที่วัดได้"
+    },
+    "Enter the figure exactly as the service tool reported it. Joule stores it as a separate record and never merges it into its own estimate.": {
+        "en": "Enter the figure exactly as the service tool reported it. Joule stores it as a separate record and never merges it into its own estimate.",
+        "de": "Geben Sie den Wert genau so ein, wie das Diagnosegerät ihn angezeigt hat. Joule speichert ihn als eigenen Eintrag und vermischt ihn nie mit der eigenen Schätzung.",
+        "fr": "Saisissez la valeur exactement telle que l'outil de diagnostic l'a indiquée. Joule la conserve comme un enregistrement distinct et ne la fusionne jamais avec sa propre estimation.",
+        "es": "Introduzca la cifra exactamente como la indicó la herramienta de diagnóstico. Joule la guarda como un registro aparte y nunca la combina con su propia estimación.",
+        "zh-Hans": "请按检测设备显示的数值原样输入。Joule 会将其作为独立记录保存，绝不会并入自身的估算值。",
+        "ja": "診断機に表示された数値をそのまま入力してください。Joule はこれを独立した記録として保存し、自身の推定値と統合することはありません。",
+        "nb": "Skriv inn verdien nøyaktig slik diagnoseverktøyet oppga den. Joule lagrer den som en egen oppføring og slår den aldri sammen med sitt eget estimat.",
+        "th": "กรอกตัวเลขตามที่เครื่องมือตรวจวัดรายงานมาทุกประการ Joule จะเก็บเป็นบันทึกแยกต่างหาก และจะไม่นำไปรวมกับค่าประมาณของตัวเองเด็ดขาด"
+    },
+    "Source": {
+        "comment": "Picker label for who or what produced a service reading.",
+        "en": "Source",
+        "de": "Quelle",
+        "fr": "Source",
+        "es": "Fuente",
+        "zh-Hans": "来源",
+        "ja": "測定元",
+        "nb": "Kilde",
+        "th": "แหล่งที่มา"
+    },
+    "Tool or Workshop": {
+        "en": "Tool or Workshop",
+        "de": "Gerät oder Werkstatt",
+        "fr": "Outil ou atelier",
+        "es": "Herramienta o taller",
+        "zh-Hans": "设备或维修厂",
+        "ja": "診断機または整備工場",
+        "nb": "Verktøy eller verksted",
+        "th": "เครื่องมือหรืออู่"
+    },
+    "Provenance": {
+        "comment": "Section header for who measured a reading and with what.",
+        "en": "Provenance",
+        "de": "Herkunft",
+        "fr": "Provenance",
+        "es": "Procedencia",
+        "zh-Hans": "来源信息",
+        "ja": "出所",
+        "nb": "Opphav",
+        "th": "ที่มาของข้อมูล"
+    },
+    "Recorded on the battery certificate so a buyer or insurer can see who measured the figure.": {
+        "en": "Recorded on the battery certificate so a buyer or insurer can see who measured the figure.",
+        "de": "Wird im Batteriezertifikat vermerkt, damit Käufer oder Versicherer sehen, wer den Wert gemessen hat.",
+        "fr": "Consigné sur le certificat de batterie afin qu'un acheteur ou un assureur puisse voir qui a mesuré la valeur.",
+        "es": "Se registra en el certificado de la batería para que un comprador o aseguradora pueda ver quién midió la cifra.",
+        "zh-Hans": "将记录在电池健康证书上，便于买家或保险公司了解该数值由谁测量。",
+        "ja": "バッテリー証明書に記録され、購入者や保険会社が測定者を確認できます。",
+        "nb": "Føres på batterisertifikatet slik at en kjøper eller forsikringsselskap kan se hvem som målte verdien.",
+        "th": "จะถูกบันทึกลงในใบรับรองสุขภาพแบตเตอรี่ เพื่อให้ผู้ซื้อหรือบริษัทประกันทราบว่าใครเป็นผู้วัดค่านี้"
+    },
+    "Readings on File": {
+        "en": "Readings on File",
+        "de": "Gespeicherte Messungen",
+        "fr": "Relevés enregistrés",
+        "es": "Lecturas registradas",
+        "zh-Hans": "已保存的读数",
+        "ja": "保存済みの測定値",
+        "nb": "Lagrede målinger",
+        "th": "ค่าที่บันทึกไว้"
+    },
+    "Dealer Service": {
+        "en": "Dealer Service",
+        "de": "Vertragswerkstatt",
+        "fr": "Concessionnaire",
+        "es": "Servicio oficial",
+        "zh-Hans": "授权经销商",
+        "ja": "ディーラー整備",
+        "nb": "Merkeverksted",
+        "th": "ศูนย์บริการผู้แทนจำหน่าย"
+    },
+    "Independent Shop": {
+        "en": "Independent Shop",
+        "de": "Freie Werkstatt",
+        "fr": "Garage indépendant",
+        "es": "Taller independiente",
+        "zh-Hans": "独立维修厂",
+        "ja": "独立系整備工場",
+        "nb": "Uavhengig verksted",
+        "th": "อู่อิสระ"
+    },
+    "OBD Scan": {
+        "en": "OBD Scan",
+        "de": "OBD-Auslesung",
+        "fr": "Lecture OBD",
+        "es": "Lectura OBD",
+        "zh-Hans": "OBD 读取",
+        "ja": "OBDスキャン",
+        "nb": "OBD-avlesning",
+        "th": "การอ่านค่าผ่าน OBD"
+    },
+    "Inspection Report": {
+        "en": "Inspection Report",
+        "de": "Prüfbericht",
+        "fr": "Rapport d'inspection",
+        "es": "Informe de inspección",
+        "zh-Hans": "检测报告",
+        "ja": "点検報告書",
+        "nb": "Inspeksjonsrapport",
+        "th": "รายงานการตรวจสภาพ"
+    },
+    "Service Reading": {
+        "comment": "Label for an externally measured State of Health figure, shown beside the app's own estimate.",
+        "en": "Service Reading",
+        "de": "Servicemessung",
+        "fr": "Relevé d'atelier",
+        "es": "Lectura de taller",
+        "zh-Hans": "检测读数",
+        "ja": "整備測定値",
+        "nb": "Servicemåling",
+        "th": "ค่าจากศูนย์บริการ"
+    },
+    "Service reading": {
+        "comment": "Chart legend entry for externally measured readings.",
+        "en": "Service reading",
+        "de": "Servicemessung",
+        "fr": "Relevé d'atelier",
+        "es": "Lectura de taller",
+        "zh-Hans": "检测读数",
+        "ja": "整備測定値",
+        "nb": "Servicemåling",
+        "th": "ค่าจากศูนย์บริการ"
+    },
+    "Joule estimate": {
+        "comment": "Chart legend entry for the app's own computed State of Health.",
+        "en": "Joule estimate",
+        "de": "Joule-Schätzung",
+        "fr": "Estimation Joule",
+        "es": "Estimación de Joule",
+        "zh-Hans": "Joule 估算值",
+        "ja": "Joule 推定値",
+        "nb": "Joule-estimat",
+        "th": "ค่าประมาณจาก Joule"
+    },
+    "Joule Estimate": {
+        "comment": "Certificate column heading for the app's own computed State of Health.",
+        "en": "Joule Estimate",
+        "de": "Joule-Schätzung",
+        "fr": "Estimation Joule",
+        "es": "Estimación de Joule",
+        "zh-Hans": "Joule 估算值",
+        "ja": "Joule 推定値",
+        "nb": "Joule-estimat",
+        "th": "ค่าประมาณจาก Joule"
+    },
+    "Estimated SoH (Joule)": {
+        "en": "Estimated SoH (Joule)",
+        "de": "Geschätzter SoH (Joule)",
+        "fr": "SoH estimé (Joule)",
+        "es": "SoH estimado (Joule)",
+        "zh-Hans": "估算健康度（Joule）",
+        "ja": "推定SoH（Joule）",
+        "nb": "Estimert SoH (Joule)",
+        "th": "SoH ประมาณการ (Joule)"
+    },
+    "SELF-REPORTED": {
+        "comment": "Certificate badge shown when no external measurement backs the figures.",
+        "en": "SELF-REPORTED",
+        "de": "SELBST ERFASST",
+        "fr": "AUTODÉCLARÉ",
+        "es": "AUTODECLARADO",
+        "zh-Hans": "自行记录",
+        "ja": "自己申告",
+        "nb": "EGENRAPPORTERT",
+        "th": "บันทึกด้วยตนเอง"
+    },
+    "SERVICE-VERIFIED": {
+        "comment": "Certificate badge shown when a service measurement backs the figures.",
+        "en": "SERVICE-VERIFIED",
+        "de": "WERKSTATTGEPRÜFT",
+        "fr": "VÉRIFIÉ EN ATELIER",
+        "es": "VERIFICADO EN TALLER",
+        "zh-Hans": "检测验证",
+        "ja": "整備確認済み",
+        "nb": "VERKSTEDVERIFISERT",
+        "th": "ตรวจสอบโดยศูนย์บริการ"
+    },
+    "%@ vs Joule's %.1f%% estimate for that date": {
+        "comment": "Compares a service reading against the app's own estimate for the same date. %1$@ is a signed point difference, %2$.1f is the app's estimated percentage.",
+        "en": "%1$@ vs Joule's %2$.1f%% estimate for that date",
+        "de": "%1$@ gegenüber Joules Schätzung von %2$.1f%% für dieses Datum",
+        "fr": "%1$@ par rapport à l'estimation de %2$.1f%% de Joule à cette date",
+        "es": "%1$@ frente a la estimación de %2$.1f%% de Joule para esa fecha",
+        "zh-Hans": "与 Joule 当日 %2$.1f%% 的估算值相差 %1$@",
+        "ja": "同日の Joule 推定値 %2$.1f%% に対して %1$@",
+        "nb": "%1$@ mot Joules estimat på %2$.1f%% for den datoen",
+        "th": "%1$@ เทียบกับค่าประมาณ %2$.1f%% ของ Joule ในวันเดียวกัน"
+    },
+    "No charging history near this date to compare against.": {
+        "en": "No charging history near this date to compare against.",
+        "de": "Keine Ladehistorie in der Nähe dieses Datums zum Vergleich vorhanden.",
+        "fr": "Aucun historique de recharge proche de cette date pour établir une comparaison.",
+        "es": "No hay historial de carga cercano a esta fecha para comparar.",
+        "zh-Hans": "该日期附近没有充电记录可供比较。",
+        "ja": "この日付の前後に比較できる充電履歴がありません。",
+        "nb": "Ingen ladehistorikk nær denne datoen å sammenligne med.",
+        "th": "ไม่มีประวัติการชาร์จใกล้วันที่นี้ให้เปรียบเทียบ"
+    },
+    "Why don't these two numbers match?": {
+        "en": "Why don't these two numbers match?",
+        "de": "Warum stimmen diese beiden Werte nicht überein?",
+        "fr": "Pourquoi ces deux chiffres ne concordent-ils pas ?",
+        "es": "¿Por qué no coinciden estas dos cifras?",
+        "zh-Hans": "为什么这两个数值不一致？",
+        "ja": "この2つの数値が一致しないのはなぜですか？",
+        "nb": "Hvorfor stemmer ikke disse to tallene overens?",
+        "th": "ทำไมตัวเลขสองค่านี้จึงไม่ตรงกัน?"
+    },
+    "**Joule** measures from the charger: energy delivered at the plug, divided by the SoC it moved. It depends on the charging efficiency you have configured.": {
+        "en": "**Joule** measures from the charger: energy delivered at the plug, divided by the SoC it moved. It depends on the charging efficiency you have configured.",
+        "de": "**Joule** misst an der Ladesäule: die am Stecker gelieferte Energie, geteilt durch den bewegten SoC. Das Ergebnis hängt von der eingestellten Ladeeffizienz ab.",
+        "fr": "**Joule** mesure depuis la borne : l'énergie fournie à la prise, divisée par le SoC parcouru. Le résultat dépend du rendement de charge que vous avez configuré.",
+        "es": "**Joule** mide desde el cargador: la energía entregada en el enchufe, dividida por el SoC recorrido. Depende de la eficiencia de carga que haya configurado.",
+        "zh-Hans": "**Joule** 从充电端测量：插头输出的电量除以电量变化百分比，结果取决于您设置的充电效率。",
+        "ja": "**Joule** は充電側から測定します。プラグで供給された電力量を、変化したSoCで割った値であり、設定した充電効率に左右されます。",
+        "nb": "**Joule** måler fra laderen: energien levert i kontakten, delt på SoC-endringen. Resultatet avhenger av ladeeffektiviteten du har angitt.",
+        "th": "**Joule** วัดจากฝั่งเครื่องชาร์จ โดยนำพลังงานที่จ่ายออกมาหารด้วยเปอร์เซ็นต์แบตเตอรี่ที่เพิ่มขึ้น ผลลัพธ์จึงขึ้นอยู่กับค่าประสิทธิภาพการชาร์จที่คุณตั้งไว้"
+    },
+    "**A service tool** reads the pack's own capacity model, often against gross rather than usable capacity, and usually rounds to a whole percent.": {
+        "en": "**A service tool** reads the pack's own capacity model, often against gross rather than usable capacity, and usually rounds to a whole percent.",
+        "de": "**Ein Diagnosegerät** liest das Kapazitätsmodell der Batterie selbst aus, häufig bezogen auf die Brutto- statt die nutzbare Kapazität, und rundet meist auf ganze Prozent.",
+        "fr": "**Un outil de diagnostic** lit le modèle de capacité de la batterie elle-même, souvent rapporté à la capacité brute plutôt qu'utile, et arrondit généralement au pourcent entier.",
+        "es": "**Una herramienta de diagnóstico** lee el modelo de capacidad de la propia batería, a menudo sobre la capacidad bruta en lugar de la utilizable, y suele redondear a un porcentaje entero.",
+        "zh-Hans": "**检测设备** 读取的是电池组自身的容量模型，通常以总容量而非可用容量为基准，且一般会取整到整数百分比。",
+        "ja": "**診断機** はバッテリー自身の容量モデルを読み取ります。多くの場合、使用可能容量ではなく総容量を基準とし、通常は整数のパーセントに丸められます。",
+        "nb": "**Et diagnoseverktøy** leser batteriets egen kapasitetsmodell, ofte mot brutto- fremfor brukbar kapasitet, og runder vanligvis av til hele prosent.",
+        "th": "**เครื่องมือตรวจวัด** อ่านค่าจากแบบจำลองความจุภายในของแบตเตอรี่เอง ซึ่งมักอ้างอิงความจุรวมแทนความจุที่ใช้งานได้จริง และโดยทั่วไปจะปัดเป็นจำนวนเต็มเปอร์เซ็นต์"
+    },
+    "The two agree to within the offset these methods normally differ by. Joule keeps showing its own estimate because it tracks the **trend** between service visits.": {
+        "en": "The two agree to within the offset these methods normally differ by. Joule keeps showing its own estimate because it tracks the **trend** between service visits.",
+        "de": "Beide stimmen im Rahmen der üblichen Abweichung dieser Methoden überein. Joule zeigt weiterhin die eigene Schätzung, weil sie den **Verlauf** zwischen Werkstattbesuchen abbildet.",
+        "fr": "Les deux concordent dans la marge habituelle entre ces méthodes. Joule continue d'afficher sa propre estimation car elle suit la **tendance** entre deux passages à l'atelier.",
+        "es": "Ambas coinciden dentro del margen habitual entre estos métodos. Joule sigue mostrando su propia estimación porque refleja la **tendencia** entre visitas al taller.",
+        "zh-Hans": "两者的差异在这两种方法的正常偏差范围内。Joule 继续显示自身估算值，因为它能反映两次检测之间的**变化趋势**。",
+        "ja": "両者の差は、これらの測定方法で通常生じる範囲内です。Joule が自身の推定値を表示し続けるのは、整備の合間の**推移**を追えるからです。",
+        "nb": "De to samsvarer innenfor avviket disse metodene normalt har. Joule viser fortsatt sitt eget estimat fordi det følger **utviklingen** mellom verkstedbesøk.",
+        "th": "ทั้งสองค่าต่างกันอยู่ในช่วงที่วิธีวัดทั้งสองแบบมักต่างกันอยู่แล้ว Joule ยังคงแสดงค่าประมาณของตัวเองไว้ เพราะมันติดตาม**แนวโน้ม**ในช่วงระหว่างการเข้าศูนย์บริการแต่ละครั้ง"
+    },
+    "The gap is wider than the methods usually differ by. Check that the nominal pack capacity and charging efficiency in your vehicle settings match the figures your service tool assumes.": {
+        "en": "The gap is wider than the methods usually differ by. Check that the nominal pack capacity and charging efficiency in your vehicle settings match the figures your service tool assumes.",
+        "de": "Die Abweichung ist größer als bei diesen Methoden üblich. Prüfen Sie, ob Nennkapazität und Ladeeffizienz in Ihren Fahrzeugeinstellungen zu den Annahmen Ihres Diagnosegeräts passen.",
+        "fr": "L'écart dépasse la différence habituelle entre ces méthodes. Vérifiez que la capacité nominale et le rendement de charge de vos réglages véhicule correspondent aux valeurs retenues par votre outil de diagnostic.",
+        "es": "La diferencia supera la habitual entre estos métodos. Compruebe que la capacidad nominal y la eficiencia de carga de los ajustes de su vehículo coincidan con las que asume su herramienta de diagnóstico.",
+        "zh-Hans": "差距超出了这两种方法通常的偏差范围。请检查车辆设置中的标称电池容量与充电效率，是否与检测设备所采用的数值一致。",
+        "ja": "差が通常の範囲を超えています。車両設定の公称容量と充電効率が、診断機が前提としている数値と一致しているか確認してください。",
+        "nb": "Avviket er større enn disse metodene vanligvis skiller seg med. Kontroller at nominell kapasitet og ladeeffektivitet i kjøretøyinnstillingene stemmer med verdiene diagnoseverktøyet legger til grunn.",
+        "th": "ส่วนต่างกว้างกว่าที่วิธีวัดทั้งสองแบบมักต่างกัน ลองตรวจสอบว่าความจุแบตเตอรี่ที่ระบุและค่าประสิทธิภาพการชาร์จในการตั้งค่ารถของคุณ ตรงกับค่าที่เครื่องมือตรวจวัดใช้อ้างอิงหรือไม่"
+    },
+    "There is no charging history near the measurement date, so the two cannot be compared directly.": {
+        "en": "There is no charging history near the measurement date, so the two cannot be compared directly.",
+        "de": "Es gibt keine Ladehistorie in der Nähe des Messdatums, daher lassen sich beide nicht direkt vergleichen.",
+        "fr": "Aucun historique de recharge proche de la date de mesure, les deux ne peuvent donc pas être comparés directement.",
+        "es": "No hay historial de carga cercano a la fecha de medición, por lo que no pueden compararse directamente.",
+        "zh-Hans": "测量日期附近没有充电记录，因此两者无法直接比较。",
+        "ja": "測定日の前後に充電履歴がないため、両者を直接比較できません。",
+        "nb": "Det finnes ingen ladehistorikk nær måledatoen, så de to kan ikke sammenlignes direkte.",
+        "th": "ไม่มีประวัติการชาร์จใกล้วันที่วัดค่า จึงไม่สามารถเปรียบเทียบทั้งสองค่าโดยตรงได้"
+    },
+    "Rolling average of %lld sessions": {
+        "comment": "Certificate subtext under the app's own State of Health figure. %1$lld is a session count.",
+        "en": "Rolling average of %1$lld sessions",
+        "de": "Gleitender Durchschnitt aus %1$lld Ladevorgängen",
+        "fr": "Moyenne glissante sur %1$lld sessions",
+        "es": "Media móvil de %1$lld sesiones",
+        "zh-Hans": "%1$lld 次充电的滚动平均值",
+        "ja": "%1$lld 回の充電の移動平均",
+        "nb": "Glidende gjennomsnitt av %1$lld ladeøkter",
+        "th": "ค่าเฉลี่ยเคลื่อนที่จากการชาร์จ %1$lld ครั้ง"
+    },
+    "Measured at the charger and read from the pack's own diagnostics respectively. The two methods differ by a few points by nature and are reported separately.": {
+        "en": "Measured at the charger and read from the pack's own diagnostics respectively. The two methods differ by a few points by nature and are reported separately.",
+        "de": "Jeweils an der Ladesäule gemessen bzw. aus der Batteriediagnose ausgelesen. Beide Methoden weichen naturgemäß um einige Prozentpunkte voneinander ab und werden getrennt ausgewiesen.",
+        "fr": "Mesuré respectivement à la borne de recharge et lu dans le diagnostic de la batterie. Ces deux méthodes diffèrent par nature de quelques points et sont présentées séparément.",
+        "es": "Medido en el cargador y leído del diagnóstico de la propia batería, respectivamente. Ambos métodos difieren por naturaleza en algunos puntos y se informan por separado.",
+        "zh-Hans": "两者分别在充电端测量和从电池自身诊断读取。这两种方法天然存在数个百分点的差异，因此分开列示。",
+        "ja": "それぞれ充電側での測定値と、バッテリー自身の診断値です。両者は原理上数ポイント異なるため、別々に記載しています。",
+        "nb": "Målt ved laderen og avlest fra batteriets egen diagnostikk. De to metodene avviker naturlig med noen prosentpoeng og oppgis derfor hver for seg.",
+        "th": "วัดจากฝั่งเครื่องชาร์จ และอ่านจากระบบวินิจฉัยของแบตเตอรี่เอง ตามลำดับ ทั้งสองวิธีมีความต่างกันไม่กี่เปอร์เซ็นต์โดยธรรมชาติ จึงแสดงแยกจากกัน"
+    },
+    "Service reading %.1f%% recorded %@ — %@": {
+        "comment": "Certificate footer audit line. %1$.1f is the measured percentage, %2$@ the date, %3$@ the tool or workshop.",
+        "en": "Service reading %1$.1f%% recorded %2$@ — %3$@",
+        "de": "Servicemessung %1$.1f%% erfasst am %2$@ — %3$@",
+        "fr": "Relevé d'atelier %1$.1f%% enregistré le %2$@ — %3$@",
+        "es": "Lectura de taller %1$.1f%% registrada el %2$@ — %3$@",
+        "zh-Hans": "检测读数 %1$.1f%%，记录于 %2$@ — %3$@",
+        "ja": "整備測定値 %1$.1f%%（%2$@ 記録） — %3$@",
+        "nb": "Servicemåling %1$.1f%% registrert %2$@ — %3$@",
+        "th": "ค่าจากศูนย์บริการ %1$.1f%% บันทึกเมื่อ %2$@ — %3$@"
+    },
+    "source not specified": {
+        "comment": "Fallback when no tool or workshop name was entered for a service reading.",
+        "en": "source not specified",
+        "de": "Quelle nicht angegeben",
+        "fr": "source non précisée",
+        "es": "fuente no especificada",
+        "zh-Hans": "未注明来源",
+        "ja": "測定元の記載なし",
+        "nb": "kilde ikke oppgitt",
+        "th": "ไม่ได้ระบุแหล่งที่มา"
+    },
 }
 
 def generate_catalog():

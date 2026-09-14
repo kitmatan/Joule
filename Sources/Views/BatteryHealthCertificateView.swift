@@ -17,6 +17,10 @@ struct BatteryHealthCertificateView: View {
         Date().formatted(.dateTime.year().month(.wide).day())
     }
 
+    private var reference: BatteryHealthReference? {
+        summary.referenceComparison?.reference
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -67,12 +71,15 @@ struct BatteryHealthCertificateView: View {
                         .tracking(1.5)
                         .foregroundColor(.secondary)
                     Spacer()
-                    Text("VERIFIED")
+                    // Every figure below it is computed from the owner's own logged sessions, so a
+                    // green VERIFIED stamp overstated what this document is. It now claims
+                    // verification only when an outside measurement backs it.
+                    Text(reference == nil ? "SELF-REPORTED" : "SERVICE-VERIFIED")
                         .font(.caption2).bold()
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
-                        .background(Color.green.opacity(0.15))
-                        .foregroundColor(.green)
+                        .background((reference == nil ? Color.secondary : Color.green).opacity(0.15))
+                        .foregroundColor(reference == nil ? .secondary : .green)
                         .clipShape(Capsule())
                 }
 
@@ -113,10 +120,46 @@ struct BatteryHealthCertificateView: View {
                         .font(.system(size: 32, weight: .heavy, design: .rounded))
                         .foregroundColor(summary.currentSoH >= 90 ? .green : (summary.currentSoH >= 80 ? .orange : .red))
 
-                    Text("State of Health")
+                    Text("Estimated SoH (Joule)")
                         .font(.caption2)
                         .fontWeight(.semibold)
                         .foregroundColor(.secondary)
+                }
+            }
+
+            // Both figures, each attributed. A buyer trusts the measured one; the rolling
+            // estimate is the only one that shows a trajectory between service visits.
+            if let comparison = summary.referenceComparison {
+                let reading = comparison.reference
+                VStack(spacing: 8) {
+                    HStack(alignment: .top, spacing: 12) {
+                        CertSourceBox(
+                            title: "Joule Estimate",
+                            value: String(format: "%.1f%%", summary.currentSoH),
+                            subtext: String(format: String(localized: "Rolling average of %lld sessions"), Int64(totalSessions)),
+                            icon: "chart.line.uptrend.xyaxis",
+                            color: .blue
+                        )
+
+                        CertSourceBox(
+                            title: "Service Reading",
+                            value: String(format: "%.1f%%", reading.sohPercent),
+                            subtext: reading.date.formatted(.dateTime.year().month(.abbreviated).day()),
+                            icon: reading.source.icon,
+                            color: .indigo
+                        )
+                    }
+
+                    HStack(spacing: 6) {
+                        Image(systemName: "info.circle")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text("Measured at the charger and read from the pack's own diagnostics respectively. The two methods differ by a few points by nature and are reported separately.")
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
                 }
             }
 
@@ -188,6 +231,20 @@ struct BatteryHealthCertificateView: View {
             // Footer Stamp
             VStack(spacing: 6) {
                 Divider()
+                if let reading = reference {
+                    HStack {
+                        Text(String(
+                            format: String(localized: "Service reading %.1f%% recorded %@ — %@"),
+                            reading.sohPercent,
+                            reading.date.formatted(.dateTime.year().month(.abbreviated).day()),
+                            reading.toolName ?? String(localized: "source not specified")
+                        ))
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
+                }
                 HStack {
                     Text(String(format: String(localized: "Generated on %@"), certificateDate))
                         .font(.caption2)
@@ -251,5 +308,47 @@ private struct CertStatBox: View {
         .padding(10)
         .background(Color.secondary.opacity(0.06))
         .cornerRadius(10)
+    }
+}
+
+/// A single attributed SoH figure on the certificate. Distinct from `CertStatBox` because the
+/// point here is provenance: which method produced the number, and when.
+private struct CertSourceBox: View {
+    let title: LocalizedStringKey
+    let value: String
+    let subtext: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundColor(color)
+                Text(title)
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.secondary)
+            }
+            Text(value)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Text(subtext)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(color.opacity(0.07))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(color.opacity(0.18), lineWidth: 1)
+        )
     }
 }

@@ -34,6 +34,19 @@ enum BatteryChemistry: String, CaseIterable, Identifiable, Codable {
     }
     
     /// Standard theoretical laboratory cycle life to 80% State of Health (SoH).
+    /// Uncertainty, in percentage points, of a single mid-curve SoC reading from the BMS.
+    ///
+    /// Away from the extremes the BMS infers SoC from a voltage curve. LFP's is famously flat
+    /// between roughly 20% and 90%, so its estimate drifts furthest between full-charge
+    /// recalibrations; the nickel chemistries have more voltage slope to work with.
+    var midCurveSoCUncertainty: Double {
+        switch self {
+        case .lfp: return 2.0
+        case .nmc, .nca: return 1.0
+        case .other: return 1.2
+        }
+    }
+    
     var defaultCycleLife: Double {
         switch self {
         case .lfp:
