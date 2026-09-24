@@ -11,14 +11,14 @@ struct ChartTooltipCard<Content: View>: View {
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                    .fill(Color.jouleSurface)
                     // The tooltip floats over plotted marks, so it needs a heavier shadow in dark
                     // mode where the card and the chart backdrop are close in luminance.
                     .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.5 : 0.15), radius: 6, x: 0, y: 2)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                    .stroke(Color.jouleMuted.opacity(0.2), lineWidth: 0.5)
             )
             .accessibilityElement(children: .combine)
     }
@@ -53,13 +53,13 @@ struct ChartTooltipRow: View {
                     .frame(width: 6, height: 6)
             }
             Text(title)
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                .font(.joule(.caption2))
+                .foregroundColor(.jouleMuted)
             Spacer(minLength: 6)
             Text(value)
-                .font(.caption2)
+                .font(.joule(.caption2))
                 .fontWeight(isBold ? .bold : .medium)
-                .foregroundColor(.primary)
+                .foregroundColor(.jouleInk)
         }
     }
 }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Visual tokens shared by the widgets, matching `DashboardHeroCard`'s blue→teal identity.
+/// Visual tokens shared by the widgets (the app itself uses the palette in JouleTheme.swift).
 ///
 /// Accessory families (lock screen and watch complications) are rendered by the system in a
 /// single tint — `vibrant` and `accented` modes discard color entirely — so anything that relies

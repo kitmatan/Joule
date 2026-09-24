@@ -67,25 +67,28 @@ struct GarageSwitcherMenu: View {
                 }
             }
         } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "car.side.fill")
-                    .font(.caption)
-                    .foregroundStyle(.blue)
-                
+            HStack(spacing: 10) {
+                Image(systemName: store.selectedVehicleId == nil && allowAllOption && store.vehicles.count > 1 ? "car.2.fill" : "bolt.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.jouleVolt)
+                    .frame(width: 32, height: 32)
+                    .background(Color.jouleInverse, in: Circle())
+
                 Text(LocalizedStringKey(labelTitle))
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+                    .font(.jouleText(15, relativeTo: .subheadline).weight(.semibold))
+                    .foregroundStyle(Color.jouleInk)
                     .lineLimit(1)
                     .truncationMode(.tail)
 
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.jouleMuted)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(Color(uiColor: .secondarySystemGroupedBackground).opacity(0.8))
-            .clipShape(Capsule())
+            .padding(.leading, 6)
+            .padding(.trailing, 14)
+            .frame(minHeight: 44)
+            .background(Color.jouleSurface, in: Capsule())
+            .overlay(Capsule().strokeBorder(Color.jouleLine, lineWidth: 1))
         }
         .sheet(isPresented: $showingGarageManagement) {
             GarageManagementView()

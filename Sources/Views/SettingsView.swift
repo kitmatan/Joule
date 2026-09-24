@@ -1,9 +1,17 @@
 import SwiftUI
 
 struct SettingsView: View {
+    /// A sheet (Mac, and the Baseline shortcut on the dashboard) or the iPhone/iPad Garage tab.
+    enum Presentation {
+        case sheet, tab
+    }
+
+    var presentation: Presentation = .sheet
+
     @EnvironmentObject private var auth: AuthService
     @EnvironmentObject private var store: SessionStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.jouleTabBarHeight) private var tabBarHeight
     
     @AppStorage("app_unit_system") private var unitSystem: UnitSystem = VehicleProfile.defaultUnitSystem
     @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
@@ -118,47 +126,33 @@ struct SettingsView: View {
             Form {
                 // Section 0: Multi-Vehicle Garage
                 Section {
-                    HStack(spacing: 12) {
-                        Image(systemName: "car.side.fill")
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 6) {
-                                Text(store.activeVehicle.name)
-                                    .font(.headline)
-                                Text("Active")
-                                    .font(.caption2).bold()
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.blue.opacity(0.15))
-                                    .foregroundColor(.blue)
-                                    .clipShape(Capsule())
-                            }
-                            Text(String(format: "%@ • %.1f kWh • %@", store.activeVehicle.chemistry.badgeTitle, store.activeVehicle.nominalCapacityKWh, unitSystem.formatDistance(km: store.activeVehicle.nominalRangeKm)))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                    ForEach(store.vehicles) { vehicle in
+                        vehicleCard(vehicle)
+                            .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                    }
+
+                    HStack(spacing: 10) {
+                        Button {
+                            showingAddVehicle = true
+                        } label: {
+                            Label("Add Vehicle…", systemImage: "plus")
+                                .frame(maxWidth: .infinity)
                         }
-                    }
-                    .padding(.vertical, 4)
-                    
-                    Button {
-                        showingGarageManagement = true
-                    } label: {
-                        HStack {
-                            Label(String(format: String(localized: "Manage Garage (%lld)…"), Int64(store.vehicles.count)), systemImage: "car.2.fill")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                        .buttonStyle(JouleDashedButtonStyle())
+
+                        Button {
+                            showingGarageManagement = true
+                        } label: {
+                            Label(String(format: String(localized: "Manage Garage (%lld)…"), Int64(store.vehicles.count)), systemImage: "car.2")
+                                .frame(maxWidth: .infinity)
                         }
+                        .buttonStyle(JouleDashedButtonStyle())
                     }
-                    
-                    Button {
-                        showingAddVehicle = true
-                    } label: {
-                        Label("Add New Vehicle…", systemImage: "plus.circle")
-                    }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 } header: {
                     Text("Multi-Vehicle Garage")
                 } footer: {
@@ -186,15 +180,13 @@ struct SettingsView: View {
 
                 // Section 1b: Appearance
                 Section {
-                    Picker("Theme", selection: $theme) {
-                        ForEach(AppTheme.allCases) { option in
-                            Label(option.displayName, systemImage: option.iconName)
-                                .tag(option)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .padding(.vertical, 2)
+                    JoulePillPicker(
+                        options: AppTheme.allCases.map { ($0, LocalizedStringKey($0.displayName)) },
+                        selection: $theme,
+                        accessibilityTitle: "Appearance"
+                    )
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowBackground(Color.clear)
                 } header: {
                     // The segmented style strips label icons, so the current theme's glyph rides
                     // in the header instead.
@@ -210,19 +202,19 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             Label("Car Model Preset", systemImage: "car.side.fill")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(Color.jouleInk)
                             Spacer()
                             Text(selectedPreset?.displayName ?? "Custom Vehicle")
-                                .foregroundColor(.primary)
+                                .foregroundColor(.jouleInk)
                             Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .font(.joule(.caption))
+                                .foregroundColor(.jouleMuted)
                         }
                     }
                     
                     HStack {
                         Label("Display Name", systemImage: "character.cursor.ibeam")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField("Vehicle Name", text: $vehicleName)
                             .multilineTextAlignment(.trailing)
@@ -247,14 +239,14 @@ struct SettingsView: View {
                     
                     HStack {
                         Label("Nominal Pack Capacity", systemImage: "bolt.batteryblock.fill")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField("kWh", value: $nominalCapacityKWh, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                        Text("kWh").foregroundColor(.secondary)
+                        Text("kWh").foregroundColor(.jouleMuted)
                     }
                     
                     Picker("Range Standard", selection: $rangeStandard) {
@@ -265,26 +257,26 @@ struct SettingsView: View {
                     
                     HStack {
                         Label("Rated Range (\(rangeStandard.rawValue))", systemImage: "road.lanes")
-                            .foregroundColor(.purple)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField(unitSystem.distanceUnit, value: nominalRangeBinding, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                        Text(unitSystem.distanceUnit).foregroundColor(.secondary)
+                        Text(unitSystem.distanceUnit).foregroundColor(.jouleMuted)
                     }
                     
                     HStack {
                         Label("Expected Cycle Life (80%)", systemImage: "arrow.triangle.2.circlepath")
-                            .foregroundColor(.indigo)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField("Cycles", value: $cycleLifeTo80, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.numberPad)
                             #endif
-                        Text("cycles").foregroundColor(.secondary)
+                        Text("cycles").foregroundColor(.jouleMuted)
                     }
                 } header: {
                     Text("Battery & Range Specifications")
@@ -315,35 +307,35 @@ struct SettingsView: View {
                     if tariffType == .custom {
                         HStack {
                             Label("Custom Tariff Rate", systemImage: "tag.fill")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(Color.jouleInk)
                             Spacer()
                             TextField(appCurrency.rateUnitSuffix, value: $customTariffRate, format: .number)
                                 .multilineTextAlignment(.trailing)
                                 #if os(iOS)
                                 .keyboardType(.decimalPad)
                                 #endif
-                            Text(appCurrency.rateUnitSuffix).foregroundColor(.secondary)
+                            Text(appCurrency.rateUnitSuffix).foregroundColor(.jouleMuted)
                         }
                     } else {
                         HStack {
                             Label("Active Rate", systemImage: "tag.fill")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.jouleMuted)
                             Spacer()
                             Text(appCurrency.formatRateSpaced(tariffType.defaultRate))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.jouleMuted)
                         }
                     }
                     
                     HStack {
                         Label("Wall Box Power", systemImage: "powerplug.fill")
-                            .foregroundColor(.cyan)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField("kW", value: $wallChargerKW, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                        Text("kW").foregroundColor(.secondary)
+                        Text("kW").foregroundColor(.jouleMuted)
                     }
                 } footer: {
                     Text(LocalizedStringKey(tariffType.description))
@@ -353,18 +345,18 @@ struct SettingsView: View {
                 Section {
                     HStack {
                         Label("AC Efficiency (OBC)", systemImage: "bolt.fill")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         Text(String(format: "%.0f%%", acEfficiency * 100))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.jouleMuted)
                     }
                     
                     HStack {
                         Label("DC Fast Efficiency", systemImage: "bolt.badge.clock.fill")
-                            .foregroundColor(.orange)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         Text(String(format: "%.0f%%", dcEfficiency * 100))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.jouleMuted)
                     }
                 } header: {
                     Text("Charging Efficiencies")
@@ -387,7 +379,7 @@ struct SettingsView: View {
                     
                     HStack {
                         Label("Fuel Economy", systemImage: "fuelpump.fill")
-                            .foregroundColor(.orange)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField(GasComparisonSettings.efficiencyUnit(unitSystem: unitSystem), value: gasEfficiencyBinding, format: .number)
                             .multilineTextAlignment(.trailing)
@@ -399,19 +391,19 @@ struct SettingsView: View {
                                     gasPreset = .custom
                                 }
                             }
-                        Text(GasComparisonSettings.efficiencyUnit(unitSystem: unitSystem)).foregroundColor(.secondary)
+                        Text(GasComparisonSettings.efficiencyUnit(unitSystem: unitSystem)).foregroundColor(.jouleMuted)
                     }
                     
                     HStack {
                         Label("Fuel Price", systemImage: "tag.fill")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField("\(appCurrency.symbol)/\(GasComparisonSettings.fuelVolumeUnit(unitSystem: unitSystem))", value: $gasFuelPrice, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                        Text("\(appCurrency.symbol)/\(GasComparisonSettings.fuelVolumeUnit(unitSystem: unitSystem))").foregroundColor(.secondary)
+                        Text("\(appCurrency.symbol)/\(GasComparisonSettings.fuelVolumeUnit(unitSystem: unitSystem))").foregroundColor(.jouleMuted)
                     }
                 } header: {
                     Text("Gas Engine Baseline (Savings Calculator)")
@@ -426,14 +418,14 @@ struct SettingsView: View {
                             Label {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Cloud Sync Active")
-                                        .font(.body)
+                                        .font(.joule(.body))
                                     Text(store.syncStatus.statusDescription)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .font(.joule(.caption))
+                                        .foregroundColor(.jouleMuted)
                                 }
                             } icon: {
                                 Image(systemName: "checkmark.icloud.fill")
-                                    .foregroundColor(.green)
+                                    .foregroundStyle(Color.joulePositive)
                             }
                             Spacer()
                         }
@@ -441,21 +433,21 @@ struct SettingsView: View {
                         if let email = auth.userEmail {
                             HStack {
                                 Label("Google Account", systemImage: "person.crop.circle.fill")
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.jouleInk)
                                 Spacer()
                                 Text(email)
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                    .font(.joule(.subheadline))
+                                    .foregroundColor(.jouleMuted)
                                     .lineLimit(1)
                             }
                         } else if let uid = auth.state.userID {
                             HStack {
                                 Label("Account ID", systemImage: "person.crop.circle")
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.jouleInk)
                                 Spacer()
                                 Text(uid)
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .font(.joule(.caption2))
+                                    .foregroundColor(.jouleMuted)
                                     .lineLimit(1)
                                     .truncationMode(.middle)
                             }
@@ -463,10 +455,10 @@ struct SettingsView: View {
                         
                         HStack {
                             Label("Synced Sessions", systemImage: "tray.full.fill")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(Color.jouleInk)
                             Spacer()
                             Text("\(store.sessions.count)")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.jouleMuted)
                         }
                         
                         Button {
@@ -483,8 +475,8 @@ struct SettingsView: View {
                                 Spacer()
                                 if store.duplicateSessionsCount > 0 {
                                     Text("\(store.duplicateSessionsCount) found")
-                                        .font(.caption)
-                                        .foregroundColor(.orange)
+                                        .font(.joule(.caption))
+                                        .foregroundColor(.jouleDeferred)
                                 }
                             }
                         }
@@ -497,30 +489,24 @@ struct SettingsView: View {
                     } else {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
-                                Label("Local Mode (Offline-First)", systemImage: "internaldrive.fill")
-                                    .font(.headline)
-                                    .foregroundColor(.blue)
+                                Label("Local Mode (Offline-First)", systemImage: "internaldrive")
+                                    .font(.joule(.headline))
+                                    .foregroundStyle(Color.jouleInk)
                                 Spacer()
-                                Text("Offline")
-                                    .font(.caption2).bold()
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.secondary.opacity(0.15))
-                                    .foregroundColor(.secondary)
-                                    .clipShape(Capsule())
+                                JouleTag("Offline", foreground: .jouleDeferredOnSoft, background: .jouleDeferredSoft)
                             }
                             Text("All charging sessions and battery analytics are stored locally on this device. Sign in with Google to enable automatic cloud backup and cross-device sync.")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .font(.joule(.caption))
+                                .foregroundColor(.jouleMuted)
                         }
                         .padding(.vertical, 4)
                         
                         HStack {
                             Label("Local Sessions", systemImage: "tray.full.fill")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(Color.jouleInk)
                             Spacer()
                             Text("\(store.sessions.count)")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.jouleMuted)
                         }
 
                         Button {
@@ -531,8 +517,8 @@ struct SettingsView: View {
                                 Spacer()
                                 if store.duplicateSessionsCount > 0 {
                                     Text("\(store.duplicateSessionsCount) found")
-                                        .font(.caption)
-                                        .foregroundColor(.orange)
+                                        .font(.joule(.caption))
+                                        .foregroundColor(.jouleDeferred)
                                 }
                             }
                         }
@@ -540,18 +526,10 @@ struct SettingsView: View {
                         Button {
                             auth.signIn()
                         } label: {
-                            HStack {
-                                Spacer()
-                                Image(systemName: "icloud.and.arrow.up.fill")
-                                    .font(.subheadline)
-                                Text("Sign in with Google to Sync")
-                                    .fontWeight(.semibold)
-                                Spacer()
-                            }
-                            .padding(.vertical, 4)
+                            Label("Sign in with Google to Sync", systemImage: "icloud.and.arrow.up")
                         }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.blue)
+                        .buttonStyle(JoulePrimaryButtonStyle())
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 12, trailing: 16))
                     }
                 } header: {
                     Text("Cloud Sync & Storage")
@@ -570,15 +548,21 @@ struct SettingsView: View {
                     }
                 }
             }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            .jouleTabBarClearance()
+            // A sheet inherits the tab bar height from whatever presented it, but has no bar.
+            .environment(\.jouleTabBarHeight, presentation == .tab ? tabBarHeight : 0)
+            .joulePage()
+            .navigationTitle(presentation == .tab ? "Garage" : "Settings")
+            .navigationBarTitleDisplayMode(presentation == .tab ? .large : .inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        syncCurrentVehicleToStore()
-                        dismiss()
+                if presentation == .sheet {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            syncCurrentVehicleToStore()
+                            dismiss()
+                        }
+                        .bold()
                     }
-                    .bold()
                 }
             }
             .onAppear {
@@ -624,6 +608,66 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    private func isActive(_ vehicle: Vehicle) -> Bool {
+        store.selectedVehicleId == vehicle.id || (store.selectedVehicleId == nil && vehicle.isDefault)
+    }
+
+    /// A vehicle as a selectable card: brand line, model in the display face, three specs.
+    private func vehicleCard(_ vehicle: Vehicle) -> some View {
+        let active = isActive(vehicle)
+        let preset = EVPresetCatalog.preset(forId: vehicle.presetId)
+        return Button {
+            store.selectVehicle(id: vehicle.id)
+        } label: {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    JouleLabel(verbatim: preset?.brand ?? vehicle.chemistry.badgeTitle)
+                    Spacer()
+                    if vehicle.isDefault {
+                        JouleTag("Default")
+                    }
+                    if active {
+                        JouleTag("Active", foreground: .jouleOnVolt, background: .jouleVolt)
+                    }
+                }
+                Text(vehicle.name)
+                    .font(.jouleDisplay(26, relativeTo: .title))
+                    .foregroundStyle(Color.jouleInk)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                HStack(alignment: .top, spacing: 12) {
+                    vehicleSpec(String(format: "%.1f kWh", vehicle.nominalCapacityKWh), vehicle.chemistry.badgeTitle)
+                    vehicleSpec(unitSystem.formatDistance(km: vehicle.nominalRangeKm), vehicle.rangeStandard.rawValue)
+                    vehicleSpec(String(format: "%.1f kW", vehicle.wallChargerKW), "AC")
+                }
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.jouleSurface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(active ? Color.jouleInk : Color.jouleLine, lineWidth: active ? 2 : 1)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(active ? .isSelected : [])
+    }
+
+    private func vehicleSpec(_ value: String, _ caption: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.jouleText(15, relativeTo: .subheadline).weight(.semibold))
+                .foregroundStyle(Color.jouleInk)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Text(caption)
+                .font(.jouleText(12, relativeTo: .caption))
+                .foregroundStyle(Color.jouleMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func handleApplyPreset(_ preset: EVPreset) {
@@ -708,29 +752,29 @@ struct PresetPickerView: View {
                                         VStack(alignment: .leading, spacing: 4) {
                                             HStack(spacing: 6) {
                                                 Text(preset.displayName)
-                                                    .font(.headline)
-                                                    .foregroundColor(.primary)
+                                                    .font(.joule(.headline))
+                                                    .foregroundColor(.jouleInk)
                                                 
                                                 Text(preset.chemistry.badgeTitle)
-                                                    .font(.caption2).bold()
+                                                    .font(.joule(.caption2)).bold()
                                                     .padding(.horizontal, 5)
                                                     .padding(.vertical, 2)
-                                                    .background(preset.chemistry == .lfp ? Color.blue.opacity(0.15) : Color.purple.opacity(0.15))
-                                                    .foregroundColor(preset.chemistry == .lfp ? .blue : .purple)
+                                                    .background(Color.jouleSunken)
+                                                    .foregroundColor(.jouleInk2)
                                                     .clipShape(Capsule())
                                             }
                                             
                                             Text(String(format: "%.1f kWh • %@ (%@) • %.1f kW AC", preset.nominalCapacityKWh, unitSystem.formatDistance(km: preset.nominalRangeKm), preset.rangeStandard.rawValue, preset.defaultWallChargerKW))
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
+                                                .font(.joule(.caption))
+                                                .foregroundColor(.jouleMuted)
                                         }
                                         
                                         Spacer()
                                         
                                         if selectedPresetId == preset.id {
                                             Image(systemName: "checkmark.circle.fill")
-                                                .foregroundColor(.blue)
-                                                .font(.title3)
+                                                .foregroundColor(.jouleInk)
+                                                .font(.joule(.title3))
                                         }
                                     }
                                     .padding(.vertical, 2)
@@ -740,6 +784,7 @@ struct PresetPickerView: View {
                     }
                 }
             }
+            .joulePage()
             .navigationTitle("Select EV Model")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search make or model (e.g. Tesla, BYD, Aion)")

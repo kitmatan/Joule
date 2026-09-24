@@ -19,14 +19,14 @@ struct SignInView: View {
             VStack(spacing: 16) {
                 Image(systemName: "bolt.car.fill")
                     .font(.system(size: 56))
-                    .foregroundStyle(.blue.gradient)
+                    .foregroundStyle(Color.jouleInk.gradient)
 
                 Text("Joule.")
-                    .font(.largeTitle).bold()
+                    .font(.joule(.largeTitle)).bold()
 
                 Text("Sign in to keep your charging history private to you and in sync across your iPhone, iPad and Mac.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.subheadline))
+                    .foregroundColor(.jouleMuted)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 340)
             }

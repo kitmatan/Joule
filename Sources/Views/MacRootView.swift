@@ -22,7 +22,7 @@ struct MacRootView: View {
                                 Spacer()
                                 if store.selectedVehicleId == vehicle.id || (store.selectedVehicleId == nil && vehicle.isDefault) {
                                     Image(systemName: "checkmark")
-                                        .font(.caption2)
+                                        .font(.joule(.caption2))
                                         .foregroundStyle(.tint)
                                 }
                             }
@@ -31,8 +31,8 @@ struct MacRootView: View {
                     }
                 }
 
-                Section("Overview") {
-                    Label("Dashboard", systemImage: "chart.bar.xaxis")
+                Section {
+                    Label("Overview", systemImage: "chart.bar.xaxis")
                         .tag(MacSidebarDestination.dashboard)
                         .keyboardShortcut("1", modifiers: .command)
                     Label("Battery Health", systemImage: "bolt.batteryblock.fill")
@@ -48,6 +48,8 @@ struct MacRootView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color.jouleSunken.opacity(0.6))
             .navigationTitle("Joule")
             .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 280)
             .safeAreaInset(edge: .bottom) {
@@ -64,7 +66,7 @@ struct MacRootView: View {
                         }
                     }
                 }
-                .background(.bar)
+                .background(Color.jouleSunken.opacity(0.6))
             }
         } detail: {
             switch navCoordinator.macSidebarSelection ?? .dashboard {
@@ -103,13 +105,9 @@ struct MacRootView: View {
         Button {
             navCoordinator.presentNewSession()
         } label: {
-            Label("New Session", systemImage: "plus.circle.fill")
-                .fontWeight(.medium)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
+            Label("Log Charge", systemImage: "plus")
         }
-        .buttonStyle(.plain)
-        .foregroundStyle(.tint)
+        .buttonStyle(JoulePrimaryButtonStyle())
         .keyboardShortcut("n", modifiers: .command)
         .accessibilityLabel("New Charging Session")
         .accessibilityHint("Opens sheet to log a new charging session")
@@ -122,7 +120,7 @@ struct MacRootView: View {
             navCoordinator.presentSettings()
         } label: {
             Label("Settings", systemImage: "gearshape")
-                .font(.callout)
+                .font(.joule(.callout))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -139,7 +137,7 @@ struct MacRootView: View {
             auth.signIn()
         } label: {
             Label("Sign In", systemImage: "icloud.and.arrow.up")
-                .font(.callout)
+                .font(.joule(.callout))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -155,7 +153,7 @@ struct MacRootView: View {
             auth.signOut()
         } label: {
             Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                .font(.callout)
+                .font(.joule(.callout))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -334,6 +332,7 @@ struct MacHistoryView: View {
             }
         }
         .listStyle(.inset)
+        .joulePage()
         .overlay {
             if filteredSessions.isEmpty {
                 if searchText.isEmpty {
@@ -370,7 +369,7 @@ struct MacHistoryView: View {
                 .padding(.horizontal)
                 .padding(.top, 8)
             }
-            .background(Color(uiColor: .systemGroupedBackground).opacity(0.4))
+            .background(Color.joulePaper)
         } else {
             ContentUnavailableView(
                 "Select a Session",
@@ -392,36 +391,36 @@ struct MacSessionRow: View {
             HStack(alignment: .firstTextBaseline) {
                 HStack(spacing: 6) {
                     Text(session.locationName ?? "Unknown Location")
-                        .font(.headline)
+                        .font(.joule(.headline))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                     
                     if store.vehicles.count > 1, let vId = session.vehicleId, !vId.isEmpty {
                         let vName = store.vehicleName(for: vId)
                         Text(vName)
-                            .font(.caption2).bold()
+                            .font(.joule(.caption2)).bold()
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
-                            .background(Color.blue.opacity(0.12))
-                            .foregroundColor(.blue)
+                            .background(Color.jouleInk.opacity(0.12))
+                            .foregroundColor(.jouleInk)
                             .clipShape(Capsule())
                     }
                 }
                 Spacer(minLength: 8)
                 Text(appCurrency.format(session.totalPrice))
-                    .font(.subheadline).bold()
-                    .foregroundColor(session.paymentStatus == .deferred ? .orange : .primary)
+                    .font(.joule(.subheadline)).bold()
+                    .foregroundColor(session.paymentStatus == .deferred ? .jouleDeferred : .jouleInk)
                     .lineLimit(1)
             }
 
             HStack(spacing: 6) {
                 if let type = session.chargingType {
                     Text(type.rawValue)
-                        .font(.caption2).bold()
+                        .font(.joule(.caption2)).bold()
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
-                        .background((type == .dc ? Color.orange : Color.blue).opacity(0.15))
-                        .foregroundColor(type == .dc ? .orange : .blue)
+                        .background((type == .dc ? Color.jouleDC : Color.jouleAC).opacity(0.15))
+                        .foregroundColor(type == .dc ? .jouleDC : .jouleAC)
                         .clipShape(Capsule())
                 }
                 Text(String(format: "%.1f kWh", session.energyAdded))
@@ -429,11 +428,11 @@ struct MacSessionRow: View {
                 Text(session.date.formatted(.dateTime.month(.abbreviated).day()))
                 if session.paymentStatus == .deferred {
                     Image(systemName: "list.bullet.rectangle.portrait")
-                        .foregroundColor(.orange)
+                        .foregroundColor(.jouleDeferred)
                 }
             }
-            .font(.caption)
-            .foregroundColor(.secondary)
+            .font(.joule(.caption))
+            .foregroundColor(.jouleMuted)
         }
         .padding(.vertical, 3)
         .accessibilityElement(children: .combine)

@@ -21,10 +21,10 @@ enum ChargingBehaviorGrade: String, Codable, CaseIterable, Comparable {
 
     var color: Color {
         switch self {
-        case .aPlus, .a: return .green
-        case .b: return .blue
-        case .c: return .orange
-        case .d: return .red
+        case .aPlus, .a: return .joulePositive
+        case .b: return .jouleInk
+        case .c: return .jouleDeferred
+        case .d: return .jouleDanger
         }
     }
 
@@ -70,10 +70,10 @@ enum ChargingLongevityAssessment: String, Codable {
 
     var color: Color {
         switch self {
-        case .optimal: return .green
-        case .good: return .blue
-        case .moderateWear: return .orange
-        case .highWear: return .red
+        case .optimal: return .joulePositive
+        case .good: return .jouleInk
+        case .moderateWear: return .jouleDeferred
+        case .highWear: return .jouleDanger
         }
     }
 }
@@ -125,9 +125,9 @@ enum ChargingRecommendationLevel: String, Codable, Comparable {
 
     var color: Color {
         switch self {
-        case .positive: return .green
-        case .tip: return .blue
-        case .caution: return .orange
+        case .positive: return .joulePositive
+        case .tip: return .jouleInk
+        case .caution: return .jouleDeferred
         }
     }
 }
@@ -267,7 +267,7 @@ struct ChargingBestPracticeItem: Identifiable, Hashable {
             category: "Daily Charge Limits",
             title: "NMC / NCA: Keep Daily Charging to 80%–90%",
             icon: "battery.75",
-            color: .blue,
+            color: .jouleInk,
             summary: "Nickel-rich chemistry undergoes accelerated cathode electrolyte oxidation and mechanical lattice strain when kept above 90% State of Charge.",
             bullets: [
                 "Set your vehicle's charge limit slider to 80% (or 90% maximum) for daily commutes.",
@@ -281,7 +281,7 @@ struct ChargingBestPracticeItem: Identifiable, Hashable {
             category: "Daily Charge Limits",
             title: "LFP: Charge to 100% Regularly for BMS Calibration",
             icon: "battery.100.bolt",
-            color: .green,
+            color: .joulePositive,
             summary: "Lithium Iron Phosphate (LFP) has an exceptionally flat voltage curve between 20% and 90%, making voltage-based SoC estimation prone to drift without regular 100% top-offs.",
             bullets: [
                 "Charge your LFP vehicle to 100% at least once every 1 to 2 weeks.",
@@ -295,7 +295,7 @@ struct ChargingBestPracticeItem: Identifiable, Hashable {
             category: "AC vs. DC Speed",
             title: "Prioritize AC Slow Charging for Daily Driving",
             icon: "powerplug.fill",
-            color: .blue,
+            color: .jouleInk,
             summary: "Gentle AC charging (7–11 kW) minimizes internal cell heating, prevents lithium dendrite plating, and preserves the Solid Electrolyte Interphase (SEI) layer.",
             bullets: [
                 "Rely on Home or Work AC chargers for >= 70% of your total energy intake.",
@@ -309,7 +309,7 @@ struct ChargingBestPracticeItem: Identifiable, Hashable {
             category: "Discharge Buffer",
             title: "Avoid Deep Discharges Below 10%–15%",
             icon: "battery.25",
-            color: .orange,
+            color: .jouleDeferred,
             summary: "Allowing lithium cells to drop below 10% increases internal resistance, generates copper dissolution risk on negative current collectors, and puts stress on individual weaker cells.",
             bullets: [
                 "Plug in when your battery reaches 15%–20% during normal day-to-day driving.",
@@ -323,7 +323,7 @@ struct ChargingBestPracticeItem: Identifiable, Hashable {
             category: "Thermal Management",
             title: "Precondition Battery Before DC Fast Charging",
             icon: "thermometer.sun.fill",
-            color: .red,
+            color: .jouleDanger,
             summary: "Cold lithium cells have high internal resistance and cannot accept high charging currents safely, while overheated cells degrade rapidly.",
             bullets: [
                 "Use built-in vehicle navigation to navigate to fast chargers so the BMS automatically pre-heats/cools the pack.",
@@ -337,7 +337,7 @@ struct ChargingBestPracticeItem: Identifiable, Hashable {
             category: "Storage & Inactivity",
             title: "Store at 40%–60% SoC for Extended Inactivity",
             icon: "parkingsign.circle.fill",
-            color: .purple,
+            color: .jouleInk2,
             summary: "Storing an EV battery at extreme charge levels (0% or 100%) for weeks accelerates calendar degradation and irreversible capacity loss.",
             bullets: [
                 "If leaving your car unused for more than 2 weeks, set SoC to approximately 50%.",

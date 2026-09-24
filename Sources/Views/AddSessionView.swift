@@ -209,12 +209,13 @@ struct AddSessionView: View {
                 }
                 
                 Section {
-                    Picker("Location Type", selection: $locationType) {
-                        Text("Public").tag(LocationType.publicStation)
-                        Text("Home").tag(LocationType.home)
-                        Text("Work").tag(LocationType.work)
-                    }
-                    .pickerStyle(.segmented)
+                    JoulePillPicker(
+                        options: [(LocationType.home, "Home"), (.publicStation, "Public"), (.work, "Work")],
+                        selection: $locationType,
+                        accessibilityTitle: "Location Type"
+                    )
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowBackground(Color.clear)
                     .onChange(of: locationType) { oldValue, newValue in
                         switch newValue {
                         case .home:
@@ -241,17 +242,17 @@ struct AddSessionView: View {
                 Section {
                     HStack {
                         Label("Location", systemImage: "mappin.and.ellipse")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField("Required", text: $locationName)
                             .multilineTextAlignment(.trailing)
                             .disabled(isHomeCharging)
-                            .foregroundColor(isHomeCharging ? .secondary : .primary)
+                            .foregroundColor(isHomeCharging ? .jouleMuted : .jouleInk)
                     }
                     if !isHomeCharging {
                         HStack {
                             Label("Vendor", systemImage: "building.2")
-                                .foregroundColor(.purple)
+                                .foregroundStyle(Color.jouleInk)
                             Spacer()
                             TextField("Optional", text: $vendorName)
                                 .multilineTextAlignment(.trailing)
@@ -259,13 +260,15 @@ struct AddSessionView: View {
                     }
                     HStack {
                         Label("Date & Time", systemImage: "calendar.badge.clock")
-                            .foregroundColor(.red)
+                            .foregroundStyle(Color.jouleInk)
+                            .lineLimit(1)
+                            .fixedSize()
                         Spacer()
                         ZStack(alignment: .trailing) {
                             Text(date.formatted(.dateTime.month(.abbreviated).day().year().hour().minute()))
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 7)
-                                .background(Color.secondary.opacity(0.15))
+                                .background(Color.jouleSunken)
                                 .cornerRadius(8)
                                 .allowsHitTesting(false)
                                 
@@ -278,14 +281,14 @@ struct AddSessionView: View {
                     }
                     HStack {
                         Label("Mileage", systemImage: "speedometer")
-                            .foregroundColor(.orange)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField(unitSystem.distanceUnit, value: mileageBinding, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                        Text(unitSystem.distanceUnit).foregroundColor(.secondary)
+                        Text(unitSystem.distanceUnit).foregroundColor(.jouleMuted)
                     }
                 } header: {
                     Text("Basic Info")
@@ -294,18 +297,22 @@ struct AddSessionView: View {
                 // Section: Battery & Range
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
+                        SoCRangeBar(start: startPercentage, end: endPercentage)
+                            .padding(.top, 4)
                         HStack {
-                            Text("Battery SoC (%)").font(.subheadline).foregroundColor(.secondary)
+                            Text("Battery SoC (%)").font(.joule(.subheadline)).foregroundColor(.jouleMuted)
                             if isSoCInvalid {
                                 Spacer()
                                 Text("Invalid SoC range")
-                                    .font(.caption2).bold()
-                                    .foregroundColor(.red)
+                                    .font(.joule(.caption2)).bold()
+                                    .foregroundColor(.jouleDanger)
                             }
                         }
                         HStack {
                             Label("Start", systemImage: "battery.25")
-                                .foregroundColor(.gray)
+                                .foregroundStyle(Color.jouleInk)
+                                .labelStyle(.titleOnly)
+                                .fixedSize()
                             TextField("0", value: $startPercentage, format: .number)
                                 .textFieldStyle(.roundedBorder)
                                 #if os(iOS)
@@ -314,7 +321,9 @@ struct AddSessionView: View {
                                 .onChange(of: startPercentage) { applyHomeEstimate() }
 
                             Label("End", systemImage: "battery.100")
-                                .foregroundColor(.green)
+                                .foregroundStyle(Color.jouleInk)
+                                .labelStyle(.titleOnly)
+                                .fixedSize()
                             TextField("100", value: $endPercentage, format: .number)
                                 .textFieldStyle(.roundedBorder)
                                 #if os(iOS)
@@ -326,10 +335,12 @@ struct AddSessionView: View {
                     .padding(.vertical, 4)
                     
                     VStack(alignment: .leading, spacing: 12) {
-                        Text(String(format: String(localized: "Estimated Range (%@)"), unitSystem.distanceUnit)).font(.subheadline).foregroundColor(.secondary)
+                        Text(String(format: String(localized: "Estimated Range (%@)"), unitSystem.distanceUnit)).font(.joule(.subheadline)).foregroundColor(.jouleMuted)
                         HStack {
                             Label("Start", systemImage: "car")
-                                .foregroundColor(.gray)
+                                .foregroundStyle(Color.jouleInk)
+                                .labelStyle(.titleOnly)
+                                .fixedSize()
                             TextField("0", value: startRangeBinding, format: .number)
                                 .textFieldStyle(.roundedBorder)
                                 #if os(iOS)
@@ -337,7 +348,9 @@ struct AddSessionView: View {
                                 #endif
                             
                             Label("End", systemImage: "car.fill")
-                                .foregroundColor(.green)
+                                .foregroundStyle(Color.jouleInk)
+                                .labelStyle(.titleOnly)
+                                .fixedSize()
                             TextField("0", value: endRangeBinding, format: .number)
                                 .textFieldStyle(.roundedBorder)
                                 #if os(iOS)
@@ -349,7 +362,7 @@ struct AddSessionView: View {
                     
                     HStack {
                         Label("Duration", systemImage: "clock.fill")
-                            .foregroundColor(.orange)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField("min", value: $durationMinutes, format: .number)
                             .multilineTextAlignment(.trailing)
@@ -359,12 +372,12 @@ struct AddSessionView: View {
                             .onChange(of: durationMinutes) {
                                 if !isSpeedManual { calculateSpeed() }
                             }
-                        Text("min").foregroundColor(.secondary)
+                        Text("min").foregroundColor(.jouleMuted)
                     }
                     
                     HStack {
                         Label("Energy", systemImage: "bolt.fill")
-                            .foregroundColor(.yellow)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField("kWh", value: $energyAdded, format: .number)
                             .multilineTextAlignment(.trailing)
@@ -377,12 +390,12 @@ struct AddSessionView: View {
                                     chargingFee = homeFee(forEnergy: energyAdded)
                                 }
                             }
-                        Text("kWh").foregroundColor(.secondary)
+                        Text("kWh").foregroundColor(.jouleMuted)
                     }
                     
                     HStack {
                         Label("Speed", systemImage: "bolt.badge.clock.fill")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         TextField("kW", value: $speed, format: .number)
                             .multilineTextAlignment(.trailing)
@@ -392,21 +405,21 @@ struct AddSessionView: View {
                             .onChange(of: speed) {
                                 isSpeedManual = true
                             }
-                        Text("kW").foregroundColor(.secondary)
+                        Text("kW").foregroundColor(.jouleMuted)
                         
                         if isSpeedManual {
                             Button("Auto") {
                                 isSpeedManual = false
                                 calculateSpeed()
                             }
-                            .font(.caption2)
+                            .font(.joule(.caption2))
                             .buttonStyle(.bordered)
                         }
                     }
                     
                     HStack {
                         Label("Type", systemImage: "powerplug.fill")
-                            .foregroundColor(.purple)
+                            .foregroundStyle(Color.jouleInk)
                         Spacer()
                         Picker("Type", selection: $chargingType) {
                             Text("AC").tag(ChargingType.ac)
@@ -452,13 +465,13 @@ struct AddSessionView: View {
                 Section {
                     Toggle(isOn: freeChargingBinding) {
                         Label("Free Charging", systemImage: "gift.fill")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Color.jouleInk)
                     }
 
                     if !isFree {
                         HStack {
                             Label("Charging Fee", systemImage: "bolt.car")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(Color.jouleInk)
                             Spacer()
                             TextField("0.00", value: $chargingFee, format: .number)
                                 .multilineTextAlignment(.trailing)
@@ -468,7 +481,7 @@ struct AddSessionView: View {
                         }
                         HStack {
                             Label("Booking Fee", systemImage: "calendar.badge.clock")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(Color.jouleInk)
                             Spacer()
                             TextField("0.00", value: $bookingFee, format: .number)
                                 .multilineTextAlignment(.trailing)
@@ -478,7 +491,7 @@ struct AddSessionView: View {
                         }
                         HStack {
                             Label("Overtime Fee", systemImage: "clock.badge.exclamationmark")
-                                .foregroundColor(.red)
+                                .foregroundStyle(Color.jouleInk)
                             Spacer()
                             TextField("0.00", value: $overtimeFee, format: .number)
                                 .multilineTextAlignment(.trailing)
@@ -492,8 +505,8 @@ struct AddSessionView: View {
                         Text(String(format: String(localized: "Fees (%@)"), appCurrency.code))
                         Spacer()
                         Text(String(format: String(localized: "Total: %@"), appCurrency.format(computedTotalPrice)))
-                            .font(.headline)
-                            .foregroundColor(computedTotalPrice > 0 ? .green : .secondary)
+                            .font(.joule(.headline))
+                            .foregroundColor(computedTotalPrice > 0 ? .joulePositive : .jouleMuted)
                     }
                     .padding(.bottom, 4)
                 } footer: {
@@ -505,11 +518,28 @@ struct AddSessionView: View {
                 }
                 
                 Section {
+                    estimateCard
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                        .listRowBackground(Color.clear)
+                }
+
+                Section {
                     TextEditor(text: $notes)
                         .frame(minHeight: 100)
                 } header: {
                     Label("Notes", systemImage: "note.text")
                 }
+            }
+            .joulePage()
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                Button("Save", action: save)
+                .buttonStyle(JoulePrimaryButtonStyle())
+                .keyboardShortcut(.defaultAction)
+                .disabled(!canSave)
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
+                .padding(.bottom, 8)
+                .background(Color.joulePaper.ignoresSafeArea(edges: .bottom))
             }
             .navigationTitle(sessionToEdit == nil ? "New Session" : "Edit Session")
             .onAppear {
@@ -529,10 +559,6 @@ struct AddSessionView: View {
                         Image(systemName: "camera.viewfinder")
                     }
                     .accessibilityLabel("Scan Receipt or Meter")
-
-                    Button("Save", action: save)
-                        .bold()
-                        .disabled(!canSave)
                 }
             }
             .sheet(isPresented: $showingScanner) {
@@ -551,6 +577,42 @@ struct AddSessionView: View {
         }
     }
     
+    /// The live result of the form: what will be saved, in the display face on the dark card.
+    private var estimateCard: some View {
+        let values = resolved
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    JouleLabel("Energy", color: .jouleOnInverseMuted)
+                    Text(String(format: "%.1f kWh", values.energy))
+                        .font(.jouleDisplay(30, relativeTo: .title))
+                        .foregroundStyle(Color.jouleOnInverse)
+                        .contentTransition(.numericText())
+                }
+                Spacer(minLength: 12)
+                VStack(alignment: .trailing, spacing: 4) {
+                    JouleLabel(verbatim: String(format: String(localized: "Total: %@"), appCurrency.code), color: .jouleOnInverseMuted)
+                    Text(appCurrency.format(values.total))
+                        .font(.jouleDisplay(30, relativeTo: .title))
+                        .foregroundStyle(Color.jouleVolt)
+                        .contentTransition(.numericText())
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                }
+            }
+            if isHomeCharging, homeEstimate != nil {
+                Text("Estimated from SoC delta based on \(currentVehicle.name) (\(currentVehicle.nominalCapacityKWh, specifier: "%.1f") kWh @ \(currentVehicle.acEfficiency * 100, specifier: "%.0f")% efficiency, \(currentVehicle.wallChargerKW, specifier: "%.1f") kW wall charger).")
+                    .font(.jouleText(13, relativeTo: .footnote))
+                    .foregroundStyle(Color.jouleOnInverseMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.jouleInverse, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+
     private func applyScannedData(_ data: ScannedChargingData) {
         if let energy = data.energyAdded {
             self.energyAdded = energy
@@ -655,5 +717,45 @@ struct AddSessionView: View {
         
         store.saveSession(newSession)
         dismiss()
+    }
+}
+
+
+/// Start and end state of charge drawn on one track: the charged span in volt between two knobs.
+/// Display only; the numbers are typed in the fields beneath it.
+struct SoCRangeBar: View {
+    let start: Double?
+    let end: Double?
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let s = min(max((start ?? 0) / 100, 0), 1)
+            let e = min(max((end ?? start ?? 0) / 100, s), 1)
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.jouleSunken).frame(height: 12)
+                if end != nil || start != nil {
+                    Rectangle()
+                        .fill(Color.jouleVolt)
+                        .frame(width: max(0, (e - s) * width), height: 12)
+                        .offset(x: s * width)
+                    knob(filled: false).offset(x: s * width - 14)
+                    knob(filled: true).offset(x: e * width - 14)
+                }
+            }
+            .frame(height: 28)
+        }
+        .frame(height: 28)
+        .padding(.horizontal, 14)
+        .accessibilityElement()
+        .accessibilityLabel("Battery SoC (%)")
+        .accessibilityValue(Text(String(format: "%.0f → %.0f", start ?? 0, end ?? 0)))
+    }
+
+    private func knob(filled: Bool) -> some View {
+        Circle()
+            .fill(filled ? Color.jouleInk : Color.jouleSurface)
+            .overlay(Circle().strokeBorder(Color.jouleInk, lineWidth: 2))
+            .frame(width: 28, height: 28)
     }
 }

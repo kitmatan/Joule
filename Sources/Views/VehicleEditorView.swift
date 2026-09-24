@@ -88,19 +88,19 @@ struct VehicleEditorView: View {
                     } label: {
                         HStack {
                             Label("Car Model Preset", systemImage: "car.side.fill")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.jouleInk)
                             Spacer()
                             Text(selectedPreset?.displayName ?? String(localized: "Custom Model"))
-                                .foregroundColor(.primary)
+                                .foregroundColor(.jouleInk)
                             Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .font(.joule(.caption))
+                                .foregroundColor(.jouleMuted)
                         }
                     }
                     
                     HStack {
                         Label("Display Name", systemImage: "character.cursor.ibeam")
-                            .foregroundColor(.blue)
+                            .foregroundColor(.jouleInk)
                         Spacer()
                         TextField("Vehicle Name", text: $name)
                             .multilineTextAlignment(.trailing)
@@ -108,7 +108,7 @@ struct VehicleEditorView: View {
                     
                     HStack {
                         Label("License Plate", systemImage: "tag.fill")
-                            .foregroundColor(.purple)
+                            .foregroundColor(.jouleInk2)
                         Spacer()
                         TextField("Optional (e.g. 1AB-2345)", text: $licensePlate)
                             .multilineTextAlignment(.trailing)
@@ -132,14 +132,14 @@ struct VehicleEditorView: View {
                     
                     HStack {
                         Label("Nominal Pack Capacity", systemImage: "bolt.batteryblock.fill")
-                            .foregroundColor(.green)
+                            .foregroundColor(.joulePositive)
                         Spacer()
                         TextField("kWh", value: $nominalCapacityKWh, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                        Text("kWh").foregroundColor(.secondary)
+                        Text("kWh").foregroundColor(.jouleMuted)
                     }
                     
                     Picker("Range Standard", selection: $rangeStandard) {
@@ -150,26 +150,26 @@ struct VehicleEditorView: View {
                     
                     HStack {
                         Label("Factory Rated Range", systemImage: "speedometer")
-                            .foregroundColor(.orange)
+                            .foregroundColor(.jouleDeferred)
                         Spacer()
                         TextField("Range", value: nominalRangeBinding, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.numberPad)
                             #endif
-                        Text(unitSystem.distanceUnit).foregroundColor(.secondary)
+                        Text(unitSystem.distanceUnit).foregroundColor(.jouleMuted)
                     }
                     
                     HStack {
                         Label("Cycle Life to 80% SoH", systemImage: "arrow.triangle.2.circlepath.circle.fill")
-                            .foregroundColor(.cyan)
+                            .foregroundColor(.jouleInk2)
                         Spacer()
                         TextField("Cycles", value: $cycleLifeTo80, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.numberPad)
                             #endif
-                        Text("cycles").foregroundColor(.secondary)
+                        Text("cycles").foregroundColor(.jouleMuted)
                     }
                 } header: {
                     Text("Battery Specifications")
@@ -179,10 +179,10 @@ struct VehicleEditorView: View {
                 Section {
                     HStack {
                         Label("AC Charging Efficiency", systemImage: "powerplug.fill")
-                            .foregroundColor(.blue)
+                            .foregroundColor(.jouleInk)
                         Spacer()
                         Text(String(format: "%.0f%%", acEfficiency * 100))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.jouleMuted)
                     }
                     Slider(value: $acEfficiency, in: 0.75...0.98, step: 0.01) {
                         Text("AC Efficiency")
@@ -190,10 +190,10 @@ struct VehicleEditorView: View {
                     
                     HStack {
                         Label("DC Fast Charge Efficiency", systemImage: "bolt.fill")
-                            .foregroundColor(.orange)
+                            .foregroundColor(.jouleDeferred)
                         Spacer()
                         Text(String(format: "%.0f%%", dcEfficiency * 100))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.jouleMuted)
                     }
                     Slider(value: $dcEfficiency, in: 0.85...0.99, step: 0.01) {
                         Text("DC Efficiency")
@@ -201,14 +201,14 @@ struct VehicleEditorView: View {
                     
                     HStack {
                         Label("Home Wall Charger Power", systemImage: "ev.charger.fill")
-                            .foregroundColor(.green)
+                            .foregroundColor(.joulePositive)
                         Spacer()
                         TextField("kW", value: $wallChargerKW, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                        Text("kW").foregroundColor(.secondary)
+                        Text("kW").foregroundColor(.jouleMuted)
                     }
                 } header: {
                     Text("Charging Parameters")
@@ -229,14 +229,14 @@ struct VehicleEditorView: View {
                     if tariffType == .custom {
                         HStack {
                             Label("Custom Electricity Rate", systemImage: "banknote")
-                                .foregroundColor(.teal)
+                                .foregroundColor(.jouleInk2)
                             Spacer()
                             TextField("Rate", value: $customTariffRate, format: .number)
                                 .multilineTextAlignment(.trailing)
                                 #if os(iOS)
                                 .keyboardType(.decimalPad)
                                 #endif
-                            Text("\(appCurrency.symbol)/kWh").foregroundColor(.secondary)
+                            Text("\(appCurrency.symbol)/kWh").foregroundColor(.jouleMuted)
                         }
                     }
                 } header: {
@@ -258,26 +258,26 @@ struct VehicleEditorView: View {
                     
                     HStack {
                         Label("Gas Fuel Efficiency", systemImage: "fuelpump.fill")
-                            .foregroundColor(.indigo)
+                            .foregroundColor(.jouleReference)
                         Spacer()
                         TextField("Efficiency", value: gasEfficiencyBinding, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                        Text(GasComparisonSettings.efficiencyUnit(unitSystem: unitSystem)).foregroundColor(.secondary)
+                        Text(GasComparisonSettings.efficiencyUnit(unitSystem: unitSystem)).foregroundColor(.jouleMuted)
                     }
                     
                     HStack {
                         Label("Baseline Fuel Price", systemImage: "dollarsign.circle.fill")
-                            .foregroundColor(.orange)
+                            .foregroundColor(.jouleDeferred)
                         Spacer()
                         TextField("Price", value: $gasCustomFuelPrice, format: .number)
                             .multilineTextAlignment(.trailing)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                        Text("\(appCurrency.symbol)/\(GasComparisonSettings.fuelVolumeUnit(unitSystem: unitSystem))").foregroundColor(.secondary)
+                        Text("\(appCurrency.symbol)/\(GasComparisonSettings.fuelVolumeUnit(unitSystem: unitSystem))").foregroundColor(.jouleMuted)
                     }
                 } header: {
                     Text("Gas Savings Comparison")

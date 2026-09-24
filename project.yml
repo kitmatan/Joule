@@ -40,6 +40,16 @@ targets:
       path: Info.plist
       properties:
         UILaunchScreen: {}
+        # Bundled typefaces (SIL OFL, licences beside the files in Sources/Resources/Fonts). Thai,
+        # CJK and other scripts they lack fall back to the system font glyph by glyph.
+        UIAppFonts:
+          - BricolageGrotesque36pt-Bold.ttf
+          - Geist-Regular.ttf
+          - Geist-Medium.ttf
+          - Geist-SemiBold.ttf
+          - Geist-Bold.ttf
+          - GeistMono-Regular.ttf
+          - GeistMono-Medium.ttf
     entitlements:
       path: Joule.entitlements
       properties:

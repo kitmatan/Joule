@@ -11,6 +11,7 @@ struct JouleApp: App {
 
     init() {
         FirebaseApp.configure()
+        JouleAppearance.configure()
 
         // One AlertCenter shared by both services, and one SessionStore shared with the snapshot
         // publisher. Both are built here rather than inside `StateObject`'s autoclosure because
@@ -54,7 +55,7 @@ struct JouleApp: App {
                 .keyboardShortcut("e", modifiers: .command)
             }
             CommandMenu("View") {
-                Button("Dashboard") {
+                Button("Overview") {
                     navCoordinator.selectTab(.dashboard)
                 }
                 .keyboardShortcut("1", modifiers: .command)

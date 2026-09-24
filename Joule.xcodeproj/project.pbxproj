@@ -14,7 +14,6 @@
 		0F609A530A6BB251D1EB70CC /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AA5D42D1286A20DF3E021B /* SessionStore.swift */; };
 		15FC59C8E1BF343EB31D5651 /* MonthlyCostSparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08ED05F468B7148684505E29 /* MonthlyCostSparkline.swift */; };
 		162747C9D2C009443394A153 /* WidgetTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2F3D63A511DC660D307C954 /* WidgetTheme.swift */; };
-		1903819B3FA809624D422DB3 /* DashboardHeroCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 378172A6705C8D928CF5B97A /* DashboardHeroCard.swift */; };
 		1B46A458FB4830A6E3151064 /* SnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF9A027428D30E11FDAC313D /* SnapshotBuilder.swift */; };
 		1C6E1EB082639F9E547EF4D1 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B7C2C49CB053382DB54985 /* AuthService.swift */; };
 		1CDC6EB216697D200A074244 /* UnitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 697243EBA19B578A25B8D3DF /* UnitSettings.swift */; };
@@ -23,7 +22,11 @@
 		22A5F0FE81F3CD67C93072A7 /* JouleSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81503CA41C6998D8112B1040 /* JouleSnapshot.swift */; };
 		238CABF0C7B803E6B67E3327 /* JouleSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81503CA41C6998D8112B1040 /* JouleSnapshot.swift */; };
 		23E1DF85DCD0290EB97EF04B /* JouleSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81503CA41C6998D8112B1040 /* JouleSnapshot.swift */; };
+		24C0296A31A4E82EF99483DB /* OFL-BricolageGrotesque.txt in Resources */ = {isa = PBXBuildFile; fileRef = 8369D9F5B4CFCA9FFA6C8FC1 /* OFL-BricolageGrotesque.txt */; };
+		2AAB75E7CCD742E8FCCD8F14 /* OFL-Geist.txt in Resources */ = {isa = PBXBuildFile; fileRef = 82D8EA86ABC195F63BECD3B9 /* OFL-Geist.txt */; };
+		2FB81EBAFB6135524F40428D /* Geist-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BCFCFF00F5934FFBD44D400B /* Geist-Bold.ttf */; };
 		3094847A89ADD7F57E0C1D0E /* PhoneWatchRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D169CD53BC6CE9A080755EDC /* PhoneWatchRelay.swift */; };
+		33C0D305254D0BF9A88D035A /* Geist-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8311FF71FEEA0C247F315B02 /* Geist-SemiBold.ttf */; };
 		3AE76B844A3AD2BFEA567A45 /* SharedStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF83A7AB31B4BB6F0B0ABCD /* SharedStorage.swift */; };
 		3C68F1639DD027F983E631D3 /* SnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 756304EB5A7D6CB01F640A79 /* SnapshotTests.swift */; };
 		3CFDD52C1174A0A7DE65B030 /* AddSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744E63FB0506F80359897B86 /* AddSessionView.swift */; };
@@ -47,14 +50,19 @@
 		5D4E596A3423C96D716ADFDF /* GarageManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC183E77F84EAF49757973BB /* GarageManagementView.swift */; };
 		5DE36FBC19F5214EC445AB1B /* AppCurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FE38B6B57963E7643D20C6F /* AppCurrency.swift */; };
 		6537847FAE9EAFA6DF74CCAC /* BatteryHealthReference.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAD65CF92B9CBF13F3EE900 /* BatteryHealthReference.swift */; };
+		6A307A7EBCB3DE2D01E075C4 /* GeistMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F663701EA0F50F19E3D919E3 /* GeistMono-Regular.ttf */; };
+		6A5621E889F7A893E5343D81 /* OFL-GeistMono.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9DE9562285ED69B0409FABD1 /* OFL-GeistMono.txt */; };
 		6A7089873F18663BC356F414 /* BatteryHealthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66FF878F9A0A9B7E0F5B7314 /* BatteryHealthView.swift */; };
 		6B11A26DA8F6B97FA32BC927 /* ChargingBehavior.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE5AC9A433E13095B090006F /* ChargingBehavior.swift */; };
 		6CE084444A49A515D7EABFE8 /* ChargingStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5682B988E3F948669068165 /* ChargingStatistics.swift */; };
 		6DA176186112691F655E7405 /* SnapshotTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = B29F39D7D8850BA19DE46A87 /* SnapshotTimelineProvider.swift */; };
 		6EFD111CE9FA07781E39C62D /* SnapshotFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5341F6286C4D2AE2BA6D83D1 /* SnapshotFormatting.swift */; };
 		7021307C1E4E67DA5419A9C7 /* JouleOverviewWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43EC54496122942C72CF64B5 /* JouleOverviewWidget.swift */; };
+		736E04D2416338BA0C3005CC /* GeistMono-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9E9576DC1C7E874A50D215A2 /* GeistMono-Medium.ttf */; };
 		73930BAEA69C22AB8AB7F42B /* SnapshotFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5341F6286C4D2AE2BA6D83D1 /* SnapshotFormatting.swift */; };
 		773058C2AD45A5D25E26A20D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = FEAE31B02908470FF07C8C59 /* FirebaseAuth */; };
+		7A5241D370665157AF225749 /* Geist-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B2EA42D8B37ED94935D65137 /* Geist-Regular.ttf */; };
+		83702918B9459CB77277EC1D /* Geist-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3F625DC765D731637C0E46FC /* Geist-Medium.ttf */; };
 		837862C2509A352E0C082103 /* AppThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 157270945514729770C2AA35 /* AppThemeTests.swift */; };
 		865AFCEEEE9CD0466F879570 /* JouleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E36357BF3445423DC800813B /* JouleApp.swift */; };
 		870CCA967969D1A885A19E2A /* ChartTooltipCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FE3A05C123DAB9536D0FF56 /* ChartTooltipCard.swift */; };
@@ -74,6 +82,7 @@
 		A5DF5DD613F3C31B09A77705 /* UnitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 697243EBA19B578A25B8D3DF /* UnitSettings.swift */; };
 		A677B45D916235F8178183C5 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 400DC804E052054BC7E7A312 /* GoogleSignIn */; };
 		A6AB82D834D34FE287E83002 /* SessionListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F136979A823455B50AA53A75 /* SessionListView.swift */; };
+		A78F52E3A65F62C8C0A6C89C /* BricolageGrotesque36pt-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E10AAF658768906A8EC52FDE /* BricolageGrotesque36pt-Bold.ttf */; };
 		AB8AE6E1EC2F25EC9EC643B2 /* DeduplicationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6876B524A40C91D08C4F1E1 /* DeduplicationTests.swift */; };
 		AC5EB97393C22EA3310031B9 /* SharedStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF83A7AB31B4BB6F0B0ABCD /* SharedStorage.swift */; };
 		AD7BF908F115951C3C405E4A /* CSVExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FB1BB48603020432A57E231 /* CSVExport.swift */; };
@@ -83,6 +92,7 @@
 		B911922493F4165F963A639D /* WatchSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16DFDD618233633CC4397059 /* WatchSnapshotStore.swift */; };
 		BC5E2F11B3DEC1D95B0CF0E9 /* LocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FC93A659147A46B3D4D090A /* LocalizationTests.swift */; };
 		BDD8364BFC2907BC8F093BFA /* BatteryReferenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D06F8649B7D605FB8E5395 /* BatteryReferenceTests.swift */; };
+		BE0834DCA69D808BC6D1C075 /* JouleComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3487981E4051A133A1FD6B72 /* JouleComponents.swift */; };
 		C59C9246169820E03BB192B5 /* ChargingBehaviorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3BEF89909BB0760ADD2C855 /* ChargingBehaviorService.swift */; };
 		C9C34D08D8943DB31D729E1B /* JouleWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 70AFC7F56E52E950A821414C /* JouleWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CA48D0E725606D8187120609 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532F731B399A9C1B8CBD665B /* AppTheme.swift */; };
@@ -96,7 +106,9 @@
 		D88D0340D74B64B21FD424DC /* GasComparisonSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B57E077A01F9B72C5063F84 /* GasComparisonSettings.swift */; };
 		D96041A96FAC4AD011BF35BA /* VehicleEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D90F1E59CC42AD9A497174F /* VehicleEditorView.swift */; };
 		D96750D645B760ED16EBBCBB /* ReceiptScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F8F4A04C2CC65CDA2B4AB1 /* ReceiptScannerView.swift */; };
+		DE20DD107982C50EC2599309 /* JouleTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71025B1620821A65D121F1D8 /* JouleTabBar.swift */; };
 		E04EF86E94E173B3E4AB8526 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 26672DE919B595DD3D3844AE /* FirebaseCore */; };
+		E0B1C212E0FB161E3F578001 /* JouleTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28AAD9BA1A5EDEAFC23A9EE3 /* JouleTheme.swift */; };
 		E2D224DA0CA98F1F575821A9 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 497D49C7B806DA75AAAA44AE /* FirebaseFirestore */; };
 		E45F7B25B019A02EF0BA3F49 /* WatchBatteryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40620FB0B499AADC1BF80EA4 /* WatchBatteryView.swift */; };
 		E4652D8D94CE79F8282EABEA /* WatchTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A26A81DC5F770B6FC64578F0 /* WatchTheme.swift */; };
@@ -192,16 +204,18 @@
 		1B7CBE58FA53041CCC033C90 /* CSVProcessingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVProcessingTests.swift; sourceTree = "<group>"; };
 		1FC93A659147A46B3D4D090A /* LocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationTests.swift; sourceTree = "<group>"; };
 		24AA5D42D1286A20DF3E021B /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		28AAD9BA1A5EDEAFC23A9EE3 /* JouleTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleTheme.swift; sourceTree = "<group>"; };
 		2B57E077A01F9B72C5063F84 /* GasComparisonSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GasComparisonSettings.swift; sourceTree = "<group>"; };
 		2FAFC87FA5A246312103F29F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		3487981E4051A133A1FD6B72 /* JouleComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleComponents.swift; sourceTree = "<group>"; };
 		34DDDB47C195F29CCE9E664A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		35D6486889072F0C97BE9CA8 /* JouleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleTests.swift; sourceTree = "<group>"; };
-		378172A6705C8D928CF5B97A /* DashboardHeroCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardHeroCard.swift; sourceTree = "<group>"; };
 		397D8CF95874FB93D11A6327 /* PDFReportGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFReportGenerator.swift; sourceTree = "<group>"; };
 		3A71AA0D6513085A5409BBF6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3B95188F17C85BA80916D030 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		3D90F1E59CC42AD9A497174F /* VehicleEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleEditorView.swift; sourceTree = "<group>"; };
 		3DE28281D97BAC3DF2678EB7 /* AppNavigationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppNavigationCoordinator.swift; sourceTree = "<group>"; };
+		3F625DC765D731637C0E46FC /* Geist-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Geist-Medium.ttf"; sourceTree = "<group>"; };
 		3FE3A05C123DAB9536D0FF56 /* ChartTooltipCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartTooltipCard.swift; sourceTree = "<group>"; };
 		40620FB0B499AADC1BF80EA4 /* WatchBatteryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchBatteryView.swift; sourceTree = "<group>"; };
 		41B64C23EDAC0B265705196A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -222,6 +236,7 @@
 		697243EBA19B578A25B8D3DF /* UnitSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitSettings.swift; sourceTree = "<group>"; };
 		6AF83A7AB31B4BB6F0B0ABCD /* SharedStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStorage.swift; sourceTree = "<group>"; };
 		70AFC7F56E52E950A821414C /* JouleWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = JouleWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		71025B1620821A65D121F1D8 /* JouleTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleTabBar.swift; sourceTree = "<group>"; };
 		71057CA07E9C4BD6495FBF89 /* JouleWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = JouleWatch.entitlements; sourceTree = "<group>"; };
 		744E63FB0506F80359897B86 /* AddSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddSessionView.swift; sourceTree = "<group>"; };
 		756304EB5A7D6CB01F640A79 /* SnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotTests.swift; sourceTree = "<group>"; };
@@ -230,6 +245,9 @@
 		7CAD65CF92B9CBF13F3EE900 /* BatteryHealthReference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealthReference.swift; sourceTree = "<group>"; };
 		7F970E88C92B9B8EB68D2645 /* BatteryReferenceEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryReferenceEditorView.swift; sourceTree = "<group>"; };
 		81503CA41C6998D8112B1040 /* JouleSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleSnapshot.swift; sourceTree = "<group>"; };
+		82D8EA86ABC195F63BECD3B9 /* OFL-Geist.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-Geist.txt"; sourceTree = "<group>"; };
+		8311FF71FEEA0C247F315B02 /* Geist-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Geist-SemiBold.ttf"; sourceTree = "<group>"; };
+		8369D9F5B4CFCA9FFA6C8FC1 /* OFL-BricolageGrotesque.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-BricolageGrotesque.txt"; sourceTree = "<group>"; };
 		8430D3D8A477A2631B55EE69 /* JouleTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = JouleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		84E18E39C6A32CE228BE3CF3 /* JouleWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleWatchApp.swift; sourceTree = "<group>"; };
 		85D06F8649B7D605FB8E5395 /* BatteryReferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryReferenceTests.swift; sourceTree = "<group>"; };
@@ -239,16 +257,20 @@
 		8B4C2D97A80447B6DE97BE71 /* JouleWatchWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleWatchWidgetBundle.swift; sourceTree = "<group>"; };
 		97D2A8982908D933A0643114 /* JouleWatchWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = JouleWatchWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		99B56310846C4E0CAEAC33E7 /* AlertCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertCenter.swift; sourceTree = "<group>"; };
+		9DE9562285ED69B0409FABD1 /* OFL-GeistMono.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-GeistMono.txt"; sourceTree = "<group>"; };
 		9E2AF64653FC233E5B2C2676 /* NewFeaturesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewFeaturesTests.swift; sourceTree = "<group>"; };
+		9E9576DC1C7E874A50D215A2 /* GeistMono-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GeistMono-Medium.ttf"; sourceTree = "<group>"; };
 		9FE38B6B57963E7643D20C6F /* AppCurrency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCurrency.swift; sourceTree = "<group>"; };
 		A26A81DC5F770B6FC64578F0 /* WatchTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTheme.swift; sourceTree = "<group>"; };
 		A90280319B7467CE7DCB9226 /* BatteryHealthCertificateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHealthCertificateView.swift; sourceTree = "<group>"; };
 		B29F39D7D8850BA19DE46A87 /* SnapshotTimelineProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotTimelineProvider.swift; sourceTree = "<group>"; };
+		B2EA42D8B37ED94935D65137 /* Geist-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Geist-Regular.ttf"; sourceTree = "<group>"; };
 		B32E7E998F210E4D936DCABA /* WatchOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchOverviewView.swift; sourceTree = "<group>"; };
 		B5682B988E3F948669068165 /* ChargingStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingStatistics.swift; sourceTree = "<group>"; };
 		B5B7C2C49CB053382DB54985 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		B6876B524A40C91D08C4F1E1 /* DeduplicationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeduplicationTests.swift; sourceTree = "<group>"; };
 		BA13888C65E01472BAC32C37 /* MacRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
+		BCFCFF00F5934FFBD44D400B /* Geist-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Geist-Bold.ttf"; sourceTree = "<group>"; };
 		C128488C31FAC2F33D48BCA1 /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
 		C3BEF89909BB0760ADD2C855 /* ChargingBehaviorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingBehaviorService.swift; sourceTree = "<group>"; };
 		C9189C3BEE85F332D24FC0B3 /* GarageSwitcherMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GarageSwitcherMenu.swift; sourceTree = "<group>"; };
@@ -258,6 +280,7 @@
 		D6D06FA4439E8178AF95BFCE /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		DA939798ABA57BDCCC365796 /* VehicleProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleProfile.swift; sourceTree = "<group>"; };
 		DE5AC9A433E13095B090006F /* ChargingBehavior.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingBehavior.swift; sourceTree = "<group>"; };
+		E10AAF658768906A8EC52FDE /* BricolageGrotesque36pt-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "BricolageGrotesque36pt-Bold.ttf"; sourceTree = "<group>"; };
 		E36357BF3445423DC800813B /* JouleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JouleApp.swift; sourceTree = "<group>"; };
 		E5658903526A12216B8DB775 /* SnapshotPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotPublisher.swift; sourceTree = "<group>"; };
 		E5E6A7A7C0F1994BE34BFA20 /* EVPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVPreset.swift; sourceTree = "<group>"; };
@@ -266,6 +289,7 @@
 		F136979A823455B50AA53A75 /* SessionListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionListView.swift; sourceTree = "<group>"; };
 		F2F3D63A511DC660D307C954 /* WidgetTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTheme.swift; sourceTree = "<group>"; };
 		F5D2A5B706184D1F7914E199 /* JouleWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = JouleWidget.entitlements; sourceTree = "<group>"; };
+		F663701EA0F50F19E3D919E3 /* GeistMono-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "GeistMono-Regular.ttf"; sourceTree = "<group>"; };
 		FA211D9DD3C06F19CECE272A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FE00782551AF4470C380C289 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		FE9ECDC6FFAAE089977C8A0A /* Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
@@ -413,6 +437,41 @@
 			path = Sources/Widget;
 			sourceTree = "<group>";
 		};
+		BCE67D88E2C03AA838A007D4 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				E10AAF658768906A8EC52FDE /* BricolageGrotesque36pt-Bold.ttf */,
+				BCFCFF00F5934FFBD44D400B /* Geist-Bold.ttf */,
+				3F625DC765D731637C0E46FC /* Geist-Medium.ttf */,
+				B2EA42D8B37ED94935D65137 /* Geist-Regular.ttf */,
+				8311FF71FEEA0C247F315B02 /* Geist-SemiBold.ttf */,
+				9E9576DC1C7E874A50D215A2 /* GeistMono-Medium.ttf */,
+				F663701EA0F50F19E3D919E3 /* GeistMono-Regular.ttf */,
+				8369D9F5B4CFCA9FFA6C8FC1 /* OFL-BricolageGrotesque.txt */,
+				82D8EA86ABC195F63BECD3B9 /* OFL-Geist.txt */,
+				9DE9562285ED69B0409FABD1 /* OFL-GeistMono.txt */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		C3D373BA1D3887DD638E9741 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BCE67D88E2C03AA838A007D4 /* Fonts */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		CE2FA683BFD0FA69CB11FC2E /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				3487981E4051A133A1FD6B72 /* JouleComponents.swift */,
+				71025B1620821A65D121F1D8 /* JouleTabBar.swift */,
+				28AAD9BA1A5EDEAFC23A9EE3 /* JouleTheme.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
 		D39CA9F3E68931FA94E03AF9 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -422,7 +481,6 @@
 				7F970E88C92B9B8EB68D2645 /* BatteryReferenceEditorView.swift */,
 				3FE3A05C123DAB9536D0FF56 /* ChartTooltipCard.swift */,
 				FA211D9DD3C06F19CECE272A /* ContentView.swift */,
-				378172A6705C8D928CF5B97A /* DashboardHeroCard.swift */,
 				3B95188F17C85BA80916D030 /* DashboardView.swift */,
 				CC183E77F84EAF49757973BB /* GarageManagementView.swift */,
 				C9189C3BEE85F332D24FC0B3 /* GarageSwitcherMenu.swift */,
@@ -433,6 +491,7 @@
 				2FAFC87FA5A246312103F29F /* SettingsView.swift */,
 				E88CBBB0F4DC2ADD8B5C1A19 /* SignInView.swift */,
 				3D90F1E59CC42AD9A497174F /* VehicleEditorView.swift */,
+				CE2FA683BFD0FA69CB11FC2E /* Design */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -457,6 +516,7 @@
 				FE00782551AF4470C380C289 /* Localizable.xcstrings */,
 				25B080F5F13B47ACE7C6CADD /* App */,
 				3BE45B50E7EF10CCC17D464D /* Models */,
+				C3D373BA1D3887DD638E9741 /* Resources */,
 				FCFD9A99A785FDC86250876C /* Services */,
 				31501A1FA38CF25388C0EFE4 /* Shared */,
 				D39CA9F3E68931FA94E03AF9 /* Views */,
@@ -658,8 +718,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				D76A5A2FB35F59195191CD49 /* Assets.xcassets in Resources */,
+				A78F52E3A65F62C8C0A6C89C /* BricolageGrotesque36pt-Bold.ttf in Resources */,
+				2FB81EBAFB6135524F40428D /* Geist-Bold.ttf in Resources */,
+				83702918B9459CB77277EC1D /* Geist-Medium.ttf in Resources */,
+				7A5241D370665157AF225749 /* Geist-Regular.ttf in Resources */,
+				33C0D305254D0BF9A88D035A /* Geist-SemiBold.ttf in Resources */,
+				736E04D2416338BA0C3005CC /* GeistMono-Medium.ttf in Resources */,
+				6A307A7EBCB3DE2D01E075C4 /* GeistMono-Regular.ttf in Resources */,
 				21FCB40EF5D43710B07A6672 /* GoogleService-Info.plist in Resources */,
 				4F2CAE017EE703763AA1E419 /* Localizable.xcstrings in Resources */,
+				24C0296A31A4E82EF99483DB /* OFL-BricolageGrotesque.txt in Resources */,
+				2AAB75E7CCD742E8FCCD8F14 /* OFL-Geist.txt in Resources */,
+				6A5621E889F7A893E5343D81 /* OFL-GeistMono.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -741,14 +811,16 @@
 				6CE084444A49A515D7EABFE8 /* ChargingStatistics.swift in Sources */,
 				870CCA967969D1A885A19E2A /* ChartTooltipCard.swift in Sources */,
 				5062C029AC63E9884AA19D5A /* ContentView.swift in Sources */,
-				1903819B3FA809624D422DB3 /* DashboardHeroCard.swift in Sources */,
 				9A78802EDB3D17D568A1F178 /* DashboardView.swift in Sources */,
 				3D0C8720D65474C7F4027FD2 /* EVPreset.swift in Sources */,
 				5D4E596A3423C96D716ADFDF /* GarageManagementView.swift in Sources */,
 				1FABC844365B8B9314EEA1A3 /* GarageSwitcherMenu.swift in Sources */,
 				D88D0340D74B64B21FD424DC /* GasComparisonSettings.swift in Sources */,
 				865AFCEEEE9CD0466F879570 /* JouleApp.swift in Sources */,
+				BE0834DCA69D808BC6D1C075 /* JouleComponents.swift in Sources */,
 				23E1DF85DCD0290EB97EF04B /* JouleSnapshot.swift in Sources */,
+				DE20DD107982C50EC2599309 /* JouleTabBar.swift in Sources */,
+				E0B1C212E0FB161E3F578001 /* JouleTheme.swift in Sources */,
 				0A8A07D17F2B50131ED9D051 /* MacRootView.swift in Sources */,
 				CFAFAC7309432EF52615B45A /* PDFReportGenerator.swift in Sources */,
 				3094847A89ADD7F57E0C1D0E /* PhoneWatchRelay.swift in Sources */,

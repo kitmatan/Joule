@@ -105,40 +105,40 @@ struct VehicleCardRow: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center, spacing: 10) {
                 Image(systemName: "car.side.fill")
-                    .font(.title2)
-                    .foregroundColor(isActive ? .blue : .secondary)
+                    .font(.joule(.title2))
+                    .foregroundColor(isActive ? .jouleInk : .jouleMuted)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         Text(vehicle.name)
-                            .font(.headline)
-                            .foregroundColor(.primary)
+                            .font(.joule(.headline))
+                            .foregroundColor(.jouleInk)
                         
                         if vehicle.isDefault {
                             Text("Default")
-                                .font(.caption2).bold()
+                                .font(.joule(.caption2)).bold()
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Color.yellow.opacity(0.2))
-                                .foregroundColor(.orange)
+                                .background(Color.jouleDeferred.opacity(0.2))
+                                .foregroundColor(.jouleDeferred)
                                 .clipShape(Capsule())
                         }
                         
                         if isActive {
                             Text("Active")
-                                .font(.caption2).bold()
+                                .font(.joule(.caption2)).bold()
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Color.blue.opacity(0.15))
-                                .foregroundColor(.blue)
+                                .background(Color.jouleInk.opacity(0.15))
+                                .foregroundColor(.jouleInk)
                                 .clipShape(Capsule())
                         }
                     }
                     
                     if let plate = vehicle.licensePlate, !plate.isEmpty {
                         Text(String(format: String(localized: "Plate: %@"), plate))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            .font(.joule(.caption))
+                            .foregroundColor(.jouleMuted)
                     }
                 }
                 
@@ -146,8 +146,8 @@ struct VehicleCardRow: View {
                 
                 Button(action: onEdit) {
                     Image(systemName: "pencil.circle.fill")
-                        .font(.title3)
-                        .foregroundColor(.secondary)
+                        .font(.joule(.title3))
+                        .foregroundColor(.jouleMuted)
                 }
                 .buttonStyle(.plain)
             }
@@ -158,30 +158,30 @@ struct VehicleCardRow: View {
                 // Specs pill
                 HStack(spacing: 4) {
                     Text(vehicle.chemistry.badgeTitle)
-                        .font(.caption2).bold()
+                        .font(.joule(.caption2)).bold()
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
-                        .background(vehicle.chemistry == .lfp ? Color.blue.opacity(0.15) : Color.purple.opacity(0.15))
-                        .foregroundColor(vehicle.chemistry == .lfp ? .blue : .purple)
+                        .background(vehicle.chemistry == .lfp ? Color.jouleInk.opacity(0.15) : Color.jouleInk2.opacity(0.15))
+                        .foregroundColor(vehicle.chemistry == .lfp ? .jouleInk : .jouleInk2)
                         .clipShape(Capsule())
                     
                     Text(String(format: "%.1f kWh", vehicle.nominalCapacityKWh))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.joule(.caption))
+                        .foregroundColor(.jouleMuted)
                 }
                 
                 Text("•")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.jouleMuted)
                 
                 Text(unitSystem.formatDistance(km: vehicle.nominalRangeKm))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption))
+                    .foregroundColor(.jouleMuted)
                 
                 Spacer()
                 
                 Text(String(format: String(localized: "%1$lld sessions (%2$.0f kWh)"), Int64(sessionCount), totalEnergy))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption))
+                    .foregroundColor(.jouleMuted)
             }
             
             // Action Buttons
@@ -190,7 +190,7 @@ struct VehicleCardRow: View {
                     Button("Make Active") {
                         onSelect()
                     }
-                    .font(.subheadline)
+                    .font(.joule(.subheadline))
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
                 }
@@ -199,7 +199,7 @@ struct VehicleCardRow: View {
                     Button("Set as Default") {
                         onSetDefault()
                     }
-                    .font(.subheadline)
+                    .font(.joule(.subheadline))
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                 }
@@ -209,11 +209,11 @@ struct VehicleCardRow: View {
                 if canDelete {
                     Button(role: .destructive, action: onDelete) {
                         Image(systemName: "trash")
-                            .font(.caption)
+                            .font(.joule(.caption))
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-                    .tint(.red)
+                    .tint(.jouleDanger)
                 }
             }
             .padding(.top, 4)

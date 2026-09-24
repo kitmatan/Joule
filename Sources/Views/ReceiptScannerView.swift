@@ -46,8 +46,8 @@ struct ReceiptScannerView: View {
                         scannedResultsCard
                     } else if let error = errorMessage {
                         Text(error)
-                            .font(.subheadline)
-                            .foregroundColor(.red)
+                            .font(.joule(.subheadline))
+                            .foregroundColor(.jouleDanger)
                             .padding()
                     }
                 }
@@ -83,14 +83,14 @@ struct ReceiptScannerView: View {
         VStack(spacing: 16) {
             Image(systemName: "camera.viewfinder")
                 .font(.system(size: 64))
-                .foregroundColor(.blue)
+                .foregroundColor(.jouleInk)
 
             Text("Scan Charger Screen or Receipt")
-                .font(.headline)
+                .font(.joule(.headline))
 
             Text("Select a photo of your EV charger screen, charging app confirmation, or printed receipt to auto-fill session metrics.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.joule(.subheadline))
+                .foregroundColor(.jouleMuted)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
@@ -100,7 +100,7 @@ struct ReceiptScannerView: View {
                 photoLibrary: .shared()
             ) {
                 Label("Choose Photo from Library", systemImage: "photo.on.rectangle.angled")
-                    .font(.headline)
+                    .font(.joule(.headline))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
             }
@@ -120,7 +120,7 @@ struct ReceiptScannerView: View {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.jouleMuted.opacity(0.3), lineWidth: 1)
                 )
 
             PhotosPicker(
@@ -129,7 +129,7 @@ struct ReceiptScannerView: View {
                 photoLibrary: .shared()
             ) {
                 Label("Pick Another Photo", systemImage: "arrow.triangle.2.circlepath")
-                    .font(.caption)
+                    .font(.joule(.caption))
             }
         }
     }
@@ -138,40 +138,40 @@ struct ReceiptScannerView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Image(systemName: "sparkles")
-                    .foregroundColor(.orange)
+                    .foregroundColor(.jouleDeferred)
                 Text("Extracted Charging Values")
-                    .font(.headline)
+                    .font(.joule(.headline))
                 Spacer()
                 Text("Review & Apply")
-                    .font(.caption2).bold()
-                    .foregroundColor(.green)
+                    .font(.joule(.caption2)).bold()
+                    .foregroundColor(.joulePositive)
             }
 
             Divider()
 
             VStack(spacing: 10) {
                 if let energy = scannedData.energyAdded {
-                    ResultRow(title: "Energy Added", value: String(format: "%.2f kWh", energy), icon: "bolt.fill", color: .blue)
+                    ResultRow(title: "Energy Added", value: String(format: "%.2f kWh", energy), icon: "bolt.fill", color: .jouleInk)
                 }
 
                 if let cost = scannedData.totalPrice {
-                    ResultRow(title: "Total Cost", value: String(format: "%.2f", cost), icon: "creditcard.fill", color: .green)
+                    ResultRow(title: "Total Cost", value: String(format: "%.2f", cost), icon: "creditcard.fill", color: .joulePositive)
                 }
 
                 if let mins = scannedData.durationMinutes {
-                    ResultRow(title: "Duration", value: String(format: "%.0f min", mins), icon: "clock.fill", color: .orange)
+                    ResultRow(title: "Duration", value: String(format: "%.0f min", mins), icon: "clock.fill", color: .jouleDeferred)
                 }
 
                 if let start = scannedData.startPercentage, let end = scannedData.endPercentage {
-                    ResultRow(title: "State of Charge", value: String(format: "%.0f%% → %.0f%%", start, end), icon: "battery.100", color: .indigo)
+                    ResultRow(title: "State of Charge", value: String(format: "%.0f%% → %.0f%%", start, end), icon: "battery.100", color: .jouleReference)
                 }
 
                 if let speed = scannedData.speedKW {
-                    ResultRow(title: "Charging Speed", value: String(format: "%.1f kW", speed), icon: "bolt.badge.clock.fill", color: .cyan)
+                    ResultRow(title: "Charging Speed", value: String(format: "%.1f kW", speed), icon: "bolt.badge.clock.fill", color: .jouleInk2)
                 }
 
                 if let loc = scannedData.locationOrVendor {
-                    ResultRow(title: "Location / Vendor", value: loc, icon: "mappin.and.ellipse", color: .purple)
+                    ResultRow(title: "Location / Vendor", value: loc, icon: "mappin.and.ellipse", color: .jouleInk2)
                 }
             }
 
@@ -189,15 +189,14 @@ struct ReceiptScannerView: View {
                 .padding(.vertical, 12)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.green)
+            .tint(.joulePositive)
             .padding(.top, 6)
         }
         .padding()
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(14)
+        .jouleCard(padding: nil, radius: 16)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                .stroke(Color.jouleMuted.opacity(0.2), lineWidth: 1)
         )
     }
 
@@ -271,15 +270,15 @@ private struct ResultRow: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .font(.caption)
+                .font(.joule(.caption))
                 .foregroundColor(color)
                 .frame(width: 20)
             Text(title)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.joule(.subheadline))
+                .foregroundColor(.jouleMuted)
             Spacer()
             Text(value)
-                .font(.subheadline)
+                .font(.joule(.subheadline))
                 .fontWeight(.semibold)
         }
     }

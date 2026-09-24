@@ -6172,6 +6172,215 @@ TRANSLATIONS = {
         "nb": "kilde ikke oppgitt",
         "th": "ไม่ได้ระบุแหล่งที่มา"
     },
+    "Battery": {
+        "comment": "Tab bar label for the battery health screen.",
+        "en": "Battery",
+        "de": "Batterie",
+        "fr": "Batterie",
+        "es": "Batería",
+        "zh-Hans": "电池",
+        "ja": "バッテリー",
+        "nb": "Batteri",
+        "th": "แบตเตอรี่"
+    },
+    "Log charge": {
+        "comment": "Accessibility label of the centre tab bar button that opens the new session form.",
+        "en": "Log charge",
+        "de": "Ladung erfassen",
+        "fr": "Enregistrer une recharge",
+        "es": "Registrar carga",
+        "zh-Hans": "记录充电",
+        "ja": "充電を記録",
+        "nb": "Registrer lading",
+        "th": "บันทึกการชาร์จ"
+    },
+    "Opens the form to log a new charging session": {
+        "en": "Opens the form to log a new charging session",
+        "de": "Öffnet das Formular für einen neuen Ladevorgang",
+        "fr": "Ouvre le formulaire pour enregistrer une nouvelle session de recharge",
+        "es": "Abre el formulario para registrar una nueva sesión de carga",
+        "zh-Hans": "打开表单以记录新的充电记录",
+        "ja": "新しい充電セッションを記録するフォームを開きます",
+        "nb": "Åpner skjemaet for å registrere en ny ladeøkt",
+        "th": "เปิดแบบฟอร์มเพื่อบันทึกการชาร์จครั้งใหม่"
+    },
+    "Month": {
+        "comment": "Period toggle on the overview: figures for the current month.",
+        "en": "Month",
+        "de": "Monat",
+        "fr": "Mois",
+        "es": "Mes",
+        "zh-Hans": "本月",
+        "ja": "今月",
+        "nb": "Måned",
+        "th": "เดือนนี้"
+    },
+    "Lifetime": {
+        "comment": "Period toggle on the overview: figures for all time.",
+        "en": "Lifetime",
+        "de": "Gesamt",
+        "fr": "Total",
+        "es": "Total",
+        "zh-Hans": "累计",
+        "ja": "累計",
+        "nb": "Totalt",
+        "th": "ทั้งหมด"
+    },
+    "Period": {
+        "comment": "Accessibility label of the month/lifetime toggle.",
+        "en": "Period",
+        "de": "Zeitraum",
+        "fr": "Période",
+        "es": "Periodo",
+        "zh-Hans": "时间段",
+        "ja": "期間",
+        "nb": "Periode",
+        "th": "ช่วงเวลา"
+    },
+    "%.1f kWh charged": {
+        "en": "%.1f kWh charged",
+        "de": "%.1f kWh geladen",
+        "fr": "%.1f kWh rechargés",
+        "es": "%.1f kWh cargados",
+        "zh-Hans": "已充 %.1f kWh",
+        "ja": "%.1f kWh 充電",
+        "nb": "%.1f kWh ladet",
+        "th": "ชาร์จแล้ว %.1f kWh"
+    },
+    "Consumption": {
+        "en": "Consumption",
+        "de": "Verbrauch",
+        "fr": "Consommation",
+        "es": "Consumo",
+        "zh-Hans": "能耗",
+        "ja": "電費",
+        "nb": "Forbruk",
+        "th": "อัตราสิ้นเปลือง"
+    },
+    "Double tap to show average charging rate": {
+        "en": "Double tap to show average charging rate",
+        "de": "Doppeltippen, um den durchschnittlichen Ladepreis anzuzeigen",
+        "fr": "Touchez deux fois pour afficher le tarif de recharge moyen",
+        "es": "Toca dos veces para mostrar la tarifa media de carga",
+        "zh-Hans": "轻点两下以显示平均充电单价",
+        "ja": "ダブルタップで平均充電単価を表示",
+        "nb": "Dobbelttrykk for å vise gjennomsnittlig ladepris",
+        "th": "แตะสองครั้งเพื่อแสดงค่าชาร์จเฉลี่ย"
+    },
+    "Double tap to show driving cost per distance": {
+        "en": "Double tap to show driving cost per distance",
+        "de": "Doppeltippen, um die Fahrtkosten pro Strecke anzuzeigen",
+        "fr": "Touchez deux fois pour afficher le coût par distance",
+        "es": "Toca dos veces para mostrar el coste por distancia",
+        "zh-Hans": "轻点两下以显示每公里行驶成本",
+        "ja": "ダブルタップで距離あたりの走行コストを表示",
+        "nb": "Dobbelttrykk for å vise kjørekostnad per distanse",
+        "th": "แตะสองครั้งเพื่อแสดงค่าใช้จ่ายต่อระยะทาง"
+    },
+    "Double tap to show distance per kWh": {
+        "en": "Double tap to show distance per kWh",
+        "de": "Doppeltippen, um die Strecke pro kWh anzuzeigen",
+        "fr": "Touchez deux fois pour afficher la distance par kWh",
+        "es": "Toca dos veces para mostrar la distancia por kWh",
+        "zh-Hans": "轻点两下以显示每 kWh 行驶距离",
+        "ja": "ダブルタップで1 kWhあたりの距離を表示",
+        "nb": "Dobbelttrykk for å vise distanse per kWh",
+        "th": "แตะสองครั้งเพื่อแสดงระยะทางต่อ kWh"
+    },
+    "Double tap to show consumption": {
+        "en": "Double tap to show consumption",
+        "de": "Doppeltippen, um den Verbrauch anzuzeigen",
+        "fr": "Touchez deux fois pour afficher la consommation",
+        "es": "Toca dos veces para mostrar el consumo",
+        "zh-Hans": "轻点两下以显示能耗",
+        "ja": "ダブルタップで電費を表示",
+        "nb": "Dobbelttrykk for å vise forbruk",
+        "th": "แตะสองครั้งเพื่อแสดงอัตราสิ้นเปลือง"
+    },
+    "Spend": {
+        "comment": "Trend chart toggle: money spent per month.",
+        "en": "Spend",
+        "de": "Kosten",
+        "fr": "Dépenses",
+        "es": "Gasto",
+        "zh-Hans": "花费",
+        "ja": "費用",
+        "nb": "Kostnad",
+        "th": "ค่าใช้จ่าย"
+    },
+    "Driving Efficiency": {
+        "en": "Driving Efficiency",
+        "de": "Fahreffizienz",
+        "fr": "Efficacité de conduite",
+        "es": "Eficiencia de conducción",
+        "zh-Hans": "行驶能效",
+        "ja": "走行効率",
+        "nb": "Kjøreeffektivitet",
+        "th": "ประสิทธิภาพการขับขี่"
+    },
+    "Unspecified": {
+        "comment": "Charging sessions with no AC/DC type recorded.",
+        "en": "Unspecified",
+        "de": "Nicht angegeben",
+        "fr": "Non précisé",
+        "es": "Sin especificar",
+        "zh-Hans": "未指定",
+        "ja": "未指定",
+        "nb": "Ikke angitt",
+        "th": "ไม่ระบุ"
+    },
+    "All": {
+        "comment": "History filter chip showing every session.",
+        "en": "All",
+        "de": "Alle",
+        "fr": "Toutes",
+        "es": "Todas",
+        "zh-Hans": "全部",
+        "ja": "すべて",
+        "nb": "Alle",
+        "th": "ทั้งหมด"
+    },
+    "On bill": {
+        "comment": "Tag and filter for sessions whose cost is deferred to the electricity bill.",
+        "en": "On bill",
+        "de": "Auf Rechnung",
+        "fr": "Sur facture",
+        "es": "En la factura",
+        "zh-Hans": "计入电费",
+        "ja": "電気代に計上",
+        "nb": "På regning",
+        "th": "รวมในบิลค่าไฟ"
+    },
+    "Unknown Location": {
+        "en": "Unknown Location",
+        "de": "Unbekannter Ort",
+        "fr": "Lieu inconnu",
+        "es": "Ubicación desconocida",
+        "zh-Hans": "未知地点",
+        "ja": "不明な場所",
+        "nb": "Ukjent sted",
+        "th": "ไม่ทราบสถานที่"
+    },
+    "%.0f min": {
+        "en": "%.0f min",
+        "de": "%.0f Min.",
+        "fr": "%.0f min",
+        "es": "%.0f min",
+        "zh-Hans": "%.0f 分钟",
+        "ja": "%.0f分",
+        "nb": "%.0f min",
+        "th": "%.0f นาที"
+    },
+    "Session Details": {
+        "en": "Session Details",
+        "de": "Ladevorgang",
+        "fr": "Détails de la session",
+        "es": "Detalles de la sesión",
+        "zh-Hans": "充电详情",
+        "ja": "セッションの詳細",
+        "nb": "Øktdetaljer",
+        "th": "รายละเอียดการชาร์จ"
+    },
 }
 
 def generate_catalog():

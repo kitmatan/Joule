@@ -8,15 +8,16 @@ struct SessionDetailView: View {
     var body: some View {
         ScrollView {
             SessionDetailContent(session: session)
+                .padding(.bottom, 24)
         }
+        .jouleTabBarClearance()
+        .joulePage()
         .navigationTitle("Session Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem {
-                Button(action: { showingEditSession = true }) {
-                    Image(systemName: "pencil")
-                        .fontWeight(.semibold)
-                }
+                Button("Edit") { showingEditSession = true }
+                    .font(.jouleText(15, relativeTo: .body).weight(.semibold))
             }
         }
         .sheet(isPresented: $showingEditSession) {
@@ -57,51 +58,96 @@ struct SessionDetailContent: View {
     }
 
     var body: some View {
-        VStack(spacing: 24) {
-            
+        VStack(alignment: .leading, spacing: 24) {
+
             // Header
-            VStack(spacing: 8) {
-                Text(session.locationName ?? "Unknown Location")
-                    .font(.title)
-                    .bold()
-                    .multilineTextAlignment(.center)
-                
-                if let vendor = session.vendorName, !vendor.isEmpty {
-                    Text(vendor)
-                        .font(.title3)
-                        .foregroundColor(.secondary)
-                }
-                
-                Text(session.date.formatted(.dateTime.month(.abbreviated).day().year().hour().minute()))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 4)
-            }
-            .padding(.top, 20)
-            .accessibilityElement(children: .combine)
-            
-            // Hero Metrics
-            Group {
-                if dynamicTypeSize.isAccessibilitySize {
-                    VStack(spacing: 12) {
-                        DetailHeroCard(title: "Total Paid", value: appCurrency.format(session.totalPrice), color: .green)
-                        DetailHeroCard(title: "Energy", value: String(format: "%.1f kWh", session.energyAdded), color: .blue)
-                        DetailHeroCard(title: "Duration", value: String(format: "%.0f min", session.duration / 60), color: .orange)
-                    }
-                } else {
-                    HStack(spacing: 16) {
-                        DetailHeroCard(title: "Total Paid", value: appCurrency.format(session.totalPrice), color: .green)
-                        DetailHeroCard(title: "Energy", value: String(format: "%.1f kWh", session.energyAdded), color: .blue)
-                        DetailHeroCard(title: "Duration", value: String(format: "%.0f min", session.duration / 60), color: .orange)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    ChargeTypeBadge(type: session.chargingType, size: 28)
+                    if let locType = session.locationType {
+                        Text(LocalizedStringKey(locType == .publicStation ? "Public" : locType.rawValue))
+                            .font(.jouleText(14, relativeTo: .subheadline))
+                            .foregroundStyle(Color.jouleMuted)
                     }
                 }
+                Text(session.locationName ?? String(localized: "Unknown Location"))
+                    .font(.jouleDisplay(34, relativeTo: .largeTitle))
+                    .foregroundStyle(Color.jouleInk)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text([session.vendorName, session.date.formatted(.dateTime.weekday(.wide).day().month(.wide).year().hour().minute())]
+                    .compactMap { $0 }
+                    .filter { !$0.isEmpty }
+                    .joined(separator: " · "))
+                    .font(.jouleText(15, relativeTo: .subheadline))
+                    .foregroundStyle(Color.jouleInk2)
             }
+            .padding(.top, 12)
             .padding(.horizontal)
-            
+            .accessibilityElement(children: .combine)
+
+            // Cost & energy
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top) {
+                    JouleAmount(formatted: appCurrency.format(session.totalPrice), size: 56)
+                    Spacer(minLength: 8)
+                    if let status = session.paymentStatus {
+                        switch status {
+                        case .deferred:
+                            JouleTag("On bill", foreground: .jouleDeferredOnSoft, background: .jouleDeferredSoft)
+                        case .free:
+                            JouleTag("Free", foreground: .joulePositive, background: .joulePositiveSoft)
+                        case .paidUpfront:
+                            EmptyView()
+                        }
+                    }
+                }
+                if efficiency > 0 {
+                    Text(String(format: "%.1f kWh", session.energyAdded) + " · " + appCurrency.formatRateSpaced(efficiency))
+                        .font(.jouleText(14, relativeTo: .subheadline))
+                        .foregroundStyle(Color.jouleInk2)
+                }
+                if let vehicle = sessionVehicle, vehicle.nominalCapacityKWh > 0 {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ShareBar(
+                            fraction: session.energyAdded / vehicle.nominalCapacityKWh,
+                            color: session.chargingType?.jouleColor ?? .jouleMuted,
+                            height: 12
+                        )
+                        HStack {
+                            Text(String(format: "+%.1f kWh", session.energyAdded))
+                            Spacer()
+                            Text(String(format: "%.0f%% of %.1f kWh", min(100, session.energyAdded / vehicle.nominalCapacityKWh * 100), vehicle.nominalCapacityKWh))
+                        }
+                        .font(.jouleMono(12))
+                        .foregroundStyle(Color.jouleMuted)
+                    }
+                }
+            }
+            .jouleCard(padding: 20, radius: 20)
+            .padding(.horizontal)
+            .accessibilityElement(children: .combine)
+
+            // Quick figures
+            Grid(horizontalSpacing: 1, verticalSpacing: 1) {
+                GridRow {
+                    detailFigure("Duration", String(format: "%.0f min", session.duration / 60))
+                    detailFigure("Speed", session.speed > 0 ? String(format: "%.1f kW", session.speed) : "—")
+                }
+                GridRow {
+                    detailFigure("Energy", String(format: "%.1f kWh", session.energyAdded))
+                    detailFigure("Battery SoC (%)", socSummary)
+                }
+            }
+            .background(Color.jouleLine)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Color.jouleLine, lineWidth: 1))
+            .padding(.horizontal)
+
             // Technical Details
             VStack(alignment: .leading, spacing: 16) {
                 Text("Technical Details")
-                    .font(.headline)
+                    .font(.jouleDisplay(20, relativeTo: .title3))
+                    .accessibilityAddTraits(.isHeader)
                     .padding(.horizontal)
                 
                 VStack(spacing: 0) {
@@ -152,17 +198,17 @@ struct SessionDetailContent: View {
                         Divider().padding(.leading, 44)
                         HStack {
                             Image(systemName: "bolt.batteryblock.fill")
-                                .foregroundColor(point.confidence == .high ? .green : (point.confidence == .medium ? .blue : .orange))
+                                .foregroundColor(point.confidence == .high ? .green : (point.confidence == .medium ? .jouleInk : .jouleDeferred))
                                 .frame(width: 24)
                             Text("Est. Pack Capacity")
                             Spacer()
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text(String(format: "%.1f kWh (%.1f%% SoH)", point.estimatedCapacityKWh, point.stateOfHealth))
-                                    .foregroundColor(.primary)
-                                    .font(.subheadline)
+                                    .foregroundColor(.jouleInk)
+                                    .font(.joule(.subheadline))
                                 Text(LocalizedStringKey(point.confidence.description))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .font(.joule(.caption2))
+                                    .foregroundColor(.jouleMuted)
                             }
                         }
                         .padding(.vertical, 10)
@@ -176,23 +222,23 @@ struct SessionDetailContent: View {
                         Divider().padding(.leading, 44)
                         HStack {
                             Image(systemName: "fuelpump.fill")
-                                .foregroundColor(.orange)
+                                .foregroundColor(.jouleDeferred)
                                 .frame(width: 24)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Gas Equivalent")
-                                    .font(.body)
+                                    .font(.joule(.body))
                                 Text(appCurrency.format(sessionSavings.gasCost))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .font(.joule(.caption2))
+                                    .foregroundColor(.jouleMuted)
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text(appCurrency.format(sessionSavings.netSavings))
-                                    .foregroundColor(.green)
-                                    .font(.subheadline).bold()
+                                    .foregroundColor(.joulePositive)
+                                    .font(.joule(.subheadline)).bold()
                                 Text(String(format: "Saved (%.0f%%)", sessionSavings.savingsPercentage))
-                                    .font(.caption2)
-                                    .foregroundColor(.green)
+                                    .font(.joule(.caption2))
+                                    .foregroundColor(.joulePositive)
                             }
                         }
                         .padding(.vertical, 10)
@@ -201,8 +247,7 @@ struct SessionDetailContent: View {
                         .accessibilityLabel("Cost Savings vs Gas: Saved \(appCurrency.format(sessionSavings.netSavings)), gas equivalent \(appCurrency.format(sessionSavings.gasCost))")
                     }
                 }
-                .background(Color.secondary.opacity(0.1))
-                .cornerRadius(12)
+                .jouleCard(padding: 0, radius: 18)
                 .padding(.horizontal)
             }
 
@@ -213,7 +258,7 @@ struct SessionDetailContent: View {
             if session.chargingFee > 0 || session.bookingFee > 0 || session.overtimeFee > 0 || session.paymentStatus != nil {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Fees Breakdown")
-                        .font(.headline)
+                        .font(.joule(.headline))
                         .padding(.horizontal)
                     
                     VStack(spacing: 0) {
@@ -234,8 +279,7 @@ struct SessionDetailContent: View {
                             DetailRow(title: "Payment Status", value: payStat.rawValue, icon: paymentStatusIcon(payStat))
                         }
                     }
-                    .background(Color.secondary.opacity(0.1))
-                    .cornerRadius(12)
+                    .jouleCard(padding: 0, radius: 18)
                     .padding(.horizontal)
                 }
             }
@@ -244,20 +288,34 @@ struct SessionDetailContent: View {
             if let notes = session.notes, !notes.isEmpty {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Notes")
-                        .font(.headline)
+                        .font(.joule(.headline))
                         .padding(.horizontal)
                     
                     Text(notes)
-                        .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.secondary.opacity(0.1))
-                        .cornerRadius(12)
+                        .jouleCard(padding: 16, radius: 16)
                         .padding(.horizontal)
                 }
             }
             
             Spacer(minLength: 40)
         }
+    }
+
+    private var socSummary: String {
+        switch (session.startPercentage, session.endPercentage) {
+        case let (start?, end?): return String(format: "%.0f → %.0f", start, end)
+        case let (start?, nil): return String(format: "%.0f →", start)
+        case let (nil, end?): return String(format: "→ %.0f", end)
+        default: return "—"
+        }
+    }
+
+    private func detailFigure(_ label: LocalizedStringKey, _ value: String) -> some View {
+        JouleStat(label: label, value: value, valueSize: 22)
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.jouleSurface)
     }
 
     // MARK: - Battery Longevity Impact
@@ -269,28 +327,28 @@ struct SessionDetailContent: View {
 
         return VStack(alignment: .leading, spacing: 12) {
             Text("Battery Longevity Impact")
-                .font(.headline)
+                .font(.jouleDisplay(20, relativeTo: .title3))
+                .accessibilityAddTraits(.isHeader)
                 .padding(.horizontal)
 
             VStack(spacing: 8) {
                 // Speed Impact
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: isAC ? "checkmark.circle.fill" : "bolt.fill")
-                        .foregroundColor(isAC ? .green : .orange)
-                        .font(.body)
+                        .foregroundColor(isAC ? .joulePositive : .jouleDeferred)
+                        .font(.joule(.body))
                         .padding(.top, 2)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(isAC ? "Gentle AC Charging" : "High C-Rate DC Fast Charge")
-                            .font(.subheadline).bold()
+                            .font(.joule(.subheadline)).bold()
                         Text(isAC ? "Minimal cell heat generation and low mechanical stress on the Solid Electrolyte Interphase (SEI) layer." : "High charging current generates elevated internal cell temperatures. Reserve for long-distance travel.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            .font(.joule(.caption))
+                            .foregroundColor(.jouleMuted)
                     }
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background((isAC ? Color.green : Color.orange).opacity(0.08))
-                .cornerRadius(10)
+                .background((isAC ? Color.joulePositiveSoft : Color.jouleDeferredSoft), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                 // SoC Range Impact
                 if let start, let end {
@@ -302,41 +360,39 @@ struct SessionDetailContent: View {
                     if endsFull {
                         HStack(alignment: .top, spacing: 10) {
                             Image(systemName: isLFP ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                                .foregroundColor(isLFP ? .green : .orange)
-                                .font(.body)
+                                .foregroundColor(isLFP ? .joulePositive : .jouleDeferred)
+                                .font(.joule(.body))
                                 .padding(.top, 2)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(isLFP ? "100% LFP Calibration Charge" : "100% Top-Off on \(chemistry.rawValue)")
-                                    .font(.subheadline).bold()
+                                    .font(.joule(.subheadline)).bold()
                                 Text(isLFP ? "Excellent for LFP BMS cell balancing and capacity calibration." : "Regular daily 100% charges on \(chemistry.rawValue) increase cathode voltage stress. Limit daily charges to 80%–90%.")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .font(.joule(.caption))
+                                    .foregroundColor(.jouleMuted)
                             }
                         }
                         .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background((isLFP ? Color.green : Color.orange).opacity(0.08))
-                        .cornerRadius(10)
+                        .background((isLFP ? Color.joulePositiveSoft : Color.jouleDeferredSoft), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
 
                     if startsLow {
                         HStack(alignment: .top, spacing: 10) {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
-                                .font(.body)
+                                .foregroundColor(.jouleDeferred)
+                                .font(.joule(.body))
                                 .padding(.top, 2)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Deep Discharge Zone (Start < 15%)")
-                                    .font(.subheadline).bold()
+                                    .font(.joule(.subheadline)).bold()
                                 Text("Starting below 15% increases anode internal resistance. Aim to plug in around 15%–20% buffer.")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .font(.joule(.caption))
+                                    .foregroundColor(.jouleMuted)
                             }
                         }
                         .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.orange.opacity(0.08))
-                        .cornerRadius(10)
+                        .background(Color.jouleDeferredSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                 }
             }
@@ -353,54 +409,26 @@ struct SessionDetailContent: View {
     }
 }
 
-struct DetailHeroCard: View {
-    let title: LocalizedStringKey
-    let value: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            Text(value)
-                .font(.headline)
-                .foregroundColor(color)
-                .bold()
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .padding(.horizontal, 8)
-        .background(color.opacity(0.1))
-        .cornerRadius(12)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(title))
-        .accessibilityValue(value)
-    }
-}
-
 struct DetailRow: View {
     let title: LocalizedStringKey
     let value: String
     let icon: String
     
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.blue)
+                .foregroundStyle(Color.jouleInk2)
                 .frame(width: 24)
             Text(title)
-                .font(.body)
-            Spacer()
+                .font(.jouleText(15, relativeTo: .body))
+                .foregroundStyle(Color.jouleInk)
+            Spacer(minLength: 8)
             Text(value)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.jouleText(15, relativeTo: .body).weight(.medium))
+                .foregroundStyle(Color.jouleInk)
+                .multilineTextAlignment(.trailing)
         }
-        .padding(.vertical, 12)
+        .frame(minHeight: 48)
         .padding(.horizontal, 16)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text(title))

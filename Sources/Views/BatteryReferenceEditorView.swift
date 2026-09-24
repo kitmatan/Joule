@@ -47,7 +47,7 @@ struct BatteryReferenceEditorView: View {
                             .frame(width: 80)
                         // verbatim: a bare "%" would be extracted into the string catalog as a
                         // translatable key with no sensible translation in any language.
-                        Text(verbatim: "%").foregroundColor(.secondary)
+                        Text(verbatim: "%").foregroundColor(.jouleMuted)
                     }
 
                     HStack {
@@ -58,7 +58,7 @@ struct BatteryReferenceEditorView: View {
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 90)
-                        Text(unitSystem.distanceUnit).foregroundColor(.secondary)
+                        Text(unitSystem.distanceUnit).foregroundColor(.jouleMuted)
                     }
                 } header: {
                     Text("Reading")
@@ -116,16 +116,16 @@ struct BatteryReferenceEditorView: View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
                 Text(reading.date.formatted(.dateTime.year().month(.abbreviated).day()))
-                    .font(.subheadline).bold()
-                    .foregroundColor(.primary)
+                    .font(.joule(.subheadline)).bold()
+                    .foregroundColor(.jouleInk)
                 Label(reading.source.displayName, systemImage: reading.source.icon)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption))
+                    .foregroundColor(.jouleMuted)
             }
             Spacer()
             Text(String(format: "%.1f%%", reading.sohPercent))
-                .font(.headline)
-                .foregroundColor(.primary)
+                .font(.joule(.headline))
+                .foregroundColor(.jouleInk)
         }
         .contentShape(Rectangle())
     }

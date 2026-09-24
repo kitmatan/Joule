@@ -15,6 +15,8 @@ struct ContentView: View {
                 PhoneRootView()
             }
         }
+        .tint(Color.jouleInk)
+        .font(.joule(.body))
         // Theming goes through the window's `overrideUserInterfaceStyle` and nothing else.
         // `preferredColorScheme` drives that same property from SwiftUI's side, and running both
         // leaves them fighting: one of the two hierarchies (root or presented sheet) keeps the
@@ -54,6 +56,9 @@ struct PhoneRootView: View {
     @EnvironmentObject private var store: SessionStore
     @EnvironmentObject private var navCoordinator: AppNavigationCoordinator
 
+    /// Measured by the tab bar; a sensible first guess avoids a jump on the first frame.
+    @State private var tabBarHeight: CGFloat = 72
+
     var body: some View {
         Group {
             if let targetSession = store.sessions.first, ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "session_detail" {
@@ -71,29 +76,37 @@ struct PhoneRootView: View {
             } else if ProcessInfo.processInfo.environment["SCREENSHOT_MODE"] == "presets" {
                 PresetPickerView(selectedPresetId: .constant("byd_atto3_ext")) { _ in }
             } else {
-                TabView(selection: Binding(
-                    get: { navCoordinator.selectedTab.rawValue },
-                    set: { if let tab = AppTab(rawValue: $0) { navCoordinator.selectTab(tab) } }
-                )) {
+                TabView(selection: $navCoordinator.selectedTab) {
                     DashboardView()
-                        .tabItem {
-                            Label("Dashboard", systemImage: "chart.bar.xaxis")
-                        }
-                        .tag(0)
+                        .toolbar(.hidden, for: .tabBar)
+                        .tag(AppTab.dashboard)
 
                     NavigationStack {
                         BatteryHealthView()
                     }
-                    .tabItem {
-                        Label("Battery Health", systemImage: "bolt.batteryblock.fill")
-                    }
-                    .tag(1)
+                    .toolbar(.hidden, for: .tabBar)
+                    .tag(AppTab.batteryHealth)
 
                     SessionListView()
-                        .tabItem {
-                            Label("History", systemImage: "list.bullet")
-                        }
-                        .tag(2)
+                        .toolbar(.hidden, for: .tabBar)
+                        .tag(AppTab.history)
+
+                    SettingsView(presentation: .tab)
+                        .toolbar(.hidden, for: .tabBar)
+                        .tag(AppTab.garage)
+                }
+                // The system bar is hidden above and this one is drawn over the tabs; each tab's
+                // scroll view reserves its height so nothing scrolls out of reach beneath it.
+                .environment(\.jouleTabBarHeight, tabBarHeight)
+                .overlay(alignment: .bottom) {
+                    JouleTabBar(
+                        selection: Binding(
+                            get: { navCoordinator.selectedTab },
+                            set: { navCoordinator.selectTab($0) }
+                        ),
+                        height: $tabBarHeight,
+                        onLogCharge: { navCoordinator.presentNewSession() }
+                    )
                 }
             }
         }
@@ -121,6 +134,7 @@ struct PhoneRootView: View {
                 switch envTab {
                 case "1", "battery_health": navCoordinator.selectTab(.batteryHealth)
                 case "2", "history": navCoordinator.selectTab(.history)
+                case "3", "garage": navCoordinator.selectTab(.garage)
                 default: navCoordinator.selectTab(.dashboard)
                 }
             }

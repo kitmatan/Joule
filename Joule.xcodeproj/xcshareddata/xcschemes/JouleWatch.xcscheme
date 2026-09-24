@@ -55,7 +55,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E04F933E693DAFD28CA2E685"
             BuildableName = "JouleWatch.app"
-            BlueprintName = "JouleWatch"
             ReferencedContainer = "container:Joule.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -72,7 +71,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E04F933E693DAFD28CA2E685"
             BuildableName = "JouleWatch.app"
-            BlueprintName = "JouleWatch"
             ReferencedContainer = "container:Joule.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

@@ -24,6 +24,19 @@ enum SessionFilter: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// Short label for the History filter chips.
+    var chipTitle: String {
+        switch self {
+        case .all: return "All"
+        case .ac: return "AC"
+        case .dc: return "DC"
+        case .home: return "Home"
+        case .publicStation: return "Public"
+        case .work: return "Work"
+        case .deferred: return "On bill"
+        }
+    }
+
     /// Display name used in the macOS sidebar.
     var sidebarTitle: String {
         self == .all ? String(localized: "All Sessions") : rawValue
@@ -97,38 +110,43 @@ struct SessionListView: View {
                 // truncates. Here it simply scrolls away. Matches DashboardView, which also runs
                 // with an empty navigation title.
                 Text("History")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                    .font(.jouleDisplay(34, relativeTo: .largeTitle))
+                    .foregroundStyle(Color.jouleInk)
                     .accessibilityAddTraits(.isHeader)
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20))
+                    .listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4))
+
+                filterChips
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0))
 
                 if store.duplicateSessionsCount > 0 {
                     Section {
                         HStack(spacing: 12) {
                             Image(systemName: "sparkles.rectangle.stack.fill")
-                                .font(.title3)
-                                .foregroundColor(.orange)
+                                .font(.joule(.title3))
+                                .foregroundColor(.jouleDeferred)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(String(format: String(localized: "%lld Duplicate Sessions Found"), Int64(store.duplicateSessionsCount)))
-                                    .font(.subheadline)
+                                    .font(.joule(.subheadline))
                                     .fontWeight(.medium)
                                 Text("Merge data into canonical records and remove duplicates.")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .font(.joule(.caption))
+                                    .foregroundColor(.jouleMuted)
                             }
                             Spacer()
                             Button("Clean Up") {
                                 store.cleanDuplicates()
                             }
-                            .font(.caption)
+                            .font(.joule(.caption))
                             .fontWeight(.semibold)
-                            .buttonStyle(.borderedProminent)
-                            .tint(.orange)
+                            .buttonStyle(JouleOutlineButtonStyle())
                         }
                         .padding(.vertical, 2)
                     }
+                    .listRowBackground(Color.jouleDeferredSoft)
                 }
 
                 ForEach(groupedSessions, id: \.0) { month, sessions in
@@ -139,6 +157,8 @@ struct SessionListView: View {
                             } label: {
                                 SessionRow(session: session)
                             }
+                            .listRowBackground(Color.jouleSurface)
+                            .listRowSeparatorTint(Color.jouleLine)
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
                                     sessionToDelete = session
@@ -148,26 +168,33 @@ struct SessionListView: View {
                             }
                         }
                     } header: {
-                        HStack {
+                        HStack(alignment: .firstTextBaseline) {
                             Text(month)
+                                .font(.jouleDisplay(18, relativeTo: .headline))
+                                .foregroundStyle(Color.jouleInk)
                             Spacer()
-                            Text(appCurrency.format(sessions.reduce(0) { $0 + $1.totalPrice }))
-                            Text("•")
-                            Text(String(format: "%.0f kWh", sessions.reduce(0) { $0 + $1.energyAdded }))
+                            Text(appCurrency.format(sessions.reduce(0) { $0 + $1.totalPrice }) + " · " + String(format: "%.1f kWh", sessions.reduce(0) { $0 + $1.energyAdded }))
+                                .font(.jouleMono(12))
+                                .foregroundStyle(Color.jouleInk2)
                         }
+                        .textCase(nil)
+                        .padding(.bottom, 2)
                     }
                 }
             }
+            .jouleTabBarClearance()
+            .joulePage()
             .searchable(text: $searchText, prompt: "Search location, vendor, notes")
             .overlay {
                 if store.sessions.isEmpty {
                     VStack(spacing: 20) {
                         Text("No charging history yet.")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.jouleMuted)
                         Button("Add Charging Session") {
                             navCoordinator.presentNewSession()
                         }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(JoulePrimaryButtonStyle())
+                        .frame(maxWidth: 280)
                     }
                 } else if filteredSessions.isEmpty {
                     if searchText.isEmpty {
@@ -245,12 +272,6 @@ struct SessionListView: View {
                         }
                         .accessibilityLabel("History Options")
 
-                        Button(action: { navCoordinator.presentNewSession() }) {
-                            Image(systemName: "plus")
-                                .fontWeight(.semibold)
-                        }
-                        .keyboardShortcut("n", modifiers: .command)
-                        .accessibilityLabel("New Session")
                     }
                 }
             }
@@ -300,130 +321,100 @@ struct SessionListView: View {
         }
     }
 
+
+    private var filterChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(SessionFilter.allCases) { option in
+                    JouleChip(title: LocalizedStringKey(option.chipTitle), isSelected: filter == option) {
+                        filter = option
+                    }
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Filter")
+    }
 }
 
 struct SessionRow: View {
     @EnvironmentObject private var store: SessionStore
     let session: ChargingSession
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @AppStorage("app_currency") private var appCurrency: AppCurrency = VehicleProfile.defaultCurrency
-    
+
+    /// Energy added as a share of the session vehicle's pack — the length of the row's bar.
+    private var packShare: Double {
+        let pack = store.vehicle(for: session.vehicleId)?.nominalCapacityKWh ?? store.activeVehicle.nominalCapacityKWh
+        return pack > 0 ? session.energyAdded / pack : 0
+    }
+
+    private var meta: String {
+        var parts: [String] = []
+        if let vendor = session.vendorName, !vendor.isEmpty { parts.append(vendor) }
+        parts.append(session.date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
+        if session.duration > 0 { parts.append(String(format: String(localized: "%.0f min"), session.duration / 60)) }
+        if session.speed > 0 { parts.append(String(format: "%.0f kW", session.speed)) }
+        return parts.joined(separator: " · ")
+    }
+
     var body: some View {
-        HStack(spacing: 16) {
-            // Icon Background
-            ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.1))
-                    .frame(width: 44, height: 44)
-                Image(systemName: "bolt.car.fill")
-                    .foregroundColor(.blue)
-                    .font(.title3)
-            }
-            
-            // Details
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Text(session.locationName ?? "Unknown Location")
-                        .font(.headline)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
-                    
-                    if store.vehicles.count > 1, let vId = session.vehicleId, !vId.isEmpty {
-                        let vName = store.vehicleName(for: vId)
-                        Text(vName)
-                            .font(.caption2).bold()
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(Color.blue.opacity(0.12))
-                            .foregroundColor(.blue)
-                            .clipShape(Capsule())
-                    }
-                }
-                
-                HStack(spacing: 4) {
-                    if let vendor = session.vendorName, !vendor.isEmpty {
-                        Text(vendor)
-                        Text("•")
-                    }
-                    Text(session.date.formatted(.dateTime.month(.abbreviated).day().year().hour().minute()))
-                }
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .lineLimit(1)
-                
-                Group {
-                    if dynamicTypeSize.isAccessibilitySize {
-                        VStack(alignment: .leading, spacing: 4) {
-                            if let type = session.chargingType {
-                                metricView(icon: "powerplug.fill", text: type.rawValue, color: type == .dc ? .orange : .blue)
-                            }
-                            metricView(icon: "bolt.fill", text: String(format: "%.1f kWh", session.energyAdded))
-                            metricView(icon: "clock.fill", text: String(format: "%.0f min", session.duration / 60))
-                            if session.speed > 0 {
-                                metricView(icon: "gauge.medium", text: String(format: "%.0f kW", session.speed))
-                            }
-                        }
-                    } else {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 8) {
-                                if let type = session.chargingType {
-                                    metricView(icon: "powerplug.fill", text: type.rawValue, color: type == .dc ? .orange : .blue)
-                                }
-                                metricView(icon: "bolt.fill", text: String(format: "%.1f kWh", session.energyAdded))
-                            }
-                            HStack(spacing: 8) {
-                                metricView(icon: "clock.fill", text: String(format: "%.0f min", session.duration / 60))
-                                if session.speed > 0 {
-                                    metricView(icon: "gauge.medium", text: String(format: "%.0f kW", session.speed))
-                                }
-                            }
+        HStack(alignment: .top, spacing: 12) {
+            ChargeTypeBadge(type: session.chargingType)
+
+            VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(session.locationName ?? String(localized: "Unknown Location"))
+                            .font(.jouleText(16, relativeTo: .headline).weight(.semibold))
+                            .foregroundStyle(Color.jouleInk)
+                            .lineLimit(1)
+
+                        if store.vehicles.count > 1, let vId = session.vehicleId, !vId.isEmpty {
+                            Text(store.vehicleName(for: vId))
+                                .font(.jouleText(11, relativeTo: .caption2).weight(.semibold))
+                                .foregroundStyle(Color.jouleInk2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 1)
+                                .background(Color.jouleSunken, in: Capsule())
+                                .lineLimit(1)
                         }
                     }
+                    Text(meta)
+                        .font(.jouleText(13, relativeTo: .footnote))
+                        .foregroundStyle(Color.jouleMuted)
+                        .lineLimit(2)
                 }
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .padding(.top, 2)
+
+                HStack(spacing: 8) {
+                    ShareBar(fraction: packShare, color: session.chargingType?.jouleColor ?? .jouleMuted)
+                    Text(String(format: "%.1f kWh", session.energyAdded))
+                        .font(.jouleMono(12))
+                        .foregroundStyle(Color.jouleInk2)
+                        .fixedSize()
+                }
             }
-            
-            Spacer(minLength: 8)
-            
-            // Cost
+
+            Spacer(minLength: 4)
+
             VStack(alignment: .trailing, spacing: 4) {
-                if session.paymentStatus == .deferred {
-                    HStack(spacing: 4) {
-                        Image(systemName: "list.bullet.rectangle.portrait")
-                            .foregroundColor(.orange)
-                            .font(.caption2)
-                        Text(appCurrency.format(session.totalPrice))
-                            .font(.subheadline)
-                            .bold()
-                            .foregroundColor(.orange)
-                    }
-                } else {
-                    Text(appCurrency.format(session.totalPrice))
-                        .font(.subheadline)
-                        .bold()
-                }
-                
+                Text(appCurrency.format(session.totalPrice))
+                    .font(.jouleText(16, relativeTo: .headline).weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.jouleInk)
                 if session.energyAdded > 0 {
                     Text(appCurrency.formatRate(session.totalPrice / session.energyAdded))
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .font(.jouleMono(11))
+                        .foregroundStyle(Color.jouleMuted)
+                }
+                if session.paymentStatus == .deferred {
+                    JouleTag("On bill", foreground: .jouleDeferredOnSoft, background: .jouleDeferredSoft)
                 }
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(session.locationName ?? "Charging Session")\(session.vendorName != nil ? ", \(session.vendorName!)" : ""), \(session.date.formatted(.dateTime.month(.abbreviated).day().year()))")
         .accessibilityValue("\(session.chargingType?.rawValue ?? "") charging, \(String(format: "%.1f kWh", session.energyAdded)) added in \(String(format: "%.0f minutes", session.duration / 60)), \(appCurrency.format(session.totalPrice))\(session.paymentStatus == .deferred ? ", Deferred" : "")")
-    }
-    
-    @ViewBuilder
-    private func metricView(icon: String, text: String, color: Color = .secondary) -> some View {
-        HStack(spacing: 2) {
-            Image(systemName: icon)
-            Text(text)
-        }
-        .foregroundColor(color)
     }
 }

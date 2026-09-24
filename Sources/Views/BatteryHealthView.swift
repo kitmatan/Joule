@@ -243,7 +243,9 @@ struct BatteryHealthView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(alignment: .leading, spacing: 28) {
+                header
+
                 if let summary = summary, !allPoints.isEmpty {
                     heroCard(summary: summary)
                     metricsGrid(summary: summary)
@@ -257,47 +259,25 @@ struct BatteryHealthView: View {
                         referenceBand(
                             BatteryReferenceComparison(reference: reading, estimatedSoHAtReadingDate: nil)
                         )
-                        .padding(.horizontal)
                     } else {
                         // With no sessions there is no hero card to host it, and the toolbar no
                         // longer carries the button, so this is the only way in.
                         addReferenceButton
-                            .padding(.horizontal)
                     }
                     emptyState
                 }
             }
-            .padding(.vertical)
+            .padding(.horizontal, isWide ? 32 : 20)
+            .padding(.top, 8)
+            .padding(.bottom, 32)
             .frame(maxWidth: isWide ? 1100 : .infinity)
             .frame(maxWidth: .infinity)
         }
+        .jouleTabBarClearance()
+        .joulePage()
+        .jouleStatusBarBackdrop()
         .navigationTitle("Battery Health")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                GarageSwitcherMenu(allowAllOption: false)
-            }
-            // Two items, so the group stays inline. Labels rather than bare Images: if the system
-            // ever does collapse this into an overflow menu, an image-only button has no title to
-            // show and the menu renders blank.
-            ToolbarItemGroup(placement: .primaryAction) {
-                if summary != nil, !allPoints.isEmpty {
-                    Button {
-                        showingCertificateSheet = true
-                    } label: {
-                        Label("Battery Certificate", systemImage: "bolt.shield")
-                            .fontWeight(.semibold)
-                    }
-                }
-
-                Button {
-                    showingSettings = true
-                } label: {
-                    Label("Settings", systemImage: "gearshape")
-                        .fontWeight(.semibold)
-                }
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showingSettings) {
             SettingsView()
         }
@@ -322,123 +302,105 @@ struct BatteryHealthView: View {
         }
     }
     
+    // MARK: - Header
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                GarageSwitcherMenu(allowAllOption: false)
+                Spacer()
+                if summary != nil, !allPoints.isEmpty {
+                    Button {
+                        showingCertificateSheet = true
+                    } label: {
+                        Label("Battery Certificate", systemImage: "square.and.arrow.up")
+                            .labelStyle(.titleAndIcon)
+                    }
+                    .buttonStyle(JouleOutlineButtonStyle())
+                }
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Battery Health")
+                    .font(.jouleDisplay(34, relativeTo: .largeTitle))
+                    .foregroundStyle(Color.jouleInk)
+                    .accessibilityAddTraits(.isHeader)
+                Text(String(format: "%@ · %.1f kWh · %@", targetVehicle.name, targetVehicle.nominalCapacityKWh, targetVehicle.chemistry.badgeTitle))
+                    .font(.jouleText(14, relativeTo: .subheadline))
+                    .foregroundStyle(Color.jouleMuted)
+            }
+        }
+    }
+
     // MARK: - Hero Card
     private func heroCard(summary: BatteryHealthSummary) -> some View {
-        VStack(spacing: 16) {
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top) {
-                    heroTextContent(summary: summary)
-                    Spacer()
-                    circularCapacityGauge(summary: summary)
-                }
-                
-                VStack(alignment: .leading, spacing: 16) {
-                    heroTextContent(summary: summary)
-                    HStack {
-                        Spacer()
-                        circularCapacityGauge(summary: summary)
-                        Spacer()
-                    }
-                }
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 10) {
+                JouleTag(LocalizedStringKey(summary.assessment.title), foreground: .jouleVolt, background: .jouleInverse)
+                JouleLabel("Estimated State of Health (SoH)")
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
-            
-            Divider()
-            
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
+
+            (Text(String(format: "%.1f", summary.currentSoH))
+                .font(.jouleDisplay(isWide ? 96 : 104, relativeTo: .largeTitle))
+             + Text("%")
+                .font(.jouleDisplay(48, relativeTo: .largeTitle)))
+                .tracking(-3)
+                .foregroundStyle(Color.jouleInk)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+
+            batteryGauge(fraction: summary.currentSoH / 100)
+
+            HStack(alignment: .top, spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Remaining Usable Capacity")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.jouleText(13, relativeTo: .footnote))
+                        .foregroundStyle(Color.jouleMuted)
                     Text(String(format: "%.1f / %.1f kWh", summary.currentCapacityKWh, summary.nominalCapacityKWh))
-                        .font(.subheadline).bold()
+                        .font(.jouleDisplay(22, relativeTo: .title2))
+                        .foregroundStyle(Color.jouleInk)
                 }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
+                .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Total Capacity Loss")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text(String(format: "%.1f kWh (%.1f%%)", summary.capacityLostKWh, summary.totalDegradationPercentage))
-                        .font(.subheadline).bold()
-                        .foregroundColor(.red)
+                        .font(.jouleText(13, relativeTo: .footnote))
+                        .foregroundStyle(Color.jouleMuted)
+                    Text(String(format: "%.1f kWh · %.1f%%", summary.capacityLostKWh, summary.totalDegradationPercentage))
+                        .font(.jouleDisplay(22, relativeTo: .title2))
+                        .foregroundStyle(Color.jouleDanger)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            
-            Divider()
-            
+
             if let comparison = summary.referenceComparison {
                 referenceBand(comparison)
             } else {
                 addReferenceButton
             }
         }
-        .padding(20)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(16)
-        // A hairline shadow disappears against a dark background, so lean on a deeper one there to
-        // keep the card lifted off the grouped backdrop.
-        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.04), radius: 6, x: 0, y: 3)
-        .padding(.horizontal)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Battery State of Health: \(String(format: "%.1f%%", summary.currentSoH)), \(summary.assessment.title)")
         .accessibilityValue("Usable capacity: \(String(format: "%.1f", summary.currentCapacityKWh)) of \(String(format: "%.1f", summary.nominalCapacityKWh)) kilowatt-hours nominal. Capacity loss: \(String(format: "%.1f", summary.capacityLostKWh)) kilowatt-hours (\(String(format: "%.1f%%", summary.totalDegradationPercentage)))")
     }
 
-    private func heroTextContent(summary: BatteryHealthSummary) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Image(systemName: summary.assessment.icon)
-                    .foregroundColor(assessmentColor(summary.assessment))
-                Text(LocalizedStringKey(summary.assessment.title))
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(assessmentColor(summary.assessment))
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(assessmentColor(summary.assessment).opacity(0.12))
-            .clipShape(Capsule())
-            
-            Text(String(format: "%.1f%%", summary.currentSoH))
-                .font(.system(size: 48, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
-            
-            Text("Estimated State of Health (SoH)")
-                .font(.caption)
-                .foregroundColor(.secondary)
+    /// The pack drawn as a battery: ten cells in an outlined case with a terminal nub.
+    private func batteryGauge(fraction: Double) -> some View {
+        HStack(spacing: 4) {
+            CellGauge(fraction: fraction, cells: 10, height: 50, spacing: 4, track: .jouleSunken, cornerRadius: 6)
+                .padding(5)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(Color.jouleInk, lineWidth: 2)
+                )
+            UnevenRoundedRectangle(topLeadingRadius: 0, bottomLeadingRadius: 0, bottomTrailingRadius: 3, topTrailingRadius: 3)
+                .fill(Color.jouleInk)
+                .frame(width: 6, height: 22)
         }
+        .accessibilityHidden(true)
     }
 
-    private func circularCapacityGauge(summary: BatteryHealthSummary) -> some View {
-        ZStack {
-            Circle()
-                .stroke(Color.secondary.opacity(0.2), lineWidth: 10)
-            Circle()
-                .trim(from: 0, to: CGFloat(min(1.0, summary.currentSoH / 100.0)))
-                .stroke(
-                    LinearGradient(
-                        colors: [assessmentColor(summary.assessment), .blue],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    style: StrokeStyle(lineWidth: 10, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-            
-            VStack(spacing: 2) {
-                Image(systemName: "bolt.batteryblock.fill")
-                    .font(.title2)
-                    .foregroundColor(.blue)
-                Text(String(format: "%.1f", summary.currentCapacityKWh))
-                    .font(.headline)
-                    .bold()
-                Text("kWh")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .frame(width: 100, height: 100)
-    }
-    
     // MARK: - Service Reading Band
     
     /// The externally measured figure, shown as its own dated and attributed record rather than
@@ -461,25 +423,24 @@ struct BatteryHealthView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "stethoscope")
-                    .font(.caption)
-                    .foregroundColor(.indigo)
+                    .font(.joule(.subheadline))
+                    .foregroundColor(.jouleInk2)
                 Text("Add a service reading")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.indigo)
+                    .font(.joule(.subheadline))
+                    .fontWeight(.medium)
+                    .foregroundColor(.jouleInk)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption2))
+                    .foregroundColor(.jouleMuted)
             }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.indigo.opacity(0.08))
-            .cornerRadius(10)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.indigo.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(Color.jouleMuted.opacity(0.6), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
             )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -490,34 +451,34 @@ struct BatteryHealthView: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: reading.source.icon)
-                    .font(.caption)
-                    .foregroundColor(.indigo)
+                    .font(.joule(.caption))
+                    .foregroundColor(.jouleReference)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Service Reading")
-                        .font(.caption)
+                        .font(.joule(.caption))
                         .fontWeight(.semibold)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.jouleMuted)
                     
                     HStack(spacing: 6) {
                         Text(reading.source.displayName)
                         Text("•")
                         Text(reading.date.formatted(.dateTime.year().month(.abbreviated).day()))
                     }
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption2))
+                    .foregroundColor(.jouleMuted)
                 }
                 
                 Spacer()
                 
                 Text(String(format: "%.1f%%", reading.sohPercent))
-                    .font(.title3)
+                    .font(.joule(.title3))
                     .fontWeight(.bold)
-                    .foregroundColor(.indigo)
+                    .foregroundColor(.jouleReference)
                 
                 Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption2))
+                    .foregroundColor(.jouleMuted)
             }
             
             if let delta = comparison.delta, let estimate = comparison.estimatedSoHAtReadingDate {
@@ -526,22 +487,17 @@ struct BatteryHealthView: View {
                     signedDelta(delta),
                     estimate
                 ))
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                .font(.joule(.caption2))
+                .foregroundColor(.jouleMuted)
             } else {
                 Text("No charging history near this date to compare against.")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption2))
+                    .foregroundColor(.jouleMuted)
             }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.indigo.opacity(0.08))
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.indigo.opacity(0.2), lineWidth: 1)
-        )
+        .background(Color.jouleReferenceSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Service reading: \(String(format: "%.1f%%", reading.sohPercent)) measured \(reading.date.formatted(.dateTime.year().month(.wide).day()))")
     }
@@ -558,15 +514,15 @@ struct BatteryHealthView: View {
     private func referenceExplanationView(_ comparison: BatteryReferenceComparison) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "questionmark.circle.fill")
-                .font(.body)
-                .foregroundColor(.indigo)
+                .font(.joule(.body))
+                .foregroundColor(.jouleReference)
                 .padding(.top, 2)
             
             VStack(alignment: .leading, spacing: 6) {
                 Text("Why don't these two numbers match?")
-                    .font(.subheadline)
+                    .font(.joule(.subheadline))
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.jouleInk)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .top, spacing: 4) {
@@ -596,18 +552,13 @@ struct BatteryHealthView: View {
                         }
                     }
                 }
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(.joule(.caption))
+                .foregroundColor(.jouleMuted)
             }
             Spacer()
         }
         .padding(12)
-        .background(Color.indigo.opacity(0.08))
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.indigo.opacity(0.2), lineWidth: 1)
-        )
+        .background(Color.jouleReferenceSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
     
     // MARK: - Metrics Grid
@@ -634,8 +585,8 @@ struct BatteryHealthView: View {
                     title: "Degradation Rate",
                     value: summary.formattedDegradationRate(unit: unitSystem),
                     icon: "gauge.with.needle.fill",
-                    color: .mint,
-                    valueColor: isDegradationCalibrating ? nil : .red
+                    color: .joulePositive,
+                    valueColor: isDegradationCalibrating ? nil : .jouleDanger
                 )
                 
                 StatCard(
@@ -646,22 +597,22 @@ struct BatteryHealthView: View {
                             : "< 0.1% / yr")
                         : "Calibrating",
                     icon: "calendar.badge.clock",
-                    color: .cyan,
-                    valueColor: isAnnualCalibrating ? nil : .red
+                    color: .jouleInk2,
+                    valueColor: isAnnualCalibrating ? nil : .jouleDanger
                 )
                 
                 StatCard(
                     title: "Full Cycles (EFC)",
                     value: String(format: "%.1f cycles", summary.equivalentFullCycles),
                     icon: "arrow.triangle.2.circlepath.circle.fill",
-                    color: .purple
+                    color: .jouleInk2
                 )
                 
                 StatCard(
                     title: "Projected 100% Range",
                     value: unitSystem.formatDistance(km: summary.currentProjectedRangeKm ?? summary.nominalRangeKm),
                     icon: "car.fill",
-                    color: .green
+                    color: .joulePositive
                 )
             }
 
@@ -673,7 +624,6 @@ struct BatteryHealthView: View {
                 referenceExplanationView(comparison)
             }
         }
-        .padding(.horizontal)
     }
 
     // MARK: - Calibration Explanation
@@ -684,15 +634,15 @@ struct BatteryHealthView: View {
 
         return HStack(alignment: .top, spacing: 12) {
             Image(systemName: "info.circle.fill")
-                .font(.body)
-                .foregroundColor(.cyan)
+                .font(.joule(.body))
+                .foregroundColor(.jouleInk2)
                 .padding(.top, 2)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("Why are rates calibrating?")
-                    .font(.subheadline)
+                    .font(.joule(.subheadline))
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.jouleInk)
 
                 if isDegradationCalibrating && isAnnualCalibrating {
                     VStack(alignment: .leading, spacing: 4) {
@@ -705,52 +655,51 @@ struct BatteryHealthView: View {
                             Text("**Annual Rate** requires at least 4 sessions spanning 60 days to calculate a yearly trend.")
                         }
                     }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption))
+                    .foregroundColor(.jouleMuted)
                 } else if isDegradationCalibrating {
                     Text("**Degradation Rate** requires at least 4 sessions with odometer readings spanning \(distanceThreshold) of driving to establish a reliable distance-based trend.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.joule(.caption))
+                        .foregroundColor(.jouleMuted)
                 } else if isAnnualCalibrating {
                     Text("**Annual Rate** requires at least 60 days of charging history to compute a yearly degradation trend.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.joule(.caption))
+                        .foregroundColor(.jouleMuted)
                 }
             }
             Spacer()
         }
         .padding(12)
-        .background(Color.cyan.opacity(0.08))
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.cyan.opacity(0.2), lineWidth: 1)
-        )
+        .background(Color.jouleSunken.opacity(0.7), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
     
     // MARK: - Charts Section
     private func chartsSection(summary: BatteryHealthSummary) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Deterioration Trends")
-                    .font(.title2).bold()
-                Spacer()
-                Picker("Time Range", selection: $selectedTimeRange) {
-                    ForEach(ChartTimeRange.allCases) { range in
-                        Text(range.rawValue).tag(range)
+            JouleSectionHeader("Deterioration Trends") {
+                Menu {
+                    Picker("Time Range", selection: $selectedTimeRange) {
+                        ForEach(ChartTimeRange.allCases) { range in
+                            Text(LocalizedStringKey(range.rawValue)).tag(range)
+                        }
                     }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(LocalizedStringKey(selectedTimeRange.rawValue))
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .font(.jouleText(14, relativeTo: .subheadline).weight(.medium))
+                    .foregroundStyle(Color.jouleInk)
+                    .frame(minHeight: 44)
                 }
-                .pickerStyle(.menu)
             }
-            .padding(.horizontal)
-            
-            Picker("Mode", selection: $selectedChartMode) {
-                ForEach(ChartMode.allCases) { mode in
-                    Text(mode.title(unit: unitSystem)).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
+
+            JoulePillPicker(
+                options: ChartMode.allCases.map { ($0, $0.title(unit: unitSystem)) },
+                selection: $selectedChartMode,
+                accessibilityTitle: "Mode"
+            )
             
             Group {
                 switch selectedChartMode {
@@ -765,29 +714,25 @@ struct BatteryHealthView: View {
                 }
             }
             .frame(minHeight: 260)
-            .padding()
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .cornerRadius(16)
-            .padding(.horizontal)
+            .jouleCard(padding: 16)
 
             // The diamonds mean nothing without saying what they are.
             if selectedChartMode == .time && !filteredReferences.isEmpty {
                 HStack(spacing: 14) {
                     HStack(spacing: 5) {
-                        Circle().fill(Color.blue).frame(width: 7, height: 7)
+                        Circle().fill(Color.jouleInk).frame(width: 7, height: 7)
                         Text("Joule estimate")
                     }
                     HStack(spacing: 5) {
                         Image(systemName: "diamond.fill")
                             .font(.system(size: 7))
-                            .foregroundColor(.indigo)
+                            .foregroundColor(.jouleReference)
                         Text("Service reading")
                     }
                     Spacer()
                 }
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
+                .font(.joule(.caption2))
+                .foregroundColor(.jouleMuted)
             }
         }
     }
@@ -797,12 +742,12 @@ struct BatteryHealthView: View {
         let chart = Chart {
             // 100% Reference Baseline
             RuleMark(y: .value("100% Nominal", 100.0))
-                .foregroundStyle(Color.secondary.opacity(0.4))
+                .foregroundStyle(Color.jouleMuted.opacity(0.4))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                 .annotation(position: .top, alignment: .trailing) {
                     Text("100% Factory")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .font(.joule(.caption2))
+                        .foregroundColor(.jouleMuted)
                 }
             
             // Raw Session Samples, each with the range its SoC readings actually support.
@@ -831,7 +776,7 @@ struct BatteryHealthView: View {
                     x: .value("Date", trend.date),
                     y: .value("SoH", trend.smoothedSoH)
                 )
-                .foregroundStyle(.blue)
+                .foregroundStyle(Color.jouleInk)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .interpolationMethod(.monotone)
                 
@@ -840,13 +785,7 @@ struct BatteryHealthView: View {
                     yStart: .value("Baseline", 80.0),
                     yEnd: .value("SoH", trend.smoothedSoH)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.blue.opacity(0.2), Color.blue.opacity(0.02)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(Color.jouleAC.opacity(0.07))
                 .interpolationMethod(.monotone)
             }
 
@@ -855,55 +794,55 @@ struct BatteryHealthView: View {
             // numbers shown on separate screens read as a bug.
             ForEach(filteredReferences) { reading in
                 RuleMark(x: .value("Measured", reading.date))
-                    .foregroundStyle(Color.indigo.opacity(0.35))
+                    .foregroundStyle(Color.jouleReference.opacity(0.35))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
 
                 PointMark(
                     x: .value("Measured", reading.date),
                     y: .value("SoH", reading.sohPercent)
                 )
-                .foregroundStyle(Color.indigo)
+                .foregroundStyle(Color.jouleReference)
                 .symbol(.diamond)
                 .symbolSize(110)
                 .annotation(position: .topTrailing, spacing: 2, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
                     Text(String(format: "%.0f%%", reading.sohPercent))
-                        .font(.caption2)
+                        .font(.joule(.caption2))
                         .fontWeight(.bold)
-                        .foregroundColor(.indigo)
+                        .foregroundColor(.jouleReference)
                 }
             }
 
             if let selPoint = selectedHealthPoint {
                 RuleMark(x: .value("Selected Date", selPoint.date))
-                    .foregroundStyle(Color.secondary.opacity(0.35))
+                    .foregroundStyle(Color.jouleMuted.opacity(0.35))
                     .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
                     .offset(yStart: -10)
                     .annotation(position: .top, spacing: 6, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
                         ChartTooltipCard {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(selPoint.date.formatted(.dateTime.year().month(.abbreviated).day()))
-                                    .font(.caption2)
+                                    .font(.joule(.caption2))
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.jouleMuted)
                                 HStack(spacing: 5) {
                                     Circle().fill(pointColor(for: selPoint.confidence)).frame(width: 7, height: 7)
                                     Text(String(format: "%.1f%% SoH", selPoint.stateOfHealth))
-                                        .font(.subheadline)
+                                        .font(.joule(.subheadline))
                                         .fontWeight(.bold)
-                                        .foregroundColor(.primary)
+                                        .foregroundColor(.jouleInk)
                                 }
                                 Text(String(format: "%.1f kWh • %@", selPoint.estimatedCapacityKWh, selPoint.confidence.rawValue))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .font(.joule(.caption2))
+                                    .foregroundColor(.jouleMuted)
                                 if selPoint.sohUncertainty >= 1.0 {
                                     Text(String(format: "± %.1f pts from SoC accuracy", selPoint.sohUncertainty))
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
+                                        .font(.joule(.caption2))
+                                        .foregroundColor(.jouleMuted)
                                 }
                                 if let trend = selectedHealthTrend {
                                     Text(String(format: "Trend: %.1f%%", trend.smoothedSoH))
-                                        .font(.caption2)
-                                        .foregroundColor(.blue)
+                                        .font(.joule(.caption2))
+                                        .foregroundColor(.jouleInk)
                                 }
                             }
                         }
@@ -921,7 +860,7 @@ struct BatteryHealthView: View {
         .chartYScale(domain: 80...105)
         .chartYAxis {
             AxisMarks(position: .leading, values: [80, 85, 90, 95, 100]) { value in
-                AxisGridLine()
+                AxisGridLine().foregroundStyle(Color.jouleLine)
                 AxisValueLabel {
                     if let intVal = value.as(Int.self) {
                         Text("\(intVal)%")
@@ -931,8 +870,7 @@ struct BatteryHealthView: View {
         }
         .chartXAxis {
             AxisMarks(preset: .aligned, values: .automatic(desiredCount: 4)) { value in
-                AxisGridLine()
-                AxisTick()
+                AxisGridLine().foregroundStyle(Color.jouleLine)
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(formatAxisDate(date))
@@ -960,7 +898,7 @@ struct BatteryHealthView: View {
         
         let chart = Chart {
             RuleMark(y: .value("100% Nominal", 100.0))
-                .foregroundStyle(Color.secondary.opacity(0.4))
+                .foregroundStyle(Color.jouleMuted.opacity(0.4))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
             
             ForEach(mileagePoints) { point in
@@ -978,7 +916,7 @@ struct BatteryHealthView: View {
                     x: .value("Mileage", unitSystem.convertFromKm(trend.mileage!)),
                     y: .value("SoH", trend.smoothedSoH)
                 )
-                .foregroundStyle(.mint)
+                .foregroundStyle(Color.joulePositive)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .interpolationMethod(.monotone)
 
@@ -987,43 +925,37 @@ struct BatteryHealthView: View {
                     yStart: .value("Baseline", 80.0),
                     yEnd: .value("SoH", trend.smoothedSoH)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.mint.opacity(0.2), Color.mint.opacity(0.02)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(Color.jouleAC.opacity(0.07))
                 .interpolationMethod(.monotone)
             }
 
             if let selPoint = selectedMileagePoint, let mileage = selPoint.mileage {
                 let convertedMileage = unitSystem.convertFromKm(mileage)
                 RuleMark(x: .value("Selected Mileage", convertedMileage))
-                    .foregroundStyle(Color.secondary.opacity(0.35))
+                    .foregroundStyle(Color.jouleMuted.opacity(0.35))
                     .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
                     .offset(yStart: -10)
                     .annotation(position: .top, spacing: 6, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
                         ChartTooltipCard {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("\(Int(convertedMileage.rounded())) \(unitSystem.distanceUnit)")
-                                    .font(.caption2)
+                                    .font(.joule(.caption2))
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.jouleMuted)
                                 HStack(spacing: 5) {
                                     Circle().fill(pointColor(for: selPoint.confidence)).frame(width: 7, height: 7)
                                     Text(String(format: "%.1f%% SoH", selPoint.stateOfHealth))
-                                        .font(.subheadline)
+                                        .font(.joule(.subheadline))
                                         .fontWeight(.bold)
-                                        .foregroundColor(.primary)
+                                        .foregroundColor(.jouleInk)
                                 }
                                 Text(String(format: "%.1f kWh • %@", selPoint.estimatedCapacityKWh, selPoint.confidence.rawValue))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .font(.joule(.caption2))
+                                    .foregroundColor(.jouleMuted)
                                 if let trend = selectedMileageTrend {
                                     Text(String(format: "Trend: %.1f%%", trend.smoothedSoH))
-                                        .font(.caption2)
-                                        .foregroundColor(.mint)
+                                        .font(.joule(.caption2))
+                                        .foregroundColor(.joulePositive)
                                 }
                             }
                         }
@@ -1041,7 +973,7 @@ struct BatteryHealthView: View {
         .chartYScale(domain: 80...105)
         .chartYAxis {
             AxisMarks(position: .leading, values: [80, 85, 90, 95, 100]) { value in
-                AxisGridLine()
+                AxisGridLine().foregroundStyle(Color.jouleLine)
                 AxisValueLabel {
                     if let intVal = value.as(Int.self) {
                         Text("\(intVal)%")
@@ -1051,8 +983,7 @@ struct BatteryHealthView: View {
         }
         .chartXAxis {
             AxisMarks(preset: .aligned, values: .automatic(desiredCount: 4)) { value in
-                AxisGridLine()
-                AxisTick()
+                AxisGridLine().foregroundStyle(Color.jouleLine)
                 AxisValueLabel {
                     if let d = value.as(Double.self) {
                         Text(formatMileageAxis(d))
@@ -1084,12 +1015,12 @@ struct BatteryHealthView: View {
         
         let chart = Chart {
             RuleMark(y: .value("Rated Range", nominalConverted))
-                .foregroundStyle(Color.green.opacity(0.5))
+                .foregroundStyle(Color.joulePositive.opacity(0.5))
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                 .annotation(position: .top, alignment: .trailing) {
                     Text("Factory \(Int(nominalConverted)) \(unitSystem.distanceUnit) (\(standardTag))")
-                        .font(.caption2)
-                        .foregroundColor(.green)
+                        .font(.joule(.caption2))
+                        .foregroundColor(.joulePositive)
                 }
             
             ForEach(rangePoints) { point in
@@ -1097,7 +1028,7 @@ struct BatteryHealthView: View {
                     x: .value("Date", point.date),
                     y: .value("Range", unitSystem.convertFromKm(point.projectedFullRangeKm!))
                 )
-                .foregroundStyle(.green.opacity(0.7))
+                .foregroundStyle(Color.joulePositive.opacity(0.7))
                 .symbolSize(35)
             }
             
@@ -1107,7 +1038,7 @@ struct BatteryHealthView: View {
                     x: .value("Date", trend.date),
                     y: .value("Range", unitSystem.convertFromKm(trend.projectedFullRangeKm!))
                 )
-                .foregroundStyle(.green)
+                .foregroundStyle(Color.joulePositive)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .interpolationMethod(.monotone)
 
@@ -1116,40 +1047,34 @@ struct BatteryHealthView: View {
                     yStart: .value("Baseline", minBound),
                     yEnd: .value("Range", unitSystem.convertFromKm(trend.projectedFullRangeKm!))
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.green.opacity(0.2), Color.green.opacity(0.02)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(Color.jouleAC.opacity(0.07))
                 .interpolationMethod(.monotone)
             }
 
             if let selPoint = selectedRangePoint, let rangeKm = selPoint.projectedFullRangeKm {
                 let convertedRange = unitSystem.convertFromKm(rangeKm)
                 RuleMark(x: .value("Selected Date", selPoint.date))
-                    .foregroundStyle(Color.secondary.opacity(0.35))
+                    .foregroundStyle(Color.jouleMuted.opacity(0.35))
                     .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
                     .offset(yStart: -10)
                     .annotation(position: .top, spacing: 6, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
                         ChartTooltipCard {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(selPoint.date.formatted(.dateTime.year().month(.abbreviated).day()))
-                                    .font(.caption2)
+                                    .font(.joule(.caption2))
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.jouleMuted)
                                 HStack(spacing: 5) {
-                                    Circle().fill(Color.green).frame(width: 7, height: 7)
+                                    Circle().fill(Color.joulePositive).frame(width: 7, height: 7)
                                     Text("\(Int(convertedRange.rounded())) \(unitSystem.distanceUnit)")
-                                        .font(.subheadline)
+                                        .font(.joule(.subheadline))
                                         .fontWeight(.bold)
-                                        .foregroundColor(.primary)
+                                        .foregroundColor(.jouleInk)
                                 }
                                 let diff = Int(convertedRange.rounded() - nominalConverted.rounded())
                                 Text(String(format: "%+d %@ vs rated", diff, unitSystem.distanceUnit))
-                                    .font(.caption2)
-                                    .foregroundColor(diff < 0 ? .orange : .secondary)
+                                    .font(.joule(.caption2))
+                                    .foregroundColor(diff < 0 ? .jouleDeferred : .jouleMuted)
                             }
                         }
                     }
@@ -1158,7 +1083,7 @@ struct BatteryHealthView: View {
                     x: .value("Selected Date", selPoint.date),
                     y: .value("Range", convertedRange)
                 )
-                .foregroundStyle(.green)
+                .foregroundStyle(Color.joulePositive)
                 .symbolSize(90)
             }
         }
@@ -1166,7 +1091,7 @@ struct BatteryHealthView: View {
         .chartYScale(domain: minBound...maxBound)
         .chartYAxis {
             AxisMarks(position: .leading) { value in
-                AxisGridLine()
+                AxisGridLine().foregroundStyle(Color.jouleLine)
                 AxisValueLabel {
                     if let intVal = value.as(Int.self) {
                         Text("\(intVal) \(unitSystem.distanceUnit)")
@@ -1178,8 +1103,7 @@ struct BatteryHealthView: View {
         }
         .chartXAxis {
             AxisMarks(preset: .aligned, values: .automatic(desiredCount: 4)) { value in
-                AxisGridLine()
-                AxisTick()
+                AxisGridLine().foregroundStyle(Color.jouleLine)
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(formatAxisDate(date))
@@ -1225,13 +1149,7 @@ struct BatteryHealthView: View {
                     yStart: .value("Baseline", 80.0),
                     yEnd: .value("Theoretical SoH", theoreticalSoH)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.blue.opacity(0.12), Color.blue.opacity(0.01)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(Color.jouleAC.opacity(0.07))
             }
             
             // Actual Measured Position
@@ -1249,31 +1167,31 @@ struct BatteryHealthView: View {
                 let yVal = isNearVehicle ? summary.currentSoH : theoreticalSoH
 
                 RuleMark(x: .value("Selected Cycles", xPos))
-                    .foregroundStyle(Color.secondary.opacity(0.35))
+                    .foregroundStyle(Color.jouleMuted.opacity(0.35))
                     .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
                     .offset(yStart: -10)
                     .annotation(position: .top, spacing: 6, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
                         ChartTooltipCard {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(isNearVehicle ? "Your Vehicle" : "\(chemistryName) Benchmark")
-                                    .font(.caption2)
+                                    .font(.joule(.caption2))
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.jouleMuted)
                                 HStack(spacing: 5) {
-                                    Circle().fill(isNearVehicle ? Color.blue : Color.secondary).frame(width: 7, height: 7)
+                                    Circle().fill(isNearVehicle ? Color.jouleInk : Color.jouleMuted).frame(width: 7, height: 7)
                                     Text(String(format: "%.1f%% SoH", yVal))
-                                        .font(.subheadline)
+                                        .font(.joule(.subheadline))
                                         .fontWeight(.bold)
-                                        .foregroundColor(.primary)
+                                        .foregroundColor(.jouleInk)
                                 }
                                 Text(String(format: "%.1f Full Cycles", xPos))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .font(.joule(.caption2))
+                                    .foregroundColor(.jouleMuted)
                                 if isNearVehicle {
                                     let diff = summary.currentSoH - theoreticalSoH
                                     Text(String(format: "%+.1f%% vs benchmark", diff))
-                                        .font(.caption2)
-                                        .foregroundColor(diff >= 0 ? .green : .orange)
+                                        .font(.joule(.caption2))
+                                        .foregroundColor(diff >= 0 ? .joulePositive : .jouleDeferred)
                                 }
                             }
                         }
@@ -1283,19 +1201,19 @@ struct BatteryHealthView: View {
                     x: .value("Selected Cycles", xPos),
                     y: .value("Actual SoH", yVal)
                 )
-                .foregroundStyle(isNearVehicle ? Color.blue : Color.secondary)
+                .foregroundStyle(isNearVehicle ? Color.jouleInk : Color.jouleMuted)
                 .symbolSize(80)
             }
         }
         .chartXSelection(value: $selectedCycle)
         .chartForegroundStyleScale([
-            "Your Vehicle": Color.blue,
-            benchmarkLabel: Color.secondary
+            "Your Vehicle": Color.jouleAC,
+            benchmarkLabel: Color.jouleMuted
         ])
         .chartYScale(domain: 80...105)
         .chartYAxis {
             AxisMarks(position: .leading, values: [80, 90, 100]) { value in
-                AxisGridLine()
+                AxisGridLine().foregroundStyle(Color.jouleLine)
                 AxisValueLabel {
                     if let intVal = value.as(Int.self) {
                         Text("\(intVal)%")
@@ -1305,8 +1223,7 @@ struct BatteryHealthView: View {
         }
         .chartXAxis {
             AxisMarks(preset: .aligned, values: .automatic(desiredCount: 4)) { value in
-                AxisGridLine()
-                AxisTick()
+                AxisGridLine().foregroundStyle(Color.jouleLine)
                 AxisValueLabel {
                     if let d = value.as(Double.self) {
                         Text("\(Int(d.rounded())) cyc")
@@ -1328,25 +1245,23 @@ struct BatteryHealthView: View {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Charging Behavior & Battery Care")
-                        .font(.title2).bold()
+                        .font(.joule(.title2))
+                        .accessibilityAddTraits(.isHeader)
                     Text("Habit review and longevity impact for \(targetVehicle.name)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(.joule(.caption))
+                        .foregroundColor(.jouleMuted)
                 }
                 Spacer()
                 Button {
                     showingBestPracticesSheet = true
                 } label: {
                     Label("Best Practices", systemImage: "book.closed.fill")
-                        .font(.caption)
+                        .font(.joule(.caption))
                         .fontWeight(.semibold)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .tint(.blue)
+                .buttonStyle(JouleOutlineButtonStyle())
                 .accessibilityLabel("Open EV Battery Charging Best Practices Guide")
             }
-            .padding(.horizontal)
             
             VStack(spacing: 16) {
                 // Behavior Hero Card with Grade & Longevity Score
@@ -1363,7 +1278,6 @@ struct BatteryHealthView: View {
                 // Dynamic Battery Chemistry Tip
                 chemistryTipCard
             }
-            .padding(.horizontal)
         }
     }
 
@@ -1374,32 +1288,32 @@ struct BatteryHealthView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 8) {
                         Text(analysis.grade.rawValue)
-                            .font(.system(size: 24, weight: .black, design: .rounded))
-                            .foregroundColor(.white)
+                            .font(.jouleDisplay(24))
+                            .foregroundColor(.jouleOnVolt)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 4)
-                            .background(analysis.grade.color)
+                            .background(Color.jouleVolt)
                             .clipShape(Capsule())
 
                         VStack(alignment: .leading, spacing: 1) {
                             HStack(spacing: 4) {
                                 Image(systemName: analysis.assessment.icon)
-                                    .font(.caption)
+                                    .font(.joule(.caption))
                                     .foregroundColor(analysis.grade.color)
                                 Text(LocalizedStringKey(analysis.assessment.rawValue))
-                                    .font(.subheadline)
+                                    .font(.joule(.subheadline))
                                     .fontWeight(.bold)
                                     .foregroundColor(analysis.grade.color)
                             }
                             Text(LocalizedStringKey(analysis.grade.title))
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .font(.joule(.caption2))
+                                .foregroundColor(.jouleMuted)
                         }
                     }
 
                     Text(LocalizedStringKey(analysis.summaryText))
-                        .font(.subheadline)
-                        .foregroundColor(.primary)
+                        .font(.joule(.subheadline))
+                        .foregroundColor(.jouleInk)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -1408,35 +1322,29 @@ struct BatteryHealthView: View {
                 // Circular Behavior Score Gauge
                 ZStack {
                     Circle()
-                        .stroke(Color.secondary.opacity(0.18), lineWidth: 8)
+                        .stroke(Color.jouleSunken, lineWidth: 8)
                     Circle()
                         .trim(from: 0, to: CGFloat(min(1.0, analysis.overallScore / 100.0)))
                         .stroke(
-                            LinearGradient(
-                                colors: [analysis.grade.color, .blue],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
+                            Color.jouleInk,
                             style: StrokeStyle(lineWidth: 8, lineCap: .round)
                         )
                         .rotationEffect(.degrees(-90))
 
                     VStack(spacing: 1) {
                         Text("\(Int(analysis.overallScore.rounded()))")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
+                            .font(.jouleDisplay(24))
+                            .foregroundColor(.jouleInk)
                         Text("/ 100")
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.jouleMuted)
                     }
                 }
                 .frame(width: 76, height: 76)
             }
         }
         .padding(18)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.04), radius: 6, x: 0, y: 3)
+        .jouleCard(padding: nil, radius: 18)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Charging Behavior Score: \(Int(analysis.overallScore)) out of 100, Grade \(analysis.grade.rawValue), \(analysis.assessment.rawValue). \(analysis.summaryText)")
     }
@@ -1461,10 +1369,10 @@ struct BatteryHealthView: View {
                 title: "Speed Balance",
                 score: analysis.speedBalanceScore,
                 icon: "bolt.fill",
-                color: .blue,
+                color: .jouleInk,
                 detail: String(format: "%.0f%% AC / %.0f%% DC", m.acEnergyRatio * 100, m.dcEnergyRatio * 100),
                 progress: m.acEnergyRatio,
-                progressColor: .blue
+                progressColor: .jouleInk
             )
 
             // Dimension 2: Target SoC Control
@@ -1483,10 +1391,10 @@ struct BatteryHealthView: View {
                 title: targetVehicle.chemistry == .lfp ? "100% Calibration" : "Daily SoC Ceiling",
                 score: analysis.targetSoCScore,
                 icon: "battery.100.bolt",
-                color: targetVehicle.chemistry == .lfp ? .green : .purple,
+                color: targetVehicle.chemistry == .lfp ? .joulePositive : .jouleInk2,
                 detail: targetDetail,
                 progress: analysis.targetSoCScore / 100.0,
-                progressColor: targetVehicle.chemistry == .lfp ? .green : .purple
+                progressColor: targetVehicle.chemistry == .lfp ? .joulePositive : .jouleInk2
             )
 
             // Dimension 3: Low-SoC Buffer
@@ -1497,10 +1405,10 @@ struct BatteryHealthView: View {
                 title: "Discharge Floor",
                 score: analysis.dischargeBufferScore,
                 icon: "battery.25",
-                color: .orange,
+                color: .jouleDeferred,
                 detail: bufferDetail,
                 progress: analysis.dischargeBufferScore / 100.0,
-                progressColor: .orange
+                progressColor: .jouleDeferred
             )
 
             // Dimension 4: Cycle Consistency
@@ -1511,10 +1419,10 @@ struct BatteryHealthView: View {
                 title: "Cycle Regularity",
                 score: analysis.cycleConsistencyScore,
                 icon: "arrow.triangle.2.circlepath.circle.fill",
-                color: .mint,
+                color: .joulePositive,
                 detail: cycleDetail,
                 progress: analysis.cycleConsistencyScore / 100.0,
-                progressColor: .mint
+                progressColor: .joulePositive
             )
         }
     }
@@ -1531,24 +1439,24 @@ struct BatteryHealthView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: icon)
-                    .font(.caption)
+                    .font(.joule(.caption))
                     .foregroundColor(color)
                 Text(title)
-                    .font(.caption)
+                    .font(.joule(.caption))
                     .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.jouleMuted)
                     .lineLimit(1)
                 Spacer()
                 Text("\(Int(score.rounded()))%")
-                    .font(.caption)
+                    .font(.joule(.caption))
                     .fontWeight(.bold)
-                    .foregroundColor(score >= 80 ? .primary : .orange)
+                    .foregroundColor(score >= 80 ? .jouleInk : .jouleDeferred)
             }
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(Color.secondary.opacity(0.15))
+                        .fill(Color.jouleSunken)
                         .frame(height: 6)
                     Capsule()
                         .fill(progressColor)
@@ -1558,13 +1466,12 @@ struct BatteryHealthView: View {
             .frame(height: 6)
 
             Text(detail)
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                .font(.joule(.caption2))
+                .foregroundColor(.jouleMuted)
                 .lineLimit(1)
         }
         .padding(12)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(12)
+        .jouleCard(padding: nil, radius: 14)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(Int(score)) percent, \(detail)")
     }
@@ -1574,11 +1481,11 @@ struct BatteryHealthView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Label("Actionable Recommendations", systemImage: "sparkles")
-                    .font(.headline)
+                    .font(.joule(.headline))
                 Spacer()
                 Text(String(format: String(localized: "%lld tips"), Int64(analysis.recommendations.count)))
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption2))
+                    .foregroundColor(.jouleMuted)
             }
 
             VStack(spacing: 10) {
@@ -1588,27 +1495,25 @@ struct BatteryHealthView: View {
             }
         }
         .padding(16)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.04), radius: 6, x: 0, y: 3)
+        .jouleCard(padding: nil, radius: 18)
     }
 
     private func recommendationRow(rec: ChargingRecommendation) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: rec.level.icon)
-                .font(.body)
+                .font(.joule(.body))
                 .foregroundColor(rec.level.color)
                 .padding(.top, 2)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(LocalizedStringKey(rec.title))
-                        .font(.subheadline)
+                        .font(.joule(.subheadline))
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.jouleInk)
                     Spacer()
                     Text(LocalizedStringKey(rec.observedMetricFormatted))
-                        .font(.caption2)
+                        .font(.joule(.caption2))
                         .fontWeight(.semibold)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -1618,19 +1523,19 @@ struct BatteryHealthView: View {
                 }
 
                 Text(LocalizedStringKey(rec.summary))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption))
+                    .foregroundColor(.jouleMuted)
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(alignment: .top, spacing: 4) {
                     Text("•")
-                        .font(.caption)
+                        .font(.joule(.caption))
                         .fontWeight(.bold)
                         .foregroundColor(rec.level.color)
                     Text(LocalizedStringKey(rec.actionableAdvice))
-                        .font(.caption)
+                        .font(.joule(.caption))
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.jouleInk)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.top, 2)
@@ -1647,21 +1552,21 @@ struct BatteryHealthView: View {
     private var chemistryTipCard: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "lightbulb.fill")
-                .foregroundColor(.yellow)
-                .font(.title3)
+                .foregroundColor(.jouleDeferred)
+                .font(.joule(.title3))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(String(format: String(localized: "%1$@ (%2$@) Battery Care"), targetVehicle.name, targetVehicle.chemistry.rawValue))
-                    .font(.subheadline).bold()
+                    .font(.joule(.subheadline)).bold()
                 Text(LocalizedStringKey(targetVehicle.batteryCareTip))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption))
+                    .foregroundColor(.jouleMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.yellow.opacity(0.1))
+        .background(Color.jouleDeferred.opacity(0.1))
         .cornerRadius(12)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(targetVehicle.name) \(targetVehicle.chemistry.rawValue) battery care tip: \(targetVehicle.batteryCareTip)")
@@ -1672,13 +1577,13 @@ struct BatteryHealthView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Recent Capacity Calculations")
-                    .font(.title2).bold()
+                    .font(.joule(.title2))
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
                 Text(String(format: String(localized: "%lld sessions analyzed"), Int64(allPoints.count)))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.joule(.caption))
+                    .foregroundColor(.jouleMuted)
             }
-            .padding(.horizontal)
             
             VStack(spacing: 0) {
                 ForEach(Array(allPoints.suffix(5).reversed().enumerated()), id: \.element.id) { index, point in
@@ -1689,35 +1594,35 @@ struct BatteryHealthView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(spacing: 6) {
                                 Text(point.date.formatted(.dateTime.month(.abbreviated).day().year()))
-                                    .font(.subheadline).bold()
+                                    .font(.joule(.subheadline)).bold()
                                 
                                 Text(point.chargingType.rawValue)
-                                    .font(.caption2).bold()
+                                    .font(.joule(.caption2)).bold()
                                     .padding(.horizontal, 5)
                                     .padding(.vertical, 1)
-                                    .background((point.chargingType == .dc ? Color.orange : Color.blue).opacity(0.15))
-                                    .foregroundColor(point.chargingType == .dc ? .orange : .blue)
+                                    .background((point.chargingType == .dc ? Color.jouleDC : Color.jouleAC).opacity(0.15))
+                                    .foregroundColor(point.chargingType == .dc ? .jouleDC : .jouleAC)
                                     .clipShape(Capsule())
                             }
                             
                             Text(String(format: "SoC: %.0f%% → %.0f%% (Δ%.0f%%) • %.1f kWh added", point.startSoC, point.endSoC, point.socDelta, point.energyAdded))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .font(.joule(.caption))
+                                .foregroundColor(.jouleMuted)
                         }
                         
                         Spacer()
                         
                         VStack(alignment: .trailing, spacing: 4) {
                             Text(String(format: "%.1f kWh", point.estimatedCapacityKWh))
-                                .font(.headline)
-                                .foregroundColor(.primary)
+                                .font(.joule(.headline))
+                                .foregroundColor(.jouleInk)
                             
                             HStack(spacing: 4) {
                                 Circle()
                                     .fill(pointColor(for: point.confidence))
                                     .frame(width: 6, height: 6)
                                 Text(String(format: "%.1f%% SoH", point.stateOfHealth))
-                                    .font(.caption)
+                                    .font(.joule(.caption))
                                     .bold()
                                     .foregroundColor(pointColor(for: point.confidence))
                             }
@@ -1726,8 +1631,8 @@ struct BatteryHealthView: View {
                             // one decimal and nothing else invites the reader to believe it.
                             if point.sohUncertainty >= 1.0 {
                                 Text(String(format: "± %.1f pts", point.sohUncertainty))
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .font(.joule(.caption2))
+                                    .foregroundColor(.jouleMuted)
                             }
                         }
                     }
@@ -1737,9 +1642,7 @@ struct BatteryHealthView: View {
                     .accessibilityValue("SoC changed from \(Int(point.startSoC))% to \(Int(point.endSoC))%, \(String(format: "%.1f kWh", point.energyAdded)) added. Estimated pack capacity \(String(format: "%.1f kWh", point.estimatedCapacityKWh)), \(String(format: "%.1f%%", point.stateOfHealth)) State of Health, \(point.confidence.description) confidence")
                 }
             }
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .cornerRadius(12)
-            .padding(.horizontal)
+            .jouleCard(padding: nil, radius: 14)
         }
     }
     
@@ -1748,15 +1651,15 @@ struct BatteryHealthView: View {
         VStack(spacing: 16) {
             Image(systemName: "battery.100.bolt")
                 .font(.system(size: 48))
-                .foregroundColor(.blue)
+                .foregroundColor(.jouleInk)
                 .padding(.top, 40)
             
             Text("Insufficient Data for Battery Health")
-                .font(.title3).bold()
+                .font(.joule(.title3)).bold()
             
             Text("Log charging sessions with both Start SoC and End SoC to enable capacity estimation and degradation tracking.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.joule(.subheadline))
+                .foregroundColor(.jouleMuted)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
         }
@@ -1765,18 +1668,18 @@ struct BatteryHealthView: View {
     // MARK: - Helpers
     private func pointColor(for confidence: BatteryHealthConfidence) -> Color {
         switch confidence {
-        case .high: return .green
-        case .medium: return .blue
-        case .low: return .orange
-        case .unreliable: return .gray.opacity(0.5)
+        case .high: return .joulePositive
+        case .medium: return .jouleInk
+        case .low: return .jouleDeferred
+        case .unreliable: return .jouleMuted.opacity(0.5)
         }
     }
     
     private func assessmentColor(_ assessment: BatteryHealthSummary.BatteryAssessment) -> Color {
         switch assessment {
-        case .excellent, .good: return .green
-        case .normal: return .blue
-        case .degraded: return .orange
+        case .excellent, .good: return .joulePositive
+        case .normal: return .jouleInk
+        case .degraded: return .jouleDeferred
         }
     }
 }
@@ -1826,58 +1729,57 @@ struct ChargingBestPracticesSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(spacing: 8) {
                             Image(systemName: "sparkles")
-                                .font(.title3)
-                                .foregroundColor(.yellow)
+                                .font(.joule(.title3))
+                                .foregroundColor(.jouleDeferred)
                             Text("Battery Longevity Principles")
-                                .font(.title3)
+                                .font(.joule(.title3))
                                 .fontWeight(.bold)
                         }
 
                         Text("EV battery degradation is driven by four primary stressors: high cell temperature, extreme State of Charge (>90% or <10%), high charging current (DC fast charge C-rate), and time spent at high voltage. Follow these proven practices to maximize pack life and resale value.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .font(.joule(.subheadline))
+                            .foregroundColor(.jouleMuted)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.blue.opacity(0.08))
+                    .background(Color.jouleInk.opacity(0.08))
                     .cornerRadius(14)
 
                     // Active Vehicle Chemistry Callout
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "car.side.fill")
-                            .font(.title3)
-                            .foregroundColor(.blue)
+                            .font(.joule(.title3))
+                            .foregroundColor(.jouleInk)
                             .padding(.top, 2)
 
                         VStack(alignment: .leading, spacing: 4) {
                             HStack {
                                 Text(vehicle.name)
-                                    .font(.subheadline)
+                                    .font(.joule(.subheadline))
                                     .fontWeight(.bold)
                                 Text(LocalizedStringKey(vehicle.chemistry.fullName))
-                                    .font(.caption2)
+                                    .font(.joule(.caption2))
                                     .fontWeight(.semibold)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(Color.blue.opacity(0.15))
-                                    .foregroundColor(.blue)
+                                    .background(Color.jouleInk.opacity(0.15))
+                                    .foregroundColor(.jouleInk)
                                     .clipShape(Capsule())
                             }
 
                             Text(LocalizedStringKey(vehicle.batteryCareTip))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .font(.joule(.caption))
+                                .foregroundColor(.jouleMuted)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     .padding(14)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(uiColor: .secondarySystemGroupedBackground))
-                    .cornerRadius(12)
+                    .jouleCard(padding: nil, radius: 14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.blue.opacity(0.2), lineWidth: 1)
+                            .stroke(Color.jouleInk.opacity(0.2), lineWidth: 1)
                     )
 
                     // Filter Picker
@@ -1914,7 +1816,7 @@ struct ChargingBestPracticesSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: practice.icon)
-                    .font(.title2)
+                    .font(.joule(.title2))
                     .foregroundColor(practice.color)
                     .frame(width: 32, height: 32)
                     .background(practice.color.opacity(0.12))
@@ -1923,7 +1825,7 @@ struct ChargingBestPracticesSheet: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack {
                         Text(LocalizedStringKey(practice.category))
-                            .font(.caption2)
+                            .font(.joule(.caption2))
                             .fontWeight(.bold)
                             .foregroundColor(practice.color)
                             .textCase(.uppercase)
@@ -1931,19 +1833,19 @@ struct ChargingBestPracticesSheet: View {
                         Spacer()
 
                         Text(LocalizedStringKey(practice.chemistryApplicability.rawValue))
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .font(.joule(.caption2))
+                            .foregroundColor(.jouleMuted)
                     }
 
                     Text(LocalizedStringKey(practice.title))
-                        .font(.headline)
-                        .foregroundColor(.primary)
+                        .font(.joule(.headline))
+                        .foregroundColor(.jouleInk)
                 }
             }
 
             Text(LocalizedStringKey(practice.summary))
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.joule(.subheadline))
+                .foregroundColor(.jouleMuted)
                 .fixedSize(horizontal: false, vertical: true)
 
             Divider()
@@ -1952,21 +1854,19 @@ struct ChargingBestPracticesSheet: View {
                 ForEach(practice.bullets, id: \.self) { bullet in
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.caption)
+                            .font(.joule(.caption))
                             .foregroundColor(practice.color)
                             .padding(.top, 2)
                         Text(LocalizedStringKey(bullet))
-                            .font(.caption)
-                            .foregroundColor(.primary)
+                            .font(.joule(.caption))
+                            .foregroundColor(.jouleInk)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
         }
         .padding(16)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(14)
-        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.04), radius: 4, x: 0, y: 2)
+        .jouleCard(padding: nil, radius: 16)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(practice.title): \(practice.summary)")
     }
